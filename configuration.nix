@@ -5,16 +5,16 @@
 { config, lib, pkgs, ... }:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-    ];
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+  ];
 
   boot.kernelPackages = pkgs.linuxPackages_rpi4;
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = false; 
+  boot.loader.efi.canTouchEfiVariables = false;
 
   networking.hostName = "rpi5"; # Define your hostname.
   # Pick only one of the below networking options.
@@ -40,7 +40,6 @@
   # services.xserver.enable = true;
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
-  
 
   # Configure keymap in X11
   # services.xserver.xkb.layout = "us";
@@ -57,11 +56,15 @@
   # services.xserver.libinput.enable = true;
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
-  users.users.root.openssh.authorizedKeys.keys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEdpGzo/K4jrtmXtUDlsR8RYWa/Q87plonNjcfMgOPJ dev.alpercelik@gmail.com" ];
+  users.users.root.openssh.authorizedKeys.keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEdpGzo/K4jrtmXtUDlsR8RYWa/Q87plonNjcfMgOPJ dev.alpercelik@gmail.com"
+  ];
   users.users.rpi5 = {
     isNormalUser = true;
     extraGroups = [ "wheel" ]; # enable ‘sudo’ for the user.
-    openssh.authorizedKeys.keys = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEdpGzo/K4jrtmXtUDlsR8RYWa/Q87plonNjcfMgOPJ dev.alpercelik@gmail.com" ];
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEdpGzo/K4jrtmXtUDlsR8RYWa/Q87plonNjcfMgOPJ dev.alpercelik@gmail.com"
+    ];
   };
 
   # List packages installed in system profile. To search, run:
@@ -83,7 +86,7 @@
 
   # Enable the OpenSSH daemon.
   services.openssh = {
-    enable = true;  
+    enable = true;
     openFirewall = true;
     settings = {
       X11Forwarding = true;
@@ -91,7 +94,7 @@
       KbdInteractiveAuthentication = false;
     };
   };
- 
+
   # Open ports in the firewall.
   # networking.firewall.allowedTCPPorts = [ ... ];
   # networking.firewall.allowedUDPPorts = [ ... ];
