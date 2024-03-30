@@ -18,6 +18,11 @@
   networking.useDHCP = lib.mkDefault true;
   # networking.interfaces.wlan0.useDHCP = lib.mkDefault true;
 
+  networking.interfaces.end0.ipv4.addresses = [{
+    address = "192.168.1.200";
+    prefixLength = 24;
+  }];
+
   networking.hostName = "rpi5"; # Define your hostname.
   # Pick only one of the below networking options.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
