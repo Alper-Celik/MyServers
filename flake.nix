@@ -14,7 +14,7 @@
 
     deploy.nodes.rpi5 = {
 
-      hostname = "192.168.1.103";
+      hostname = "192.168.1.200";
       sshUser = "root";
       remoteBuild = true;
 
