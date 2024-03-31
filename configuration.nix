@@ -8,6 +8,7 @@
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
+    ./minecraft-server.nix
   ];
 
 
@@ -18,6 +19,8 @@
   networking.useDHCP = lib.mkDefault true;
   # networking.interfaces.wlan0.useDHCP = lib.mkDefault true;
 
+  networking.defaultGateway = "192.168.1.1";
+  networking.nameservers = [ "1.1.1.1" ];
   networking.interfaces.end0.ipv4.addresses = [{
     address = "192.168.1.200";
     prefixLength = 24;
@@ -44,6 +47,7 @@
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
+  environment.enableAllTerminfo = true;
   users.users.root.openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEdpGzo/K4jrtmXtUDlsR8RYWa/Q87plonNjcfMgOPJ dev.alpercelik@gmail.com"
   ];
