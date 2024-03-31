@@ -48,10 +48,16 @@
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   environment.enableAllTerminfo = true;
-  users.users.root.openssh.authorizedKeys.keys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEdpGzo/K4jrtmXtUDlsR8RYWa/Q87plonNjcfMgOPJ dev.alpercelik@gmail.com"
-  ];
+  programs.fish.enable = true;
+
+  users.users.root = {
+    shell = pkgs.fish;
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEdpGzo/K4jrtmXtUDlsR8RYWa/Q87plonNjcfMgOPJ dev.alpercelik@gmail.com"
+    ];
+  };
   users.users.rpi5 = {
+    shell = pkgs.fish;
     isNormalUser = true;
     extraGroups = [ "wheel" ]; # enable ‘sudo’ for the user.
     openssh.authorizedKeys.keys = [
