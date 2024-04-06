@@ -16,6 +16,13 @@
   fileSystems."/" = {
     device = "/dev/disk/by-uuid/f4385f66-a1b6-42d5-bef2-69fc3e17d98d";
     fsType = "btrfs";
+    options = [ "subvol=root-subvol" "compress=zstd" "noatime" ];
+  };
+
+  fileSystems."/nix" = {
+    device = "/dev/disk/by-uuid/f4385f66-a1b6-42d5-bef2-69fc3e17d98d";
+    fsType = "btrfs";
+    options = [ "subvol=nix-subvol" "compress=zstd" "noatime" ];
   };
 
   fileSystems."/boot" = {
