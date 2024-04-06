@@ -2,13 +2,14 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     deploy-rs.url = "github:serokell/deploy-rs";
+    my-blog.url = "github:Alper-Celik/MyBlog";
   };
 
-  outputs = { self, nixpkgs, deploy-rs }: {
+  outputs = inputs@{ self, nixpkgs, deploy-rs, ... }: {
 
     nixosConfigurations.rpi5 = nixpkgs.lib.nixosSystem {
       system = "aarch64-linux";
-
+      specialArgs = { inherit inputs; };
       modules = [ ./configuration.nix ];
     };
 
