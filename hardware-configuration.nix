@@ -1,4 +1,4 @@
-{ config, lib, pkgs, modulesPath, ... }:
+{ config, inputs, lib, pkgs, modulesPath, ... }:
 
 {
   imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
@@ -7,7 +7,7 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = false;
 
-  boot.kernelPackages = pkgs.linuxPackages_rpi4;
+  boot.kernelPackages = inputs.rpi5-kernel.legacyPackages.aarch64-linux.linuxPackages_rpi5;
   boot.initrd.availableKernelModules = [ ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ ];
