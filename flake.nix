@@ -1,8 +1,9 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.11";
     deploy-rs.url = "github:serokell/deploy-rs";
     my-blog.url = "github:Alper-Celik/MyBlog";
+    rpi5-kernel.url = "gitlab:vriska/nix-rpi5";
   };
 
   outputs = inputs@{ self, nixpkgs, deploy-rs, ... }: {
