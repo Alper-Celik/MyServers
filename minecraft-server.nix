@@ -11,12 +11,12 @@ let
   };
 in
 {
-  # services.minecraft-server = {
-  #   package = generic-server;
-  #   enable = true;
-  #   eula = true;
-  #   openFirewall = true;
-  #   jvmOpts = "-server -Xms2G -Xmx2G";
-  # };
+  services.minecraft-server = {
+    package = generic-server;
+    enable = true;
+    eula = true;
+    openFirewall = true;
+    jvmOpts = "-server -Xms2G -Xmx2G";
+  };
 }
 
