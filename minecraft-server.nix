@@ -13,7 +13,7 @@ in
 {
   services.minecraft-server = {
     package = generic-server;
-    enable = true;
+    # enable = true;
     eula = true;
     openFirewall = true;
     jvmOpts = "-server -Xms2G -Xmx2G";
