@@ -12,6 +12,7 @@ in
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
     ./minecraft-server.nix
+    ./fileshare.nix
   ];
 
 
