@@ -6,6 +6,7 @@
 let
   personal-ssh-public-key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEdpGzo/K4jrtmXtUDlsR8RYWa/Q87plonNjcfMgOPJ dev.alpercelik@gmail.com";
   github-ssh-public-key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCRF5cEocxBruwIB7FJsQyCR58DLmNaCgZFyqEnHUvkRb3iudYYnp8b+ApiVPGhPlu+PwzA5kQbKynVN+r/gvjBP2o/wcwvIGSXgy97JRIyD6LwyVjc/fguS9rCCWpU+bt3UPxHIVTHgF9SaMt/4ragM85sKNv+Mq3nNN9J4pHSXfbzTz3+gNyZRorW9bX8+ehIwcOZ0rvYkpvYYq6FExBsORmbNHC8/bsSsQf5riE9Ja4+d8VZQqjB8ix9glwxqOIzfsB77mLT7HZQQXDCRbmkqRT1J421DRIXljXsKtlOEHjV6e2A1gTbS88h3E5/5KqNcMN47paD7EhM3n+1oA5F+0Jw0KkZl+0QogL/c1Gl5UTBdsdDwbAPh1hXvkShBu1lCML7bS4/XKfnRsjwNH4meXVuWwepBTAFvDG/BU+Udmm0D3kHJB9RyEDykzoxv7HWXZIDiTPZkoniUlIcaA2mWRAEK4C6oskdu9G6NTfAc8s3wE1ItKeT3o/4Qkb1cnCyWy7ZVKf6yH0h2KqYCs6O9vcMPHzar2ae4gT1iNBCv6C/1RH4RGVD5uagbF+Z+wQiz2gK6UEBXUHcbWwahqNh/8hnW72dC24ZUYMNjnQqgpvSFWWAWktOpM9MYcwPPCDL8UiQQOEq8orRpSzBfSvqBC/5gSk1SZ52bfROtmQGwQ== github runner";
+  trusted-ssh-keys = [ personal-ssh-public-key github-ssh-public-key ];
 in
 {
   imports = [
@@ -56,19 +57,13 @@ in
 
   users.users.root = {
     shell = pkgs.fish;
-    openssh.authorizedKeys.keys = [
-      personal-ssh-public-key
-      github-ssh-public-key
-    ];
+    openssh.authorizedKeys.keys = trusted-ssh-keys;
   };
   users.users.rpi5 = {
     shell = pkgs.fish;
     isNormalUser = true;
     extraGroups = [ "wheel" ]; # enable ‘sudo’ for the user.
-    openssh.authorizedKeys.keys = [
-      personal-ssh-public-key
-      github-ssh-public-key
-    ];
+    openssh.authorizedKeys.keys = trusted-ssh-keys;
   };
 
   environment.systemPackages = with pkgs; [
@@ -111,7 +106,7 @@ in
   # and migrated your data accordingly.
   #
   # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
-  system.stateVersion = "23.11"; # Did you read the comment?
+  system.stateVersion = "24.05"; # Did you read the comment?
 
 }
 
