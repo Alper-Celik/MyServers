@@ -7,11 +7,11 @@
         "utils": "utils"
       },
       "locked": {
-        "lastModified": 1711973905,
-        "narHash": "sha256-UFKME/N1pbUtn+2Aqnk+agUt8CekbpuqwzljivfIme8=",
+        "lastModified": 1718194053,
+        "narHash": "sha256-FaGrf7qwZ99ehPJCAwgvNY5sLCqQ3GDiE/6uLhxxwSY=",
         "owner": "serokell",
         "repo": "deploy-rs",
-        "rev": "88b3059b020da69cbe16526b8d639bd5e0b51c8b",
+        "rev": "3867348fa92bc892eba5d9ddb2d7a97b9e127a8a",
         "type": "github"
       },
       "original": {
@@ -61,11 +61,11 @@
         "theme": "theme"
       },
       "locked": {
-        "lastModified": 1707058361,
-        "narHash": "sha256-71RxjZ3163PkoGgKP27SIAQvoqn0mHwuUWjcPfzKKYI=",
+        "lastModified": 1715269381,
+        "narHash": "sha256-Y42D9MV9YvtfKiK6lwEMK2k5adpIMktf9v3Y27dzQtw=",
         "owner": "Alper-Celik",
         "repo": "MyBlog",
-        "rev": "7420076bfccdbe52f9e07a0a57dc3cef90882425",
+        "rev": "a14ca8f281a77eedb1bdf84b0bd624eb3cbe8fe2",
         "type": "github"
       },
       "original": {
@@ -108,16 +108,16 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1720499872,
-        "narHash": "sha256-KBo9qXjTiwid2oLWF5JcxOtbrxnLZxI37xL5kR1HEV0=",
+        "lastModified": 1720386169,
+        "narHash": "sha256-NGKVY4PjzwAa4upkGtAMz1npHGoRzWotlSnVlqI40mo=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "a4d835fc988c294f7cb98cc4f287fe8ac09dff32",
+        "rev": "194846768975b7ad2c4988bdb82572c00222c0d7",
         "type": "github"
       },
       "original": {
         "owner": "nixos",
-        "ref": "nixos-24.05-small",
+        "ref": "nixos-24.05",
         "repo": "nixpkgs",
         "type": "github"
       }
