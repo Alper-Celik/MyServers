@@ -15,7 +15,7 @@
   boot.loader.efi.canTouchEfiVariables = false;
 
   fileSystems."/" = {
-    device = "/dev/disk/by-uuid/f4385f66-a1b6-42d5-bef2-69fc3e17d98d";
+    device = "/dev/disk/by-label/nixos";
     fsType = "btrfs";
     options = [
       "subvol=root-subvol"
@@ -25,7 +25,7 @@
   };
 
   fileSystems."/nix" = {
-    device = "/dev/disk/by-uuid/f4385f66-a1b6-42d5-bef2-69fc3e17d98d";
+    device = "/dev/disk/by-label/nixos";
     fsType = "btrfs";
     options = [
       "subvol=nix-subvol"
@@ -35,12 +35,14 @@
   };
 
   fileSystems."/boot" = {
-    device = "/dev/disk/by-uuid/FD9A-4BA8";
+    device = "/dev/disk/by-label/BOOT";
     fsType = "vfat";
   };
 
-  swapDevices = [ { device = "/dev/disk/by-uuid/d8f4f36c-fc95-4e07-903e-680027a9a64e"; } ];
-
+  zramSwap = {
+    enable = true;
+    memoryPercent = 60;
+  };
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
   # (the default) this is the recommended approach. When using systemd-networkd it's
   # still possible to use this option, but it's recommended to use it in conjunction
