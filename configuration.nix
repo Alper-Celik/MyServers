@@ -2,20 +2,32 @@
 # your system. Help is available in the configuration.nix(5) man page, on
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
-{ config, lib, pkgs, inputs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  inputs,
+  ...
+}:
 let
-  personal-ssh-public-key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEdpGzo/K4jrtmXtUDlsR8RYWa/Q87plonNjcfMgOPJ dev.alpercelik@gmail.com";
+
+  personal-ssh-public-keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKhCFPTP1/JLMCCJttaw88EgBQzPt5fF7EcjXIgDdeuM alper@alper-celik.dev"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILIvcX+CPn9rgA6I4MutAQS5Ehybcc5tusPqCvTw8aH0"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEdpGzo/K4jrtmXtUDlsR8RYWa/Q87plonNjcfMgOPJ"
+  ];
   github-ssh-public-key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCRF5cEocxBruwIB7FJsQyCR58DLmNaCgZFyqEnHUvkRb3iudYYnp8b+ApiVPGhPlu+PwzA5kQbKynVN+r/gvjBP2o/wcwvIGSXgy97JRIyD6LwyVjc/fguS9rCCWpU+bt3UPxHIVTHgF9SaMt/4ragM85sKNv+Mq3nNN9J4pHSXfbzTz3+gNyZRorW9bX8+ehIwcOZ0rvYkpvYYq6FExBsORmbNHC8/bsSsQf5riE9Ja4+d8VZQqjB8ix9glwxqOIzfsB77mLT7HZQQXDCRbmkqRT1J421DRIXljXsKtlOEHjV6e2A1gTbS88h3E5/5KqNcMN47paD7EhM3n+1oA5F+0Jw0KkZl+0QogL/c1Gl5UTBdsdDwbAPh1hXvkShBu1lCML7bS4/XKfnRsjwNH4meXVuWwepBTAFvDG/BU+Udmm0D3kHJB9RyEDykzoxv7HWXZIDiTPZkoniUlIcaA2mWRAEK4C6oskdu9G6NTfAc8s3wE1ItKeT3o/4Qkb1cnCyWy7ZVKf6yH0h2KqYCs6O9vcMPHzar2ae4gT1iNBCv6C/1RH4RGVD5uagbF+Z+wQiz2gK6UEBXUHcbWwahqNh/8hnW72dC24ZUYMNjnQqgpvSFWWAWktOpM9MYcwPPCDL8UiQQOEq8orRpSzBfSvqBC/5gSk1SZ52bfROtmQGwQ== github runner";
-  trusted-ssh-keys = [ personal-ssh-public-key github-ssh-public-key ];
+  trusted-ssh-keys = [
+    github-ssh-public-key
+  ] ++ personal-ssh-public-keys;
 in
 {
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
     ./minecraft-server.nix
-    ./fileshare.nix
+    inputs.nixos-hardware.nixosModules.raspberry-pi-5
   ];
-
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
   # (the default) this is the recommended approach. When using systemd-networkd it's
@@ -26,10 +38,12 @@ in
 
   networking.defaultGateway = "192.168.1.1";
   networking.nameservers = [ "1.1.1.1" ];
-  networking.interfaces.end0.ipv4.addresses = [{
-    address = "192.168.1.200";
-    prefixLength = 24;
-  }];
+  networking.interfaces.end0.ipv4.addresses = [
+    {
+      address = "192.168.1.200";
+      prefixLength = 24;
+    }
+  ];
 
   networking.hostName = "rpi5"; # Define your hostname.
   # Pick only one of the below networking options.
@@ -49,8 +63,10 @@ in
     keyMap = "trq";
   };
 
-
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
 
   environment.enableAllTerminfo = true;
   programs.fish.enable = true;
@@ -71,13 +87,12 @@ in
     fish
   ];
 
-
   # Enable the OpenSSH daemon.
   services.openssh = {
     enable = true;
     openFirewall = true;
     settings = {
-      X11Forwarding = true;
+      # X11Forwarding = true;
       PasswordAuthentication = false;
       KbdInteractiveAuthentication = false;
     };
@@ -109,4 +124,3 @@ in
   system.stateVersion = "24.05"; # Did you read the comment?
 
 }
-

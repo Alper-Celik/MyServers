@@ -1,35 +1,44 @@
 {
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-24.05";
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     deploy-rs.url = "github:serokell/deploy-rs";
     my-blog.url = "github:Alper-Celik/MyBlog";
   };
 
-  outputs = inputs@{ self, nixpkgs, deploy-rs, ... }: {
+  outputs =
+    inputs@{
+      self,
+      nixpkgs,
+      deploy-rs,
+      ...
+    }:
+    {
 
-    nixosConfigurations.rpi5 = nixpkgs.lib.nixosSystem {
-      system = "aarch64-linux";
-      specialArgs = { inherit inputs; };
-      modules = [ ./configuration.nix ];
-    };
+      nixosConfigurations.rpi5 = nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux";
+        specialArgs = {
+          inherit inputs;
+        };
+        modules = [ ./configuration.nix ];
+      };
 
-    deploy.nodes.rpi5 = {
+      deploy.nodes.rpi5 = {
 
-      hostname = "rpi5.alper-celik.dev";
-      sshUser = "root";
-      remoteBuild = true;
+        hostname = "rpi5.alper-celik.dev";
+        sshUser = "root";
+        remoteBuild = true;
 
-      profiles = {
-        system = {
-          user = "root";
-          path = deploy-rs.lib.aarch64-linux.activate.nixos
-            self.nixosConfigurations.rpi5;
+        profiles = {
+          system = {
+            user = "root";
+            path = deploy-rs.lib.aarch64-linux.activate.nixos self.nixosConfigurations.rpi5;
+          };
         };
       };
-    };
 
-    # checks =
-    #   builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy)
-    #   deploy-rs.lib;
-  };
+      # checks =
+      #   builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy)
+      #   deploy-rs.lib;
+    };
 }
