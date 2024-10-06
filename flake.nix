@@ -4,6 +4,15 @@
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     deploy-rs.url = "github:serokell/deploy-rs";
     my-blog.url = "github:Alper-Celik/MyBlog";
+
+    sops-nix = {
+      url = "github:mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    MyServersSecrets = {
+      url = "git+ssh://git@github.com/Alper-Celik/MyServersSecrets.git";
+      flake = false;
+    };
   };
 
   outputs =
@@ -25,7 +34,7 @@
 
       deploy.nodes.rpi5 = {
 
-        hostname = "rpi5.alper-celik.dev";
+        hostname = "rpi5";
         sshUser = "root";
         remoteBuild = true;
 
