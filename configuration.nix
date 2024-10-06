@@ -12,6 +12,7 @@
 let
 
   personal-ssh-public-keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOBZSTiDOsVRhcnOO/foEiy2gp3pJt+62QTFGvVJ0AOX u0_a413@localhost"
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKhCFPTP1/JLMCCJttaw88EgBQzPt5fF7EcjXIgDdeuM alper@alper-celik.dev"
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILIvcX+CPn9rgA6I4MutAQS5Ehybcc5tusPqCvTw8aH0"
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEdpGzo/K4jrtmXtUDlsR8RYWa/Q87plonNjcfMgOPJ"
