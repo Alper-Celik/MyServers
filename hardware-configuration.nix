@@ -18,7 +18,7 @@
     device = "/dev/disk/by-label/nixos";
     fsType = "btrfs";
     options = [
-      "subvol=root-subvol"
+      "subvol=root"
       "compress=zstd"
       "noatime"
     ];
@@ -28,7 +28,7 @@
     device = "/dev/disk/by-label/nixos";
     fsType = "btrfs";
     options = [
-      "subvol=nix-subvol"
+      "subvol=nix"
       "compress=zstd"
       "noatime"
     ];
