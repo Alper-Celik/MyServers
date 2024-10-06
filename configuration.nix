@@ -25,7 +25,6 @@ in
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
-    ./minecraft-server.nix
     inputs.nixos-hardware.nixosModules.raspberry-pi-5
   ];
 
