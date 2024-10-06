@@ -26,11 +26,18 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@main
 
+      - name: Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+        
       - name: install ssh key
         run: |
           install -m 600 -D /dev/null ~/.ssh/id_rsa
           echo  "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          ssh-keyscan rpi5.alper-celik.dev > ~/.ssh/known_hosts
+          ssh-keyscan rpi5 > ~/.ssh/known_hosts
         env:
           SSH_PRIVATE_KEY: ${{secrets.SSH_PRIVATE_KEY}}
 
