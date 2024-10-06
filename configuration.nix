@@ -26,6 +26,8 @@ in
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
     inputs.nixos-hardware.nixosModules.raspberry-pi-5
+    ./secrets.nix
+    ./tailscale.nix
   ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
