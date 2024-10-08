@@ -1,0 +1,85 @@
+{
+  lib,
+  nixpkgs,
+  modulesPath,
+  trusted-ssh-keys,
+  pkgs,
+  ...
+}:
+{
+  imports = [
+    (modulesPath + "/installer/scan/not-detected.nix")
+    (modulesPath + "/profiles/qemu-guest.nix")
+    ./disk.nix
+  ];
+  users.users.root = {
+    openssh.authorizedKeys.keys = trusted-ssh-keys;
+    shell = pkgs.fish;
+  };
+
+  environment.systemPackages = with pkgs; [
+    vim
+    fish
+  ];
+
+  networking.hostName = "network-vm";
+  time.timeZone = "Europe/Istanbul";
+  # Enable the OpenSSH daemon.
+  services.openssh = {
+    enable = true;
+    openFirewall = true;
+    settings = {
+      # X11Forwarding = true;
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
+    };
+  };
+
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
+
+  nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
+  # Uncomment if you want to enable azure agent (waagent):
+  require = [
+    "${nixpkgs}/nixos/modules/virtualisation/azure-agent.nix"
+  ];
+  virtualisation.azure.agent.enable = true;
+
+  boot = {
+    kernelParams = [
+      "console=ttyS0"
+      "earlyprintk=ttyS0"
+      "rootdelay=300"
+      "panic=1"
+      "boot.panic_on_fail"
+    ];
+    initrd.kernelModules = [
+      "hv_vmbus"
+      "hv_netvsc"
+      "hv_utils"
+      "hv_storvsc"
+    ];
+    loader = {
+      systemd-boot.enable = true;
+      efi.canTouchEfiVariables = true;
+      timeout = 0;
+      grub.configurationLimit = 0;
+    };
+    growPartition = true;
+  };
+
+  networking.useDHCP = false;
+  networking.nameservers = [ "8.8.8.8" ];
+  networking.defaultGateway = "10.1.1.1 ";
+  networking.interfaces.eth0.ipv4.addresses = [
+    {
+      address = "10.1.1.4";
+      prefixLength = 24;
+    }
+  ];
+
+  system.stateVersion = "24.05"; # Did you read the comment?
+
+}
