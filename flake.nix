@@ -13,6 +13,11 @@
       url = "git+ssh://git@github.com/Alper-Celik/MyServersSecrets.git";
       flake = false;
     };
+
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
