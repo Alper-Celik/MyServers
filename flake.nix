@@ -29,7 +29,7 @@
         specialArgs = {
           inherit inputs;
         };
-        modules = [ ./configuration.nix ];
+        modules = [ ./rpi5/configuration.nix ];
       };
 
       deploy.nodes.rpi5 = {
