@@ -1,6 +1,5 @@
 {
   lib,
-  nixpkgs,
   modulesPath,
   trusted-ssh-keys,
   pkgs,
@@ -8,14 +7,14 @@
 }:
 {
   imports = [
-    (modulesPath + "/installer/scan/not-detected.nix")
-    (modulesPath + "/profiles/qemu-guest.nix")
     ./disk.nix
   ];
   users.users.root = {
     openssh.authorizedKeys.keys = trusted-ssh-keys;
     shell = pkgs.fish;
   };
+  environment.enableAllTerminfo = true;
+  programs.fish.enable = true;
 
   environment.systemPackages = with pkgs; [
     vim
@@ -43,7 +42,7 @@
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   # Uncomment if you want to enable azure agent (waagent):
   require = [
-    "${nixpkgs}/nixos/modules/virtualisation/azure-agent.nix"
+    (modulesPath + "/virtualisation/azure-agent.nix")
   ];
   virtualisation.azure.agent.enable = true;
 

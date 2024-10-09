@@ -25,6 +25,7 @@
       self,
       nixpkgs,
       deploy-rs,
+      disko,
       ...
     }:
     let
@@ -41,17 +42,32 @@
     in
     {
 
-      nixosConfigurations.rpi5 = nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
-        specialArgs = {
-          inherit
-            inputs
-            trusted-ssh-keys
-            ;
+      nixosConfigurations = {
+        rpi5 = nixpkgs.lib.nixosSystem {
+          system = "aarch64-linux";
+          specialArgs = {
+            inherit
+              inputs
+              trusted-ssh-keys
+              ;
+          };
+          modules = [ ./rpi5/configuration.nix ];
         };
-        modules = [ ./rpi5/configuration.nix ];
-      };
+        azure-network-vm = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          specialArgs = {
+            inherit
+              inputs
+              trusted-ssh-keys
+              ;
+          };
+          modules = [
+            inputs.disko.nixosModules.disko
+            ./azure/network-vm/config.nix
+          ];
+        };
 
+      };
       deploy.nodes.rpi5 = {
 
         hostname = "rpi5";
