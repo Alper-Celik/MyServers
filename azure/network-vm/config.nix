@@ -69,15 +69,7 @@
     growPartition = true;
   };
 
-  networking.useDHCP = false;
-  networking.nameservers = [ "8.8.8.8" ];
-  networking.defaultGateway = "10.1.1.1 ";
-  networking.interfaces.eth0.ipv4.addresses = [
-    {
-      address = "10.1.1.4";
-      prefixLength = 24;
-    }
-  ];
+  networking.useDHCP = true;
 
   system.stateVersion = "24.05"; # Did you read the comment?
 
