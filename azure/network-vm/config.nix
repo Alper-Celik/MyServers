@@ -8,7 +8,8 @@
 {
   imports = [
     ./disk.nix
-    ../../common/secrets.nix
+    ./secrets.nix
+    ./tailscale.nix
   ];
   users.users.root = {
     openssh.authorizedKeys.keys = trusted-ssh-keys;
@@ -40,7 +41,6 @@
     "flakes"
   ];
 
-  nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   # Uncomment if you want to enable azure agent (waagent):
   require = [
     (modulesPath + "/virtualisation/azure-agent.nix")
@@ -74,4 +74,5 @@
 
   system.stateVersion = "24.05"; # Did you read the comment?
 
+  nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
 }
