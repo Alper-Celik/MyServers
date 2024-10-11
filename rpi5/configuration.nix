@@ -15,7 +15,7 @@
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
     inputs.nixos-hardware.nixosModules.raspberry-pi-5
-    ./secrets.nix
+    ../common/secrets.nix
     ./tailscale.nix
   ];
 
