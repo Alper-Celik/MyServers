@@ -68,17 +68,32 @@
         };
 
       };
-      deploy.nodes.rpi5 = {
+      deploy.nodes = {
+        rpi5 = {
+          hostname = "rpi5";
+          sshUser = "root";
+          remoteBuild = true;
 
-        hostname = "rpi5";
-        sshUser = "root";
-        remoteBuild = true;
-
-        profiles = {
-          system = {
-            user = "root";
-            path = deploy-rs.lib.aarch64-linux.activate.nixos self.nixosConfigurations.rpi5;
+          profiles = {
+            system = {
+              user = "root";
+              path = deploy-rs.lib.aarch64-linux.activate.nixos self.nixosConfigurations.rpi5;
+            };
           };
+        };
+
+        network-vm = {
+          # hostname = "network-vm";
+          hostname = "4.178.172.65";
+          sshUser = "root";
+
+          profiles = {
+            system = {
+              user = "root";
+              path = deploy-rs.lib.aarch64-linux.activate.nixos self.nixosConfigurations.rpi5;
+            };
+          };
+
         };
       };
 

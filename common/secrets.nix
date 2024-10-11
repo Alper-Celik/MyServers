@@ -14,7 +14,7 @@ in
     };
     secrets = {
       tailscale-rpi5 = { };
-      tailscale-network-vm = { };
+      # tailscale-network-vm = { };
     };
 
   };
