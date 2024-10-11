@@ -8,6 +8,7 @@
 {
   imports = [
     ./disk.nix
+    ../common/secrets.nix
   ];
   users.users.root = {
     openssh.authorizedKeys.keys = trusted-ssh-keys;
