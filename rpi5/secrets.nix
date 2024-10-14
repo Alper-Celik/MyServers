@@ -14,6 +14,8 @@ in
     };
     secrets = {
       tailscale-auth-key = { };
+      CLOUDFLARE_API_KEY = { };
+      CLOUDFLARE_EMAIL = { };
     };
 
   };
