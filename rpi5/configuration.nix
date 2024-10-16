@@ -19,6 +19,7 @@
     ./tailscale.nix
     ./vaultwarden.nix
     ./webserver.nix
+    ./nextcloud.nix
   ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
