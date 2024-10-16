@@ -13,9 +13,13 @@ in
       generateKey = true;
     };
     secrets = {
-      tailscale-auth-key = { };
       CLOUDFLARE_API_KEY = { };
       CLOUDFLARE_EMAIL = { };
+      tailscale-auth-key = { };
+      nextcloud-admin-pass = rec {
+        owner = "nextcloud";
+        group = owner;
+      };
     };
 
   };
