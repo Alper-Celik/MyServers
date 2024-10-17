@@ -14,13 +14,40 @@
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
+    inputs.impermanence.nixosModules.impermanence
     inputs.nixos-hardware.nixosModules.raspberry-pi-5
     ./secrets.nix
     ./tailscale.nix
     ./vaultwarden.nix
     ./webserver.nix
     ./nextcloud.nix
+    ./backups.nix
   ];
+
+  environment.persistence."/persistent" = {
+    enable = true;
+    directories = [
+      "/var/log"
+      "/var/lib/nixos"
+      "/var/lib/systemd/coredump"
+      {
+        directory = "/etc/ssh";
+        user = "root";
+        group = "root";
+        mode = "u=rw,g=,o=";
+      }
+    ];
+    files = [
+      "/etc/machine-id"
+      {
+        file = "/var/keys/secret_file";
+        parentDirectory = {
+          mode = "u=rwx,g=,o=";
+        };
+      }
+    ];
+
+  };
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
   # (the default) this is the recommended approach. When using systemd-networkd it's
