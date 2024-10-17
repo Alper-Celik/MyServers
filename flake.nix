@@ -5,6 +5,7 @@
     deploy-rs.url = "github:serokell/deploy-rs";
     my-blog.url = "github:Alper-Celik/MyBlog";
 
+    impermanence.url = "github:nix-community/impermanence";
     sops-nix = {
       url = "github:mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
