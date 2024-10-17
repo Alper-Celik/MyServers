@@ -36,6 +36,28 @@
     ];
   };
 
+  fileSystems."/persistent" = {
+    neededForBoot = true;
+    device = "/dev/disk/by-label/nixos";
+    fsType = "btrfs";
+    options = [
+      "subvol=persistent"
+      "compress=zstd"
+      "noatime"
+    ];
+  };
+
+  fileSystems."/persistent-important" = {
+    neededForBoot = true;
+    device = "/dev/disk/by-label/nixos";
+    fsType = "btrfs";
+    options = [
+      "subvol=persistent-important"
+      "compress=zstd"
+      "noatime"
+    ];
+  };
+
   fileSystems."/boot" = {
     device = "/dev/disk/by-label/BOOT";
     fsType = "vfat";
