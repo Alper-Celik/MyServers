@@ -15,27 +15,8 @@
     hostName = "nextcloud.lab.alper-celik.dev";
     https = true;
 
-    # Instead of using pkgs.nextcloud29Packages.apps or similar,
-    # we'll reference the package version specified in services.nextcloud.package
-    extraApps = {
-      inherit (config.services.nextcloud.package.packages.apps)
-        bookmarks
-        calendar
-        contacts
-        cookbook
-        deck
-        mail
-        memories
-        music
-        notes
-        previewgenerator
-        tasks
-        twofactor_webauthn
-        onlyoffice
-        ;
-    };
-    extraAppsEnable = true;
     autoUpdateApps.enable = true;
+    appstoreEnable = true;
 
     settings = {
       default_phone_region = "TR";
