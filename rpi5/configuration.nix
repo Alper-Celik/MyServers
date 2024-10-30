@@ -22,6 +22,7 @@
     ./webserver.nix
     ./nextcloud.nix
     ./backups.nix
+    ./freshrss.nix
   ];
 
   environment.persistence."/persistent" = {
