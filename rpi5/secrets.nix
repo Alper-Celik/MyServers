@@ -16,10 +16,10 @@ in
       CLOUDFLARE_API_KEY = { };
       CLOUDFLARE_EMAIL = { };
       tailscale-auth-key = { };
-      # freshrss-admin-pass = rec {
-      #   owner = config.services.freshrss.user;
-      #   group = owner;
-      # };
+      freshrss-admin-pass = rec {
+        owner = config.services.freshrss.user;
+        group = owner;
+      };
 
       nextcloud-admin-pass = rec {
         owner = "nextcloud";
