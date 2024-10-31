@@ -15,7 +15,7 @@
     enable = true;
     baseUrl = "https://${config.services.freshrss.virtualHost}";
     virtualHost = "freshrss.lab.alper-celik.dev";
-    passwordFile = config.sops.secrets.nextcloud-admin-pass.path;
+    passwordFile = config.sops.secrets.freshrss-admin-pass.path;
     database = {
       name = "freshrss";
       user = "freshrss";
