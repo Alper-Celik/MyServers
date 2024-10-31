@@ -39,7 +39,7 @@
       }
     ];
     files = [
-      "/etc/machine-id"
+      # "/etc/machine-id" #TODO: fix this before enabling proper impermanence
       {
         file = "/var/keys/secret_file";
         parentDirectory = {
