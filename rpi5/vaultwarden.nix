@@ -19,7 +19,6 @@ in
     ];
   };
   services.postgresql = {
-    enable = true;
     ensureDatabases = [ vaultwarden-db ];
     ensureUsers = [
       {

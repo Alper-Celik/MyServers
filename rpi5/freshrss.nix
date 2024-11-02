@@ -1,7 +1,6 @@
 { config, ... }:
 {
   services.postgresql = {
-    enable = true;
     ensureDatabases = [ config.services.freshrss.database.name ];
     ensureUsers = [
       {
