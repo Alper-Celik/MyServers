@@ -25,6 +25,11 @@ in
         owner = "nextcloud";
         group = owner;
       };
+
+      pgadmin-pass = rec {
+        owner = config.systemd.services.pgadmin.serviceConfig.User;
+        group = owner;
+      };
     };
 
   };

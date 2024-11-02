@@ -3,11 +3,11 @@
     "MyServersSecrets": {
       "flake": false,
       "locked": {
-        "lastModified": 1730296515,
-        "narHash": "sha256-QQpd/GBjCKf+hnSK9DUc1RRY+iTNhioaveXbuZUmgOo=",
+        "lastModified": 1730584475,
+        "narHash": "sha256-9T84OQTubytH44SjAN1+YNmLg8Ihfn3lhVV+K5kP9NU=",
         "ref": "refs/heads/main",
-        "rev": "0a9c9244ef82224412323f32aa5e4df2028bf391",
-        "revCount": 6,
+        "rev": "f6bfc762df0518d8183b4a18203b02ac18dd3e59",
+        "revCount": 7,
         "type": "git",
         "url": "ssh://git@github.com/Alper-Celik/MyServersSecrets.git"
       },
@@ -191,16 +191,16 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1730200266,
-        "narHash": "sha256-l253w0XMT8nWHGXuXqyiIC/bMvh1VRszGXgdpQlfhvU=",
+        "lastModified": 1730555274,
+        "narHash": "sha256-dYSnUmWkVwwEpXv0F/fZBBYT10Bgx+U2PJ2obdBTqo8=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "807e9154dcb16384b1b765ebe9cd2bba2ac287fd",
+        "rev": "cf3e5d3744dc26c3498aa5dadfa0e078c632cede",
         "type": "github"
       },
       "original": {
         "owner": "nixos",
-        "ref": "nixos-unstable",
+        "ref": "nixos-unstable-small",
         "repo": "nixpkgs",
         "type": "github"
       }
