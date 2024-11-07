@@ -107,6 +107,7 @@
   environment.systemPackages = with pkgs; [
     vim
     fish
+    waypipe
   ];
 
   # Enable the OpenSSH daemon.
