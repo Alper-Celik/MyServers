@@ -43,6 +43,11 @@
         github-ssh-public-key
       ] ++ personal-ssh-public-keys;
 
+      all-file =
+        dir:
+        builtins.map (file: (builtins.toString dir) + "/" + file) (
+          builtins.attrNames (builtins.readDir dir)
+        );
     in
     {
 
@@ -55,7 +60,7 @@
               trusted-ssh-keys
               ;
           };
-          modules = [ ./rpi5/configuration.nix ];
+          modules = all-file ./rpi5;
         };
         azure-network-vm = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
