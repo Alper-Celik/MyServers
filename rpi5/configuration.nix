@@ -90,6 +90,7 @@
     "flakes"
   ];
 
+  documentation.man.generateCaches = false; # needed man completions but takes loong time
   # environment.enableAllTerminfo = true;
   programs.fish.enable = true;
 
