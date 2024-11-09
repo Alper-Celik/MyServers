@@ -24,6 +24,8 @@
     ./backups.nix
     ./freshrss.nix
     ./postgresql.nix
+    ./authentik.nix
+    ./ddns.nix
   ];
 
   hardware.graphics.enable = true;
