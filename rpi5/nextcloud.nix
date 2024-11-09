@@ -5,6 +5,9 @@
 
     maxUploadSize = "10G";
 
+    caching.redis = true;
+    configureRedis = true;
+
     config = {
       adminpassFile = config.sops.secrets.nextcloud-admin-pass.path;
       dbtype = "pgsql";
@@ -19,6 +22,7 @@
     appstoreEnable = true;
 
     settings = {
+      maintenance_window_start = "0"; # 3 am in utc+3
       default_phone_region = "TR";
       enabledPreviewProviders = [
         "OC\\Preview\\BMP"
@@ -32,7 +36,16 @@
         "OC\\Preview\\TXT"
         "OC\\Preview\\XBitmap"
         "OC\\Preview\\HEIC"
+        "OC\\Preview\\TXT"
+        "OC\\Preview\\MarkDown"
+        "OC\\Preview\\OpenDocument"
+        "OC\\Preview\\Krita"
+        "OC\\Preview\\Imaginary"
       ];
+    };
+
+    phpOptions = {
+      "opcache.interned_strings_buffer" = 20;
     };
   };
 
