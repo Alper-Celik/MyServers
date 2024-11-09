@@ -90,7 +90,7 @@
     "flakes"
   ];
 
-  environment.enableAllTerminfo = true;
+  # environment.enableAllTerminfo = true;
   programs.fish.enable = true;
 
   users.users.root = {
