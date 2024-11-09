@@ -13,19 +13,8 @@
 {
   imports = [
     # Include the results of the hardware scan.
-    ./hardware-configuration.nix
     inputs.impermanence.nixosModules.impermanence
     inputs.nixos-hardware.nixosModules.raspberry-pi-5
-    ./secrets.nix
-    ./tailscale.nix
-    ./vaultwarden.nix
-    ./webserver.nix
-    ./nextcloud.nix
-    ./backups.nix
-    ./freshrss.nix
-    ./postgresql.nix
-    ./authentik.nix
-    ./ddns.nix
   ];
 
   hardware.graphics.enable = true;
