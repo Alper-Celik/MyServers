@@ -26,6 +26,7 @@
     ./postgresql.nix
   ];
 
+  hardware.graphics.enable = true;
   environment.persistence."/persistent" = {
     enable = true;
     directories = [
@@ -108,6 +109,7 @@
   environment.systemPackages = with pkgs; [
     vim
     fish
+    tmux
     waypipe
   ];
 

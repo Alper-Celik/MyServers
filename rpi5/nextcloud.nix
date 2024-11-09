@@ -1,5 +1,12 @@
 { pkgs, config, ... }:
 {
+
+  environment.systemPackages = with pkgs; [
+    ffmpeg-headless
+    exiftool
+    nodePackages.nodejs
+  ];
+
   services.nextcloud = {
     enable = true;
 
@@ -22,25 +29,24 @@
     appstoreEnable = true;
 
     settings = {
+      "memories.exiftool" = "/run/current-system/sw/bin/exiftool";
       maintenance_window_start = "0"; # 3 am in utc+3
       default_phone_region = "TR";
       enabledPreviewProviders = [
-        "OC\\Preview\\BMP"
-        "OC\\Preview\\GIF"
-        "OC\\Preview\\JPEG"
         "OC\\Preview\\Krita"
         "OC\\Preview\\MarkDown"
         "OC\\Preview\\MP3"
         "OC\\Preview\\OpenDocument"
-        "OC\\Preview\\PNG"
-        "OC\\Preview\\TXT"
         "OC\\Preview\\XBitmap"
-        "OC\\Preview\\HEIC"
         "OC\\Preview\\TXT"
         "OC\\Preview\\MarkDown"
         "OC\\Preview\\OpenDocument"
         "OC\\Preview\\Krita"
-        "OC\\Preview\\Imaginary"
+
+        "OC\\Preview\\Image"
+        "OC\\Preview\\HEIC"
+        "OC\\Preview\\TIFF"
+        "OC\\Preview\\Movie"
       ];
     };
 
