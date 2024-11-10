@@ -21,6 +21,10 @@
       url = "github:Janik-Haag/nixos-dns";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    octodns-ddns-src = {
+      url = "github:octodns/octodns-ddns";
+      flake = false;
+    };
     octodns-cloudflare-src = {
       url = "github:octodns/octodns-cloudflare";
       flake = false;
@@ -147,16 +151,28 @@
       #   deploy-rs.lib;
 
       packages = forEachSupportedSystem (
-        { pkgs, ... }:
+        { pkgs, self-pkgs, ... }:
         let
           generate = nixos-dns.utils.generate pkgs;
         in
         {
+          octodns =
+            with pkgs;
+            (octodns.withProviders (ps: [
+              self-pkgs.octodns-cloudflare
+              self-pkgs.octodns-ddns
+              octodns-providers.bind
+            ]));
+
           octodns-cloudflare = pkgs.python3Packages.callPackage ./pkgs/octodns-cloudflare.nix {
             src = inputs.octodns-cloudflare-src;
           };
+
+          octodns-ddns = pkgs.python3Packages.callPackage ./pkgs/octodns-ddns.nix {
+            src = inputs.octodns-ddns-src;
+          };
           zoneFiles = generate.zoneFiles dnsConfig;
-          octodns = generate.octodnsConfig {
+          octodns-config = generate.octodnsConfig {
             inherit dnsConfig;
             config = {
               providers = {
@@ -165,10 +181,21 @@
                   class = "octodns_cloudflare.CloudflareProvider";
                   token = "env/CLOUDFLARE_TOKEN";
                 };
+                "rpi5.devices" = {
+                  class = "octodns_ddns.DdnsSource";
+                  types = [ "A" ];
+                };
+
               };
             };
             zones = {
-              "alper-celik.dev." = nixos-dns.utils.octodns.generateZoneAttrs [ "cloudflare" ];
+              "alper-celik.dev." = {
+                sources = [
+                  "config"
+                  "rpi5.devices"
+                ];
+                targets = [ "cloudflare" ];
+              };
             };
           };
         }
@@ -185,10 +212,6 @@
           default = pkgs.mkShell {
             packages = with pkgs; [
               yq
-              (octodns.withProviders (ps: [
-                self-pkgs.octodns-cloudflare
-                octodns-providers.bind
-              ]))
             ];
           };
         }
