@@ -32,6 +32,23 @@
       ...
     }:
     let
+      supportedSystems = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
+      forEachSupportedSystem =
+        f:
+        nixpkgs.lib.genAttrs supportedSystems (
+          system:
+          f {
+            pkgs = import nixpkgs {
+              inherit # overlays
+                system
+                ;
+            };
+          }
+        );
+
       personal-ssh-public-keys = [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKhCFPTP1/JLMCCJttaw88EgBQzPt5fF7EcjXIgDdeuM alper@alper-celik.dev"
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILIvcX+CPn9rgA6I4MutAQS5Ehybcc5tusPqCvTw8aH0"
@@ -77,6 +94,7 @@
         };
 
       };
+
       deploy.nodes = {
         rpi5 = {
           hostname = "rpi5";
@@ -108,5 +126,17 @@
       # checks =
       #   builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy)
       #   deploy-rs.lib;
+
+      devShells = forEachSupportedSystem (
+        { pkgs }:
+        {
+          default = pkgs.mkShell {
+            packages = with pkgs; [
+              octodns
+            ];
+          };
+        }
+      );
+
     };
 }
