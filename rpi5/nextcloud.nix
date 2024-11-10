@@ -5,6 +5,7 @@
     ffmpeg-headless
     exiftool
     nodePackages.nodejs
+    python3
   ];
 
   services.nextcloud = {
