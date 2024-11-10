@@ -3,16 +3,16 @@
   defaultTTL = 300;
   zones."alper-celik.dev" =
     let
-      rpi5 = "rpi5.devices.alper-celik.dev";
+      rpi5 = "rpi5.tailnet.alper-celik.dev";
       github = "alper-celik.github.io";
     in
     {
       # devices
       "do-vm".a.data = "146.190.206.52";
-      "rpi5.devices".a = {
-        data = "85.109.15.96";
-        ttl = 60;
-      };
+      # "rpi5.devices".a = {
+      #   data = "85.109.15.96";
+      #   ttl = 60;
+      # };
       "rpi5.tailnet".a.data = "100.104.52.23";
 
       # services TODO: move these to nixos config ?
@@ -51,12 +51,5 @@
         ttl = 14400;
       };
 
-      "".ns = {
-        ttl = 86400;
-        data = [
-          # "buck.ns.cloudflare.com"
-          # "journey.ns.cloudflare.com"
-        ];
-      };
     };
 }
