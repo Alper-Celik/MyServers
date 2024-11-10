@@ -3,11 +3,11 @@
     "MyServersSecrets": {
       "flake": false,
       "locked": {
-        "lastModified": 1730891064,
-        "narHash": "sha256-2DGrjwzlznTo+UOqkmhFEmaxt1txW357OsnimAgDWOg=",
+        "lastModified": 1731254304,
+        "narHash": "sha256-2MlwSZORgpgfDQ46btTlwX6v0NiPGEMJTQ3M2kzlojw=",
         "ref": "refs/heads/main",
-        "rev": "e150b7d37fdc4c28003b0f5f903727ea7b494730",
-        "revCount": 8,
+        "rev": "76572ac69fdf0aad2a46c6c3ae39b43ee220a25b",
+        "revCount": 9,
         "type": "git",
         "url": "ssh://git@github.com/Alper-Celik/MyServersSecrets.git"
       },
@@ -433,6 +433,22 @@
         "type": "github"
       }
     },
+    "octodns-ddns-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1728414328,
+        "narHash": "sha256-JA6nTte5/ALknQ8MHtY/9utIAAF1CTDCqsxSh7L6wCk=",
+        "owner": "octodns",
+        "repo": "octodns-ddns",
+        "rev": "d152390dddd37895fc8331d3a5d90633aed063df",
+        "type": "github"
+      },
+      "original": {
+        "owner": "octodns",
+        "repo": "octodns-ddns",
+        "type": "github"
+      }
+    },
     "poetry2nix": {
       "inputs": {
         "flake-utils": [
@@ -476,6 +492,7 @@
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_4",
         "octodns-cloudflare-src": "octodns-cloudflare-src",
+        "octodns-ddns-src": "octodns-ddns-src",
         "sops-nix": "sops-nix"
       }
     },
