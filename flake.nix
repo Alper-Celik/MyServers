@@ -17,6 +17,15 @@
 
     authentik-nix.url = "github:nix-community/authentik-nix";
 
+    nixos-dns = {
+      url = "github:Janik-Haag/nixos-dns";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    octodns-cloudflare-src = {
+      url = "github:octodns/octodns-cloudflare";
+      flake = false;
+    };
+
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -29,9 +38,16 @@
       nixpkgs,
       deploy-rs,
       disko,
+      nixos-dns,
       ...
     }:
     let
+
+      dnsConfig = {
+        inherit (self) nixosConfigurations;
+        extraConfig = import ./dns.nix;
+      };
+
       supportedSystems = [
         "x86_64-linux"
         "aarch64-linux"
@@ -41,6 +57,8 @@
         nixpkgs.lib.genAttrs supportedSystems (
           system:
           f {
+            self-pkgs = self.packages.${system};
+            inherit (self) system;
             pkgs = import nixpkgs {
               inherit # overlays
                 system
@@ -77,7 +95,7 @@
               trusted-ssh-keys
               ;
           };
-          modules = all-file ./rpi5;
+          modules = all-file ./rpi5 ++ [ nixos-dns.nixosModules.dns ];
         };
         azure-network-vm = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
@@ -89,6 +107,7 @@
           };
           modules = [
             inputs.disko.nixosModules.disko
+            nixos-dns.nixosModules.dns
             ./azure/network-vm/config.nix
           ];
         };
@@ -127,12 +146,49 @@
       #   builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy)
       #   deploy-rs.lib;
 
+      packages = forEachSupportedSystem (
+        { pkgs, ... }:
+        let
+          generate = nixos-dns.utils.generate pkgs;
+        in
+        {
+          octodns-cloudflare = pkgs.python3Packages.callPackage ./pkgs/octodns-cloudflare.nix {
+            src = inputs.octodns-cloudflare-src;
+          };
+          zoneFiles = generate.zoneFiles dnsConfig;
+          octodns = generate.octodnsConfig {
+            inherit dnsConfig;
+            config = {
+              providers = {
+                config.check_origin = false;
+                cloudflare = {
+                  class = "octodns_cloudflare.CloudflareProvider";
+                  token = "env/CLOUDFLARE_TOKEN";
+                };
+              };
+            };
+            zones = {
+              "alper-celik.dev." = nixos-dns.utils.octodns.generateZoneAttrs [ "cloudflare" ];
+            };
+          };
+        }
+      );
+
       devShells = forEachSupportedSystem (
-        { pkgs }:
+        {
+          pkgs,
+          system,
+          self-pkgs,
+          ...
+        }:
         {
           default = pkgs.mkShell {
             packages = with pkgs; [
-              octodns
+              yq
+              (octodns.withProviders (ps: [
+                self-pkgs.octodns-cloudflare
+                octodns-providers.bind
+              ]))
             ];
           };
         }
