@@ -6,6 +6,8 @@
     exiftool
     nodePackages.nodejs
     python3
+    gnumake
+    gcc
   ];
 
   services.nextcloud = {
