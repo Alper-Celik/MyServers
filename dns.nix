@@ -21,6 +21,7 @@
       "nextcloud.lab".cname.data = rpi5;
       "pgadmin.lab".cname.data = rpi5;
       "collabora-online.lab".cname.data = rpi5;
+      "id.lab".cname.data = rpi5;
 
       "modded-mc".cname.data = "do-vm.alper-celik.dev";
 

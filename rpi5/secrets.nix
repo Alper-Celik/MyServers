@@ -33,6 +33,10 @@ in
         owner = config.systemd.services.pgadmin.serviceConfig.User;
         group = owner;
       };
+
+      "postgres/keycloak-pass" = {
+        mode = "444";
+      };
     };
 
   };
