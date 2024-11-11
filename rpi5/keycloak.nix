@@ -4,7 +4,7 @@
     forceSSL = true;
     enableACME = true;
     acmeRoot = null;
-    # expose = true;
+    expose = true;
     locations = {
       "/" = {
         proxyPass = "http://localhost:${toString config.services.keycloak.settings.http-port}";
