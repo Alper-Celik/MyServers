@@ -15,8 +15,6 @@
       flake = false;
     };
 
-    authentik-nix.url = "github:nix-community/authentik-nix";
-
     nixos-dns = {
       url = "github:Janik-Haag/nixos-dns";
       inputs.nixpkgs.follows = "nixpkgs";
