@@ -63,4 +63,8 @@
     enableACME = true;
     acmeRoot = null;
   };
+
+  services.collabora-online = {
+    enable = true;
+  };
 }
