@@ -13,7 +13,7 @@ in
 
   systemd.services."octo-dns-update" = {
     enable = true;
-    # wantedBy = [ "network-online.target" ];
+    wantedBy = [ "network-online.target" ];
     script = ''
       set -eu
       export CLOUDFLARE_TOKEN=$(cat ${config.sops.secrets.CLOUDFLARE_TOKEN-dns.path})
