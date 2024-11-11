@@ -66,5 +66,13 @@
 
   services.collabora-online = {
     enable = true;
+    settings = {
+      ssl.termination = true;
+      storage.woopi.host = "nextcloud.lab.alper-celik.dev";
+      net = {
+        proto = "ipv4";
+        listen = "loopback";
+      };
+    };
   };
 }
