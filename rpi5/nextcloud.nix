@@ -67,12 +67,66 @@
   services.collabora-online = {
     enable = true;
     settings = {
-      ssl.termination = true;
-      storage.woopi.host = "nextcloud.lab.alper-celik.dev";
+      # ssl.termination = true;
+      # ssl.enable = false;
       net = {
         proto = "ipv4";
         listen = "loopback";
       };
+
+      storage.wopi = {
+        host = "nextcloud.lab.alper-celik.dev";
+      };
     };
+  };
+
+  services.nginx.virtualHosts."collabora-online.lab.alper-celik.dev" = {
+    enableACME = true;
+    forceSSL = true;
+    acmeRoot = null;
+
+    extraConfig = ''
+      # static files
+      location ^~ /browser {
+        proxy_pass https://127.0.0.1:9980;
+        proxy_set_header Host $host;
+      }
+
+      # WOPI discovery URL
+      location ^~ /hosting/discovery {
+        proxy_pass https://127.0.0.1:9980;
+        proxy_set_header Host $host;
+      }
+
+      # Capabilities
+      location ^~ /hosting/capabilities {
+        proxy_pass https://127.0.0.1:9980;
+        proxy_set_header Host $host;
+      }
+
+      # main websocket
+      location ~ ^/cool/(.*)/ws$ {
+        proxy_pass https://127.0.0.1:9980;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 36000s;
+      }
+
+      # download, presentation and image upload
+      location ~ ^/(c|l)ool {
+        proxy_pass https://127.0.0.1:9980;
+        proxy_set_header Host $host;
+      }
+
+      # Admin Console websocket
+      location ^~ /cool/adminws {
+        proxy_pass https://127.0.0.1:9980;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header Host $host;
+        proxy_read_timeout 36000s;
+      }
+    '';
   };
 }
