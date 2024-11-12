@@ -5,6 +5,8 @@ in
 {
   imports = [ inputs.sops-nix.nixosModules.sops ];
 
+  users.groups.restic = { };
+
   sops = {
     defaultSopsFile = "${secrets}/secrets/rpi5.yaml";
     age = {
@@ -37,6 +39,8 @@ in
       "postgres/keycloak-pass" = {
         mode = "444";
       };
+      restic-pass = { };
+      rclone-onedrive-config = { };
     };
 
   };
