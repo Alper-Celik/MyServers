@@ -11,6 +11,9 @@
   ...
 }:
 {
+
+  systemd.enableEmergencyMode = false; # recommendation from https://schreibt.jetzt/@linus/111962725769108997
+
   imports = [
     # Include the results of the hardware scan.
     inputs.impermanence.nixosModules.impermanence
