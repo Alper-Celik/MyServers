@@ -3,7 +3,8 @@
   defaultTTL = 300;
   zones."alper-celik.dev" =
     let
-      rpi5 = "rpi5.tailnet.alper-celik.dev";
+      rpi5 = "rpi5.devices.alper-celik.dev";
+      rpi5-tailnet = "rpi5.tailnet.alper-celik.dev";
       github = "alper-celik.github.io";
     in
     {
@@ -16,12 +17,14 @@
       "rpi5.tailnet".a.data = "100.104.52.23";
 
       # services TODO: move these to nixos config ?
-      "bitwarden.lab".cname.data = rpi5;
-      "freshrss.lab".cname.data = rpi5;
-      "nextcloud.lab".cname.data = rpi5;
-      "pgadmin.lab".cname.data = rpi5;
-      "collabora-online.lab".cname.data = rpi5;
-      "id.lab".cname.data = rpi5;
+      "bitwarden.lab".cname.data = rpi5-tailnet;
+      "freshrss.lab".cname.data = rpi5-tailnet;
+      "nextcloud.lab".cname.data = rpi5-tailnet;
+      "pgadmin.lab".cname.data = rpi5-tailnet;
+      "collabora-online.lab".cname.data = rpi5-tailnet;
+      "id.lab".cname.data = rpi5-tailnet;
+
+      "beta.ym-pdf".cname.data = rpi5;
 
       "modded-mc".cname.data = "do-vm.alper-celik.dev";
 
