@@ -173,6 +173,17 @@
           octodns-config = generate.octodnsConfig {
             inherit dnsConfig;
             config = {
+              processors.only-these = {
+                class = "octodns.processor.filter.NameAllowlistFilter";
+                allowlist = [
+                  "/lab/"
+                  "blog"
+                  "/ym-pdf/"
+                  "/devices/"
+                  "/tailnet/"
+                ];
+              };
+
               providers = {
                 config.check_origin = false;
                 cloudflare = {
@@ -192,6 +203,7 @@
                   "config"
                   "rpi5.devices"
                 ];
+                processors = [ "only-these" ];
                 targets = [ "cloudflare" ];
               };
             };
@@ -210,6 +222,7 @@
           default = pkgs.mkShell {
             packages = with pkgs; [
               yq
+              self-pkgs.octodns
             ];
           };
         }

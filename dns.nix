@@ -33,28 +33,28 @@
       "ym-pdf".cname.data = github;
 
       # mail and such
-      "5xwxv5wqu77m".cname.data = "gv-56dcrarorpfoh5.dv.googlehosted.com";
-      "".mx = {
-        data = [
-          {
-            preference = 10;
-            exchange = "mxb.mailgun.org";
-          }
-          {
-            preference = 10;
-            exchange = "mxa.mailgun.org";
-          }
-        ];
-        ttl = 14352;
-      };
-      "".txt = {
-        data = "v=spf1 include:mailgun.org ~all";
-        ttl = 14352;
-      };
-      "mx._domainkey".txt = {
-        data = "k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDLquF7Q4jCNfQKJ+wUU1fv5hgeZOEvEJ0HXkEdu1XrzXm20ECnKP2wwmJyEYP19uQ2rwx5KTVHCTIJAJWDMbi3UZC1VcZsi3U2HL8VVpsV8Q/LfulrprqTbEc/KxwwgPWayW3/lH1mP2Bh74qtHXl4CR1X\" \"7UG2chBocCHpsT76swIDAQAB";
-        ttl = 14400;
-      };
+      # "5xwxv5wqu77m".cname.data = "gv-56dcrarorpfoh5.dv.googlehosted.com";
+      # "".mx = {
+      #   data = [
+      #     {
+      #       preference = 10;
+      #       exchange = "mxb.mailgun.org";
+      #     }
+      #     {
+      #       preference = 10;
+      #       exchange = "mxa.mailgun.org";
+      #     }
+      #   ];
+      #   ttl = 14352;
+      # };
+      # "".txt = {
+      #   data = "v=spf1 include:mailgun.org ~all";
+      #   ttl = 14352;
+      # };
+      # "mx._domainkey".txt = {
+      #   data = "k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDLquF7Q4jCNfQKJ+wUU1fv5hgeZOEvEJ0HXkEdu1XrzXm20ECnKP2wwmJyEYP19uQ2rwx5KTVHCTIJAJWDMbi3UZC1VcZsi3U2HL8VVpsV8Q/LfulrprqTbEc/KxwwgPWayW3/lH1mP2Bh74qtHXl4CR1X\" \"7UG2chBocCHpsT76swIDAQAB";
+      #   ttl = 14400;
+      # };
 
     };
 }
