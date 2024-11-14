@@ -109,6 +109,10 @@
 
   # Enable the OpenSSH daemon.
   services.openssh = {
+    ports = [
+      22
+      110 # pop3 port hopefully our universitsy doesnt block it
+    ];
     enable = true;
     openFirewall = true;
     settings = {
