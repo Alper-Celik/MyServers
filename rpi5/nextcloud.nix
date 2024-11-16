@@ -33,6 +33,7 @@
 
     settings = {
       "memories.exiftool" = "/run/current-system/sw/bin/exiftool";
+      "social_login_auto_redirect" = true;
       maintenance_window_start = "0"; # 3 am in utc+3
       default_phone_region = "TR";
       enabledPreviewProviders = [
