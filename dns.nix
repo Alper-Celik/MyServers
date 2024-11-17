@@ -23,6 +23,7 @@
       "pgadmin.lab".cname.data = rpi5-tailnet;
       "collabora-online.lab".cname.data = rpi5-tailnet;
       "id.lab".cname.data = rpi5-tailnet;
+      "home.lab".cname.data = rpi5-tailnet;
 
       "beta.ym-pdf".cname.data = rpi5;
 
