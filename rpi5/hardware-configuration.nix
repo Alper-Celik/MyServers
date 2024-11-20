@@ -16,6 +16,15 @@
 
   boot.kernelPackages = pkgs.linuxPackages_rpi4;
 
+  fileSystems."/hdd" = {
+    device = "/dev/disk/by-label/hdd";
+    fsType = "btrfs";
+    options = [
+      "nofail"
+      "compress=zstd"
+      "noatime"
+    ];
+  };
   fileSystems."/" = {
     device = "/dev/disk/by-label/nixos";
     fsType = "btrfs";
