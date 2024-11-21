@@ -36,6 +36,9 @@ in
         group = owner;
       };
 
+      "postgres/grafana-pass" = {
+        owner = config.systemd.services.grafana.serviceConfig.User;
+      };
       "postgres/keycloak-pass" = {
         mode = "444";
       };

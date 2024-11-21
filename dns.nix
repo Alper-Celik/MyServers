@@ -25,6 +25,7 @@
       "id.lab".cname.data = rpi5-tailnet;
       "home.lab".cname.data = rpi5-tailnet;
       "jellyfin.lab".cname.data = rpi5-tailnet;
+      "grafana.lab".cname.data = rpi5-tailnet;
 
       "beta.ym-pdf".cname.data = rpi5;
 
