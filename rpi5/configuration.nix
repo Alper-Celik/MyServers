@@ -27,12 +27,12 @@
       "/var/log"
       "/var/lib/nixos"
       "/var/lib/systemd/coredump"
-      {
-        directory = "/etc/ssh";
-        user = "root";
-        group = "root";
-        mode = "u=rw,g=,o=";
-      }
+      # {
+      #   directory = "/etc/ssh";
+      #   user = "root";
+      #   group = "root";
+      #   mode = "u=rw,g=,o=";
+      # }
     ];
     files = [
       # "/etc/machine-id" #TODO: fix this before enabling proper impermanence
