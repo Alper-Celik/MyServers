@@ -24,10 +24,10 @@
       "collabora-online.lab".cname.data = rpi5-tailnet;
       "id.lab".cname.data = rpi5;
       "home.lab".cname.data = rpi5-tailnet;
-      "jellyfin.lab".cname.data = rpi5-tailnet;
       "grafana.lab".cname.data = rpi5-tailnet;
 
       "beta.ym-pdf".cname.data = rpi5;
+      "jellyfin.lab".cname.data = rpi5;
 
       "modded-mc".cname.data = "do-vm.alper-celik.dev";
 
