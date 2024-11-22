@@ -63,6 +63,7 @@
     forceSSL = true;
     enableACME = true;
     acmeRoot = null;
+    expose = true;
   };
 
   services.collabora-online = {
