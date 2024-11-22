@@ -19,10 +19,10 @@
       # services TODO: move these to nixos config ?
       "bitwarden.lab".cname.data = rpi5-tailnet;
       "freshrss.lab".cname.data = rpi5-tailnet;
-      "nextcloud.lab".cname.data = rpi5-tailnet;
+      "nextcloud.lab".cname.data = rpi5;
       "pgadmin.lab".cname.data = rpi5-tailnet;
       "collabora-online.lab".cname.data = rpi5-tailnet;
-      "id.lab".cname.data = rpi5-tailnet;
+      "id.lab".cname.data = rpi5;
       "home.lab".cname.data = rpi5-tailnet;
       "jellyfin.lab".cname.data = rpi5-tailnet;
       "grafana.lab".cname.data = rpi5-tailnet;
