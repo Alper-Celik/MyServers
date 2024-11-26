@@ -12,7 +12,10 @@
 
   services.nextcloud = {
     enable = true;
-
+    phpExtraExtensions = all: [
+      all.pdlib
+      all.bz2
+    ];
     maxUploadSize = "10G";
 
     caching.redis = true;
@@ -56,6 +59,7 @@
 
     phpOptions = {
       "opcache.interned_strings_buffer" = 20;
+
     };
   };
 
