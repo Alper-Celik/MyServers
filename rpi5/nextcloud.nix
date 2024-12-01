@@ -35,7 +35,6 @@
     appstoreEnable = true;
 
     settings = {
-      "facerecognition.handle_group_files" = true;
       "memories.exiftool" = "/run/current-system/sw/bin/exiftool";
       "social_login_auto_redirect" = true;
       maintenance_window_start = "0"; # 3 am in utc+3
