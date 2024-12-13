@@ -25,6 +25,7 @@
       "id.lab".cname.data = rpi5;
       "home.lab".cname.data = rpi5-tailnet;
       "grafana.lab".cname.data = rpi5-tailnet;
+      "couchdb.lab".cname.data = rpi5;
 
       "beta.ym-pdf".cname.data = rpi5;
       "photos.lab".cname.data = rpi5-tailnet;
