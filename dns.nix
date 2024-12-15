@@ -32,6 +32,7 @@
       "jellyfin.lab".cname.data = rpi5;
 
       "modded-mc".cname.data = "do-vm.alper-celik.dev";
+      "fileshare".cname.data = rpi5;
 
       # github pages
       "blog".cname.data = github;
