@@ -179,6 +179,7 @@
                   "/lab/"
                   "blog"
                   "/ym-pdf/"
+                  "/fileshare/"
                   "/devices/"
                   "/tailnet/"
                 ];
