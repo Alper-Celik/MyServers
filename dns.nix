@@ -15,6 +15,7 @@
       #   ttl = 60;
       # };
       "rpi5.tailnet".a.data = "100.104.52.23";
+      "hetzner-server-1.devices".a.data = "168.119.172.112";
 
       # services TODO: move these to nixos config ?
       "bitwarden.lab".cname.data = rpi5-tailnet;
