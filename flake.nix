@@ -118,7 +118,7 @@
 
       deploy.nodes = {
         rpi5 = {
-          hostname = "rpi5";
+          hostname = "rpi5.devices.alper-celik.dev";
           sshUser = "root";
           remoteBuild = true;
 
