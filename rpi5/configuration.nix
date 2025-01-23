@@ -12,6 +12,18 @@
 }:
 {
 
+  virtualisation = {
+    oci-containers = {
+      backend = "podman";
+    };
+    podman = {
+      enable = true;
+      autoPrune = {
+        enable = true;
+        dates = "weekly";
+      };
+    };
+  };
   systemd.enableEmergencyMode = false; # recommendation from https://schreibt.jetzt/@linus/111962725769108997
 
   imports = [
