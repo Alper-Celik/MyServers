@@ -15,6 +15,10 @@
       "--network=host"
       "--privileged"
     ];
+    labels = {
+      "io.containers.autoupdate" = "registry"; # thanks to https://indieweb.social/@MediocreWightMan/113595644096501287
+    };
+    autoStart = true;
   };
 
   services.nginx = {
