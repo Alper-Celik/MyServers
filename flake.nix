@@ -89,6 +89,20 @@
     {
 
       nixosConfigurations = {
+        hetzner-server-1 = nixpkgs.lib.nixosSystem {
+          system = "aarch64-linux";
+          specialArgs = {
+            inherit
+              inputs
+              trusted-ssh-keys
+              ;
+          };
+          modules = all-file ./hetzner/server-1 ++ [
+            nixos-dns.nixosModules.dns
+            inputs.disko.nixosModules.disko
+          ];
+        };
+
         rpi5 = nixpkgs.lib.nixosSystem {
           system = "aarch64-linux";
           specialArgs = {
@@ -126,6 +140,18 @@
             system = {
               user = "root";
               path = deploy-rs.lib.aarch64-linux.activate.nixos self.nixosConfigurations.rpi5;
+            };
+          };
+        };
+        hetzner-server-1 = {
+          hostname = "hetzner-server-1.devices.alper-celik.dev";
+          sshUser = "root";
+          remoteBuild = true;
+
+          profiles = {
+            system = {
+              user = "root";
+              path = deploy-rs.lib.aarch64-linux.activate.nixos self.nixosConfigurations.hetzner-server-1;
             };
           };
         };

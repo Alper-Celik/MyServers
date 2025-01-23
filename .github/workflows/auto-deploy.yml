@@ -37,6 +37,7 @@ jobs:
           install -m 600 -D /dev/null ~/.ssh/id_rsa
           echo  "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           ssh-keyscan rpi5.devices.alper-celik.dev > ~/.ssh/known_hosts
+          ssh-keyscan hetzner-server-1.devices.alper-celik.dev > ~/.ssh/known_hosts
           # ssh-keyscan network-vm > ~/.ssh/known_hosts
         env:
           SSH_PRIVATE_KEY: ${{secrets.SSH_PRIVATE_KEY}}
