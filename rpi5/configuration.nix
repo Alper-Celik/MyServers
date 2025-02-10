@@ -64,16 +64,18 @@
   # with explicit per-interface declarations with `networking.interfaces.<interface>.useDHCP`.
   networking.useDHCP = lib.mkDefault true;
   # networking.interfaces.wlan0.useDHCP = lib.mkDefault true;
+  networking.networkmanager.enable = true;
 
-  networking.defaultGateway = "192.168.1.1";
-  networking.nameservers = [ "1.1.1.1" ];
-  networking.interfaces.end0.ipv4.addresses = [
-    {
-      address = "192.168.1.200";
-      prefixLength = 24;
-    }
-  ];
-
+  ## not at home anymore soo
+  # networking.defaultGateway = "192.168.1.1";
+  # networking.nameservers = [ "1.1.1.1" ];
+  # networking.interfaces.end0.ipv4.addresses = [
+  #   {
+  #     address = "192.168.1.200";
+  #     prefixLength = 24;
+  #   }
+  # ];
+  #
   networking.hostName = "rpi5"; # Define your hostname.
   # Pick only one of the below networking options.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
