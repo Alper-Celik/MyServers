@@ -132,7 +132,7 @@
 
       deploy.nodes = {
         rpi5 = {
-          hostname = "rpi5.devices.alper-celik.dev";
+          hostname = "rpi5.tailnet.alper-celik.dev";
           sshUser = "root";
           remoteBuild = true;
 
@@ -217,10 +217,10 @@
                   class = "octodns_cloudflare.CloudflareProvider";
                   token = "env/CLOUDFLARE_TOKEN";
                 };
-                "rpi5.devices" = {
-                  class = "octodns_ddns.DdnsSource";
-                  types = [ "A" ];
-                };
+                # "rpi5.devices" = {
+                #   class = "octodns_ddns.DdnsSource";
+                #   types = [ "A" ];
+                # };
 
               };
             };
@@ -228,7 +228,7 @@
               "alper-celik.dev." = {
                 sources = [
                   "config"
-                  "rpi5.devices"
+                  # "rpi5.devices"
                 ];
                 processors = [ "only-these" ];
                 targets = [ "cloudflare" ];

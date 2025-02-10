@@ -3,7 +3,8 @@
   defaultTTL = 300;
   zones."alper-celik.dev" =
     let
-      rpi5 = "rpi5.devices.alper-celik.dev";
+      # rpi5 = "rpi5.devices.alper-celik.dev";
+      rpi5 = "rpi5.tailnet.alper-celik.dev";
       rpi5-tailnet = "rpi5.tailnet.alper-celik.dev";
       github = "alper-celik.github.io";
     in
