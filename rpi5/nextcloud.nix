@@ -19,6 +19,20 @@
       all.bz2
     ];
     maxUploadSize = "10G";
+    extraApps = {
+      inherit (config.services.nextcloud.package.packages.apps)
+        contacts
+        calendar
+        tasks
+        deck
+        gpoddersync
+        groupfolders
+        twofactor_webauthn
+        previewgenerator
+        recognize
+        ;
+    };
+    extraAppsEnable = true;
 
     caching.redis = true;
     configureRedis = true;
