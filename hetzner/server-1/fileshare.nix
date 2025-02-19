@@ -3,14 +3,8 @@
   services.nginx.virtualHosts."fileshare.alper-celik.dev" = {
     forceSSL = true;
     enableACME = true;
-    acmeRoot = null;
-    expose = true;
     locations."/" = {
       proxyPass = "http://localhost:18080";
-      # root = "/var/lib/fileshare";
-      # extraConfig = ''
-      #   autoindex on;
-      # '';
     };
   };
 

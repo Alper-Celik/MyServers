@@ -184,6 +184,7 @@
                   "/fileshare/"
                   "/devices/"
                   "/tailnet/"
+                  "cv-redirect"
                 ];
               };
 
