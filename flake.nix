@@ -116,21 +116,6 @@
           };
           modules = all-file ./rpi5 ++ all-file ./common ++ [ nixos-dns.nixosModules.dns ];
         };
-        azure-network-vm = nixpkgs.lib.nixosSystem {
-          system = "x86_64-linux";
-          specialArgs = {
-            inherit
-              inputs
-              trusted-ssh-keys
-              ;
-          };
-          modules = [
-            inputs.disko.nixosModules.disko
-            nixos-dns.nixosModules.dns
-            ./azure/network-vm/config.nix
-          ];
-        };
-
       };
 
       deploy.nodes = {
@@ -159,18 +144,6 @@
           };
         };
 
-        # network-vm = {
-        #   hostname = "network-vm";
-        #   sshUser = "root";
-        #
-        #   profiles = {
-        #     system = {
-        #       user = "root";
-        #       path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.azure-network-vm;
-        #     };
-        #   };
-        #
-        # };
       };
 
       # checks =
