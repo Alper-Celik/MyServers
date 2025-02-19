@@ -97,10 +97,13 @@
               trusted-ssh-keys
               ;
           };
-          modules = all-file ./hetzner/server-1 ++ [
-            nixos-dns.nixosModules.dns
-            inputs.disko.nixosModules.disko
-          ];
+          modules =
+            all-file ./hetzner/server-1
+            ++ all-file ./common
+            ++ [
+              nixos-dns.nixosModules.dns
+              inputs.disko.nixosModules.disko
+            ];
         };
 
         rpi5 = nixpkgs.lib.nixosSystem {
@@ -111,7 +114,7 @@
               trusted-ssh-keys
               ;
           };
-          modules = all-file ./rpi5 ++ [ nixos-dns.nixosModules.dns ];
+          modules = all-file ./rpi5 ++ all-file ./common ++ [ nixos-dns.nixosModules.dns ];
         };
         azure-network-vm = nixpkgs.lib.nixosSystem {
           system = "x86_64-linux";
