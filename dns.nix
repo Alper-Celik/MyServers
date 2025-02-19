@@ -4,6 +4,7 @@
   zones."alper-celik.dev" =
     let
       # rpi5 = "rpi5.devices.alper-celik.dev";
+      hetzner-server-1 = "168.119.172.112";
       rpi5 = "rpi5.tailnet.alper-celik.dev";
       rpi5-tailnet = "rpi5.tailnet.alper-celik.dev";
       github = "alper-celik.github.io";
@@ -16,7 +17,7 @@
       #   ttl = 60;
       # };
       "rpi5.tailnet".a.data = "100.104.52.23";
-      "hetzner-server-1.devices".a.data = "168.119.172.112";
+      "hetzner-server-1.devices".a.data = hetzner-server-1;
 
       # services TODO: move these to nixos config ?
       "bitwarden.lab".cname.data = rpi5-tailnet;
@@ -34,11 +35,15 @@
       "jellyfin.lab".cname.data = rpi5;
 
       "modded-mc".cname.data = "do-vm.alper-celik.dev";
-      "fileshare".cname.data = rpi5;
 
       # github pages
       "blog".cname.data = github;
       "ym-pdf".cname.data = github;
+
+      # public services
+
+      "cv-redirect".a.data = hetzner-server-1;
+      "fileshare".a.data = hetzner-server-1;
 
       # mail and such
       # "5xwxv5wqu77m".cname.data = "gv-56dcrarorpfoh5.dv.googlehosted.com";
