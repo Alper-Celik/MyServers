@@ -21,4 +21,14 @@
       	https_port   44380
     '';
   };
+
+  services.nginx.virtualHosts."cv-redirect.alper-celik.dev" = {
+    forceSSL = true;
+    enableACME = true;
+    locations."/" = {
+      extraConfig = ''
+        return 301 https://fileshare.alper-celik.dev/cv%20resources/cv.pdf
+      '';
+    };
+  };
 }
