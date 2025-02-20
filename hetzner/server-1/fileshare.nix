@@ -25,10 +25,9 @@
   services.nginx.virtualHosts."cv-redirect.alper-celik.dev" = {
     forceSSL = true;
     enableACME = true;
+    acmeRoot = null;
     locations."/" = {
-      extraConfig = ''
-        return 301 https://fileshare.alper-celik.dev/cv%20resources/cv.pdf
-      '';
+      return = "301 https://fileshare.alper-celik.dev/cv%20resources/cv.pdf";
     };
   };
 }
