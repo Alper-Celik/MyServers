@@ -31,10 +31,10 @@ in
         group = owner;
       };
 
-      pgadmin-pass = rec {
-        owner = config.systemd.services.pgadmin.serviceConfig.User;
-        group = owner;
-      };
+      # pgadmin-pass = rec {
+      #   owner = config.systemd.services.pgadmin.serviceConfig.User;
+      #   group = owner;
+      # };
 
       "postgres/grafana-pass" = {
         owner = config.systemd.services.grafana.serviceConfig.User;
