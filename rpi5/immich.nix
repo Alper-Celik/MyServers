@@ -1,15 +1,8 @@
-{ config, ... }:
-{
-  users.users.immich.extraGroups = [
-    "video"
-    "render"
-  ];
+{ config, ... }: {
+  users.users.immich.extraGroups = [ "video" "render" ];
   services.immich = {
     enable = true;
-    mediaLocation = "/hdd/immich";
-    environment = {
-      IMMICH_TELEMETRY_INCLUDE = "all";
-    };
+    environment = { IMMICH_TELEMETRY_INCLUDE = "all"; };
   };
 
   services.nginx.virtualHosts."photos.lab.alper-celik.dev" = {
