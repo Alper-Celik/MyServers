@@ -1,5 +1,6 @@
 { config, ... }: {
-  users.users.immich.extraGroups = [ "video" "render" ];
+  users.users.immich.extraGroups =
+    [ "video" "render" config.users.groups.media.name ];
   services.immich = {
     enable = true;
     environment = { IMMICH_TELEMETRY_INCLUDE = "all"; };
