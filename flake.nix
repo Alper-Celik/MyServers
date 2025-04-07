@@ -34,15 +34,7 @@
     };
   };
 
-  outputs =
-    inputs@{
-      self,
-      nixpkgs,
-      deploy-rs,
-      disko,
-      nixos-dns,
-      ...
-    }:
+  outputs = inputs@{ self, nixpkgs, deploy-rs, disko, nixos-dns, ... }:
     let
 
       dnsConfig = {
@@ -50,24 +42,17 @@
         extraConfig = import ./dns.nix;
       };
 
-      supportedSystems = [
-        "x86_64-linux"
-        "aarch64-linux"
-      ];
-      forEachSupportedSystem =
-        f:
-        nixpkgs.lib.genAttrs supportedSystems (
-          system:
+      supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
+      forEachSupportedSystem = f:
+        nixpkgs.lib.genAttrs supportedSystems (system:
           f {
             self-pkgs = self.packages.${system};
             inherit (self) system;
             pkgs = import nixpkgs {
               inherit # overlays
-                system
-                ;
+                system;
             };
-          }
-        );
+          });
 
       personal-ssh-public-keys = [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKhCFPTP1/JLMCCJttaw88EgBQzPt5fF7EcjXIgDdeuM alper@alper-celik.dev"
@@ -75,46 +60,28 @@
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEdpGzo/K4jrtmXtUDlsR8RYWa/Q87plonNjcfMgOPJ"
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOBZSTiDOsVRhcnOO/foEiy2gp3pJt+62QTFGvVJ0AOX u0_a413@localhost" # termux note 10 lite
       ];
-      github-ssh-public-key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCRF5cEocxBruwIB7FJsQyCR58DLmNaCgZFyqEnHUvkRb3iudYYnp8b+ApiVPGhPlu+PwzA5kQbKynVN+r/gvjBP2o/wcwvIGSXgy97JRIyD6LwyVjc/fguS9rCCWpU+bt3UPxHIVTHgF9SaMt/4ragM85sKNv+Mq3nNN9J4pHSXfbzTz3+gNyZRorW9bX8+ehIwcOZ0rvYkpvYYq6FExBsORmbNHC8/bsSsQf5riE9Ja4+d8VZQqjB8ix9glwxqOIzfsB77mLT7HZQQXDCRbmkqRT1J421DRIXljXsKtlOEHjV6e2A1gTbS88h3E5/5KqNcMN47paD7EhM3n+1oA5F+0Jw0KkZl+0QogL/c1Gl5UTBdsdDwbAPh1hXvkShBu1lCML7bS4/XKfnRsjwNH4meXVuWwepBTAFvDG/BU+Udmm0D3kHJB9RyEDykzoxv7HWXZIDiTPZkoniUlIcaA2mWRAEK4C6oskdu9G6NTfAc8s3wE1ItKeT3o/4Qkb1cnCyWy7ZVKf6yH0h2KqYCs6O9vcMPHzar2ae4gT1iNBCv6C/1RH4RGVD5uagbF+Z+wQiz2gK6UEBXUHcbWwahqNh/8hnW72dC24ZUYMNjnQqgpvSFWWAWktOpM9MYcwPPCDL8UiQQOEq8orRpSzBfSvqBC/5gSk1SZ52bfROtmQGwQ== github runner";
-      trusted-ssh-keys = [
-        github-ssh-public-key
-      ] ++ personal-ssh-public-keys;
+      github-ssh-public-key =
+        "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCRF5cEocxBruwIB7FJsQyCR58DLmNaCgZFyqEnHUvkRb3iudYYnp8b+ApiVPGhPlu+PwzA5kQbKynVN+r/gvjBP2o/wcwvIGSXgy97JRIyD6LwyVjc/fguS9rCCWpU+bt3UPxHIVTHgF9SaMt/4ragM85sKNv+Mq3nNN9J4pHSXfbzTz3+gNyZRorW9bX8+ehIwcOZ0rvYkpvYYq6FExBsORmbNHC8/bsSsQf5riE9Ja4+d8VZQqjB8ix9glwxqOIzfsB77mLT7HZQQXDCRbmkqRT1J421DRIXljXsKtlOEHjV6e2A1gTbS88h3E5/5KqNcMN47paD7EhM3n+1oA5F+0Jw0KkZl+0QogL/c1Gl5UTBdsdDwbAPh1hXvkShBu1lCML7bS4/XKfnRsjwNH4meXVuWwepBTAFvDG/BU+Udmm0D3kHJB9RyEDykzoxv7HWXZIDiTPZkoniUlIcaA2mWRAEK4C6oskdu9G6NTfAc8s3wE1ItKeT3o/4Qkb1cnCyWy7ZVKf6yH0h2KqYCs6O9vcMPHzar2ae4gT1iNBCv6C/1RH4RGVD5uagbF+Z+wQiz2gK6UEBXUHcbWwahqNh/8hnW72dC24ZUYMNjnQqgpvSFWWAWktOpM9MYcwPPCDL8UiQQOEq8orRpSzBfSvqBC/5gSk1SZ52bfROtmQGwQ== github runner";
+      trusted-ssh-keys = [ github-ssh-public-key ] ++ personal-ssh-public-keys;
 
-      all-file =
-        dir:
-        builtins.map (file: (builtins.toString dir) + "/" + file) (
-          builtins.attrNames (builtins.readDir dir)
-        );
-    in
-    {
+      all-file = dir:
+        builtins.map (file: (builtins.toString dir) + "/" + file)
+        (builtins.attrNames (builtins.readDir dir));
+    in {
 
       nixosConfigurations = {
         hetzner-server-1 = nixpkgs.lib.nixosSystem {
           system = "aarch64-linux";
-          specialArgs = {
-            inherit
-              inputs
-              trusted-ssh-keys
-              ;
-          };
-          modules =
-            all-file ./hetzner/server-1
-            ++ all-file ./common
-            ++ [
-              nixos-dns.nixosModules.dns
-              inputs.disko.nixosModules.disko
-            ];
+          specialArgs = { inherit inputs trusted-ssh-keys; };
+          modules = all-file ./hetzner/server-1 ++ all-file ./common
+            ++ [ nixos-dns.nixosModules.dns inputs.disko.nixosModules.disko ];
         };
 
         rpi5 = nixpkgs.lib.nixosSystem {
           system = "aarch64-linux";
-          specialArgs = {
-            inherit
-              inputs
-              trusted-ssh-keys
-              ;
-          };
-          modules = all-file ./rpi5 ++ all-file ./common ++ [ nixos-dns.nixosModules.dns ];
+          specialArgs = { inherit inputs trusted-ssh-keys; };
+          modules = all-file ./rpi5 ++ all-file ./common
+            ++ [ nixos-dns.nixosModules.dns ];
         };
       };
 
@@ -123,11 +90,14 @@
           hostname = "rpi5.tailnet.alper-celik.dev";
           sshUser = "root";
           remoteBuild = true;
+          activationTimeout = 1000;
+          confirmTimeout = 60;
 
           profiles = {
             system = {
               user = "root";
-              path = deploy-rs.lib.aarch64-linux.activate.nixos self.nixosConfigurations.rpi5;
+              path = deploy-rs.lib.aarch64-linux.activate.nixos
+                self.nixosConfigurations.rpi5;
             };
           };
         };
@@ -139,7 +109,8 @@
           profiles = {
             system = {
               user = "root";
-              path = deploy-rs.lib.aarch64-linux.activate.nixos self.nixosConfigurations.hetzner-server-1;
+              path = deploy-rs.lib.aarch64-linux.activate.nixos
+                self.nixosConfigurations.hetzner-server-1;
             };
           };
         };
@@ -150,27 +121,25 @@
       #   builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy)
       #   deploy-rs.lib;
 
-      packages = forEachSupportedSystem (
-        { pkgs, self-pkgs, ... }:
-        let
-          generate = nixos-dns.utils.generate pkgs;
-        in
-        {
-          octodns =
-            with pkgs;
+      packages = forEachSupportedSystem ({ pkgs, self-pkgs, ... }:
+        let generate = nixos-dns.utils.generate pkgs;
+        in {
+          octodns = with pkgs;
             (octodns.withProviders (ps: [
               self-pkgs.octodns-cloudflare
               self-pkgs.octodns-ddns
               octodns-providers.bind
             ]));
 
-          octodns-cloudflare = pkgs.python3Packages.callPackage ./pkgs/octodns-cloudflare.nix {
-            src = inputs.octodns-cloudflare-src;
-          };
+          octodns-cloudflare =
+            pkgs.python3Packages.callPackage ./pkgs/octodns-cloudflare.nix {
+              src = inputs.octodns-cloudflare-src;
+            };
 
-          octodns-ddns = pkgs.python3Packages.callPackage ./pkgs/octodns-ddns.nix {
-            src = inputs.octodns-ddns-src;
-          };
+          octodns-ddns =
+            pkgs.python3Packages.callPackage ./pkgs/octodns-ddns.nix {
+              src = inputs.octodns-ddns-src;
+            };
           zoneFiles = generate.zoneFiles dnsConfig;
           octodns-config = generate.octodnsConfig {
             inherit dnsConfig;
@@ -212,25 +181,12 @@
               };
             };
           };
-        }
-      );
+        });
 
-      devShells = forEachSupportedSystem (
-        {
-          pkgs,
-          system,
-          self-pkgs,
-          ...
-        }:
-        {
-          default = pkgs.mkShell {
-            packages = with pkgs; [
-              yq
-              self-pkgs.octodns
-            ];
-          };
-        }
-      );
+      devShells = forEachSupportedSystem ({ pkgs, system, self-pkgs, ... }: {
+        default =
+          pkgs.mkShell { packages = with pkgs; [ yq self-pkgs.octodns ]; };
+      });
 
     };
 }
