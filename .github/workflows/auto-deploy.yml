@@ -8,8 +8,6 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-
-
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 # However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
@@ -31,7 +29,7 @@ jobs:
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@main
-        
+
       - name: install ssh key
         run: |
           install -m 600 -D /dev/null ~/.ssh/id_rsa
@@ -43,7 +41,4 @@ jobs:
           SSH_PRIVATE_KEY: ${{secrets.SSH_PRIVATE_KEY}}
 
       - name: deploy
-        run: "nix run nixpkgs#deploy-rs -- ."
-
-
-
+        run: "nix run nixpkgs#deploy-rs -- . --auto-rollback false --magic-rollback false"
