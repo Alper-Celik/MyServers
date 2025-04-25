@@ -15,10 +15,6 @@
       flake = false;
     };
 
-    nixos-dns = {
-      url = "github:Janik-Haag/nixos-dns";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     octodns-ddns-src = {
       url = "github:octodns/octodns-ddns";
       flake = false;
@@ -34,7 +30,7 @@
     };
   };
 
-  outputs = inputs@{ self, nixpkgs, deploy-rs, disko, nixos-dns, ... }:
+  outputs = inputs@{ self, nixpkgs, deploy-rs, disko, ... }:
     let
 
       dnsConfig = {
@@ -74,14 +70,13 @@
           system = "aarch64-linux";
           specialArgs = { inherit inputs trusted-ssh-keys; };
           modules = all-file ./hetzner/server-1 ++ all-file ./common
-            ++ [ nixos-dns.nixosModules.dns inputs.disko.nixosModules.disko ];
+            ++ [ inputs.disko.nixosModules.disko ];
         };
 
         rpi5 = nixpkgs.lib.nixosSystem {
           system = "aarch64-linux";
           specialArgs = { inherit inputs trusted-ssh-keys; };
-          modules = all-file ./rpi5 ++ all-file ./common
-            ++ [ nixos-dns.nixosModules.dns ];
+          modules = all-file ./rpi5 ++ all-file ./common ++ [ ];
         };
       };
 
@@ -121,67 +116,24 @@
       #   builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy)
       #   deploy-rs.lib;
 
-      packages = forEachSupportedSystem ({ pkgs, self-pkgs, ... }:
-        let generate = nixos-dns.utils.generate pkgs;
-        in {
-          octodns = with pkgs;
-            (octodns.withProviders (ps: [
-              self-pkgs.octodns-cloudflare
-              self-pkgs.octodns-ddns
-              octodns-providers.bind
-            ]));
+      packages = forEachSupportedSystem ({ pkgs, self-pkgs, ... }: {
+        octodns = with pkgs;
+          (octodns.withProviders (ps: [
+            self-pkgs.octodns-cloudflare
+            self-pkgs.octodns-ddns
+            octodns-providers.bind
+          ]));
 
-          octodns-cloudflare =
-            pkgs.python3Packages.callPackage ./pkgs/octodns-cloudflare.nix {
-              src = inputs.octodns-cloudflare-src;
-            };
-
-          octodns-ddns =
-            pkgs.python3Packages.callPackage ./pkgs/octodns-ddns.nix {
-              src = inputs.octodns-ddns-src;
-            };
-          zoneFiles = generate.zoneFiles dnsConfig;
-          octodns-config = generate.octodnsConfig {
-            inherit dnsConfig;
-            config = {
-              processors.only-these = {
-                class = "octodns.processor.filter.NameAllowlistFilter";
-                allowlist = [
-                  "/lab/"
-                  "blog"
-                  "/ym-pdf/"
-                  "/fileshare/"
-                  "/devices/"
-                  "/tailnet/"
-                  "cv-redirect"
-                ];
-              };
-
-              providers = {
-                config.check_origin = false;
-                cloudflare = {
-                  class = "octodns_cloudflare.CloudflareProvider";
-                  token = "env/CLOUDFLARE_TOKEN";
-                };
-                # "rpi5.devices" = {
-                #   class = "octodns_ddns.DdnsSource";
-                #   types = [ "A" ];
-                # };
-
-              };
-            };
-            zones = {
-              "alper-celik.dev." = {
-                sources = [
-                  "config"
-                  # "rpi5.devices"
-                ];
-                processors = [ "only-these" ];
-                targets = [ "cloudflare" ];
-              };
-            };
+        octodns-cloudflare =
+          pkgs.python3Packages.callPackage ./pkgs/octodns-cloudflare.nix {
+            src = inputs.octodns-cloudflare-src;
           };
-        });
+
+        octodns-ddns =
+          pkgs.python3Packages.callPackage ./pkgs/octodns-ddns.nix {
+            src = inputs.octodns-ddns-src;
+          };
+      });
 
       devShells = forEachSupportedSystem ({ pkgs, system, self-pkgs, ... }: {
         default =

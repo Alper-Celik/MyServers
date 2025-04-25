@@ -1,0 +1,80 @@
+beta.ym-pdf:
+  ttl: 300
+  type: CNAME
+  value: rpi5.tailnet.alper-celik.dev.
+bitwarden.lab:
+  ttl: 300
+  type: CNAME
+  value: rpi5.tailnet.alper-celik.dev.
+blog:
+  ttl: 300
+  type: CNAME
+  value: alper-celik.github.io.
+collabora-online.lab:
+  ttl: 300
+  type: CNAME
+  value: rpi5.tailnet.alper-celik.dev.
+couchdb.lab:
+  ttl: 300
+  type: CNAME
+  value: rpi5.tailnet.alper-celik.dev.
+cv-redirect:
+  ttl: 300
+  type: A
+  value: 168.119.172.112
+do-vm:
+  ttl: 300
+  type: A
+  value: 146.190.206.52
+fileshare:
+  ttl: 300
+  type: A
+  value: 168.119.172.112
+freshrss.lab:
+  ttl: 300
+  type: CNAME
+  value: rpi5.tailnet.alper-celik.dev.
+grafana.lab:
+  ttl: 300
+  type: CNAME
+  value: rpi5.tailnet.alper-celik.dev.
+hetzner-server-1.devices:
+  ttl: 300
+  type: A
+  value: 168.119.172.112
+home.lab:
+  ttl: 300
+  type: CNAME
+  value: rpi5.tailnet.alper-celik.dev.
+id.lab:
+  ttl: 300
+  type: CNAME
+  value: rpi5.tailnet.alper-celik.dev.
+jellyfin.lab:
+  ttl: 300
+  type: CNAME
+  value: rpi5.tailnet.alper-celik.dev.
+modded-mc:
+  ttl: 300
+  type: CNAME
+  value: do-vm.alper-celik.dev.
+nextcloud.lab:
+  ttl: 300
+  type: CNAME
+  value: rpi5.tailnet.alper-celik.dev.
+pgadmin.lab:
+  ttl: 300
+  type: CNAME
+  value: rpi5.tailnet.alper-celik.dev.
+photos.lab:
+  ttl: 300
+  type: CNAME
+  value: rpi5.tailnet.alper-celik.dev.
+rpi5.tailnet:
+  ttl: 300
+  type: A
+  value: 100.104.52.23
+ym-pdf:
+  ttl: 300
+  type: CNAME
+  value: alper-celik.github.io.

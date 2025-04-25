@@ -72,22 +72,6 @@
         "type": "github"
       }
     },
-    "flake-compat_2": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1733328505,
-        "narHash": "sha256-NeCCThCEP3eCl2l/+27kNNK7QrwZB1IJCrXfrbv5oqU=",
-        "owner": "edolstra",
-        "repo": "flake-compat",
-        "rev": "ff81ac966bb2cae68946d5ed5fc4994f96d0ffec",
-        "type": "github"
-      },
-      "original": {
-        "owner": "edolstra",
-        "repo": "flake-compat",
-        "type": "github"
-      }
-    },
     "flake-utils": {
       "inputs": {
         "systems": "systems_2"
@@ -138,29 +122,6 @@
       "original": {
         "owner": "Alper-Celik",
         "repo": "MyBlog",
-        "type": "github"
-      }
-    },
-    "nixos-dns": {
-      "inputs": {
-        "flake-compat": "flake-compat_2",
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "systems": "systems_3",
-        "treefmt-nix": "treefmt-nix"
-      },
-      "locked": {
-        "lastModified": 1742583654,
-        "narHash": "sha256-aTsLqhW9XD0O37BTJo0u5f0gkk/x4KnZ9sho9hSE6hE=",
-        "owner": "Janik-Haag",
-        "repo": "nixos-dns",
-        "rev": "04b00ea7423c8dbe6e0ea78e4eb96f874a04c543",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Janik-Haag",
-        "repo": "nixos-dns",
         "type": "github"
       }
     },
@@ -267,7 +228,6 @@
         "disko": "disko",
         "impermanence": "impermanence",
         "my-blog": "my-blog",
-        "nixos-dns": "nixos-dns",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_3",
         "octodns-cloudflare-src": "octodns-cloudflare-src",
@@ -325,20 +285,6 @@
         "type": "github"
       }
     },
-    "systems_3": {
-      "locked": {
-        "lastModified": 1681028828,
-        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
-        "owner": "nix-systems",
-        "repo": "default",
-        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
-        "type": "github"
-      },
-      "original": {
-        "id": "systems",
-        "type": "indirect"
-      }
-    },
     "theme": {
       "flake": false,
       "locked": {
@@ -352,27 +298,6 @@
       "original": {
         "owner": "serkodev",
         "repo": "holy",
-        "type": "github"
-      }
-    },
-    "treefmt-nix": {
-      "inputs": {
-        "nixpkgs": [
-          "nixos-dns",
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1742370146,
-        "narHash": "sha256-XRE8hL4vKIQyVMDXykFh4ceo3KSpuJF3ts8GKwh5bIU=",
-        "owner": "numtide",
-        "repo": "treefmt-nix",
-        "rev": "adc195eef5da3606891cedf80c0d9ce2d3190808",
-        "type": "github"
-      },
-      "original": {
-        "owner": "numtide",
-        "repo": "treefmt-nix",
         "type": "github"
       }
     },

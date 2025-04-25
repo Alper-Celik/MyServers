@@ -1,0 +1,30 @@
+processors:
+  only-these:
+    allowlist:
+      - /lab/
+      - blog
+      - /ym-pdf/
+      - /fileshare/
+      - /devices/
+      - /tailnet/
+      - cv-redirect
+    class: octodns.processor.filter.NameAllowlistFilter
+
+providers:
+  cloudflare:
+    class: octodns_cloudflare.CloudflareProvider
+    token: env/CLOUDFLARE_TOKEN
+  config:
+    class: octodns.provider.yaml.YamlProvider
+    directory: ./config
+    default_ttl: 300
+    enforce_order: True
+
+zones:
+  "*":
+    processors:
+      - only-these
+    sources:
+      - config
+    targets:
+      - cloudflare
