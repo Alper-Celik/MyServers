@@ -1,4 +1,5 @@
-{ config, ... }: {
+{ config, ... }:
+{
 
   users = {
     users."media" = {
@@ -6,7 +7,9 @@
       group = "media";
       uid = 975;
     };
-    groups."media" = { gid = 969; };
+    groups."media" = {
+      gid = 969;
+    };
   };
   fileSystems."/var/lib/multimedia/media" = {
     fsType = "overlay";
