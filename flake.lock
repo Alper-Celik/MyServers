@@ -43,11 +43,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1743598667,
-        "narHash": "sha256-ViE7NoFWytYO2uJONTAX35eGsvTYXNHjWALeHAg8OQY=",
+        "lastModified": 1748225455,
+        "narHash": "sha256-AzlJCKaM4wbEyEpV3I/PUq5mHnib2ryEy32c+qfj6xk=",
         "owner": "nix-community",
         "repo": "disko",
-        "rev": "329d3d7e8bc63dd30c39e14e6076db590a6eabe6",
+        "rev": "a894f2811e1ee8d10c50560551e50d6ab3c392ba",
         "type": "github"
       },
       "original": {
@@ -127,11 +127,11 @@
     },
     "nixos-hardware": {
       "locked": {
-        "lastModified": 1743420942,
-        "narHash": "sha256-b/exDDQSLmENZZgbAEI3qi9yHkuXAXCPbormD8CSJXo=",
+        "lastModified": 1747900541,
+        "narHash": "sha256-dn64Pg9xLETjblwZs9Euu/SsjW80pd6lr5qSiyLY1pg=",
         "owner": "NixOS",
         "repo": "nixos-hardware",
-        "rev": "de6fc5551121c59c01e2a3d45b277a6d05077bc4",
+        "rev": "11f2d9ea49c3e964315215d6baa73a8d42672f06",
         "type": "github"
       },
       "original": {
@@ -175,16 +175,16 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1748037224,
-        "narHash": "sha256-92vihpZr6dwEMV6g98M5kHZIttrWahb9iRPBm1atcPk=",
+        "lastModified": 1748162331,
+        "narHash": "sha256-rqc2RKYTxP3tbjA+PB3VMRQNnjesrT0pEofXQTrMsS8=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "f09dede81861f3a83f7f06641ead34f02f37597f",
+        "rev": "7c43f080a7f28b2774f3b3f43234ca11661bf334",
         "type": "github"
       },
       "original": {
         "owner": "nixos",
-        "ref": "nixos-24.11",
+        "ref": "nixos-25.05",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -192,11 +192,11 @@
     "octodns-cloudflare-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1743461547,
-        "narHash": "sha256-XYZRiUZC7HtUrSo7fnJyL6gGPi/Npi8C+8msm7sVifE=",
+        "lastModified": 1746396326,
+        "narHash": "sha256-zWqlpd/lklStisqpDCCU9IST6TR7i5ce4LI4fjz0K50=",
         "owner": "octodns",
         "repo": "octodns-cloudflare",
-        "rev": "a306f9a83c1b1a89c7a7fca545618644ed50f869",
+        "rev": "e958c7812eebc2984efe787fd79fafa69c8c4ee8",
         "type": "github"
       },
       "original": {
@@ -208,11 +208,11 @@
     "octodns-ddns-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1728414328,
-        "narHash": "sha256-JA6nTte5/ALknQ8MHtY/9utIAAF1CTDCqsxSh7L6wCk=",
+        "lastModified": 1746396234,
+        "narHash": "sha256-bcor4YZWG6RGRE1ItcuKC+aoM/F69pZTbLmyZMxehdc=",
         "owner": "octodns",
         "repo": "octodns-ddns",
-        "rev": "d152390dddd37895fc8331d3a5d90633aed063df",
+        "rev": "35a69ef528c3b0e37a9074082c6a18db1208c8d4",
         "type": "github"
       },
       "original": {
@@ -242,11 +242,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1743910657,
-        "narHash": "sha256-zr2jmWeWyhCD8WmO2aWov2g0WPPuZfcJDKzMJZYGq3Y=",
+        "lastModified": 1747603214,
+        "narHash": "sha256-lAblXm0VwifYCJ/ILPXJwlz0qNY07DDYdLD+9H+Wc8o=",
         "owner": "mic92",
         "repo": "sops-nix",
-        "rev": "523f58a4faff6c67f5f685bed33a7721e984c304",
+        "rev": "8d215e1c981be3aa37e47aeabd4e61bb069548fd",
         "type": "github"
       },
       "original": {
