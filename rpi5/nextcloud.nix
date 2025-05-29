@@ -32,7 +32,7 @@
         recognize
         ;
     };
-    extraAppsEnable = true;
+    extraAppsEnable = false;
 
     caching.redis = true;
     configureRedis = true;
@@ -43,7 +43,7 @@
     };
     database.createLocally = true;
 
-    package = pkgs.nextcloud30;
+    package = pkgs.nextcloud31;
     hostName = "nextcloud.lab.alper-celik.dev";
     https = true;
 
