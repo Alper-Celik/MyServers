@@ -47,8 +47,8 @@
     hostName = "nextcloud.lab.alper-celik.dev";
     https = true;
 
-    autoUpdateApps.enable = true;
-    appstoreEnable = true;
+    autoUpdateApps.enable = false;
+    appstoreEnable = false;
 
     settings = {
       "memories.exiftool" = "/run/current-system/sw/bin/exiftool";
