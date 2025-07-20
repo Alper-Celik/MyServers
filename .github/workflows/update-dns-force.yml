@@ -22,3 +22,5 @@ jobs:
 
       - name: deploy
         run: ./dns/update-dns.sh --doit --force
+        env:
+          CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}
