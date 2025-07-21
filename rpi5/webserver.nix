@@ -37,7 +37,7 @@ in
       recommendedProxySettings = true;
       recommendedOptimisation = true;
 
-      appendConfig = ''
+      virtualHosts."_".locations."/".extraConfig = ''
         allow 100.64.0.0/10;
 
         deny all;
