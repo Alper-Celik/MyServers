@@ -13,7 +13,6 @@
   ];
 
   services.nginx.virtualHosts."jellyfin.lab.alper-celik.dev" = {
-    expose = true;
     forceSSL = true;
     enableACME = true;
     acmeRoot = null;

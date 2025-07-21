@@ -23,7 +23,6 @@
 
   services.nginx = {
     virtualHosts."home.lab.alper-celik.dev" = {
-      expose = true;
       forceSSL = true;
       enableACME = true;
       acmeRoot = null;
