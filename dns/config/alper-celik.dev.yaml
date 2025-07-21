@@ -1,3 +1,4 @@
+# internal services
 beta.ym-pdf:
   ttl: 300
   type: CNAME
@@ -6,10 +7,6 @@ bitwarden.lab:
   ttl: 300
   type: CNAME
   value: rpi5.tailnet.alper-celik.dev.
-blog:
-  ttl: 300
-  type: CNAME
-  value: alper-celik.github.io.
 collabora-online.lab:
   ttl: 300
   type: CNAME
@@ -38,10 +35,6 @@ grafana.lab:
   ttl: 300
   type: CNAME
   value: rpi5.tailnet.alper-celik.dev.
-hetzner-server-1.devices:
-  ttl: 300
-  type: A
-  value: 168.119.172.112
 home.lab:
   ttl: 300
   type: CNAME
@@ -66,15 +59,33 @@ pgadmin.lab:
   ttl: 300
   type: CNAME
   value: rpi5.tailnet.alper-celik.dev.
-photos.lab:
-  ttl: 300
-  type: CNAME
-  value: rpi5.tailnet.alper-celik.dev.
-rpi5.tailnet:
-  ttl: 300
-  type: A
-  value: 100.104.52.23
+
+  # Github pages:
 ym-pdf:
   ttl: 300
   type: CNAME
   value: alper-celik.github.io.
+blog:
+  ttl: 300
+  type: CNAME
+  value: alper-celik.github.io.
+
+  # "public" services:
+photos.lab:
+  ttl: 300
+  type: CNAME
+  value: rpi5.devices.alper-celik.dev.
+
+  # Devices:
+rpi5.devices:
+  ttl: 300
+  type: CNAME
+  value: rpi5.ddns.alper-celik.dev.
+rpi5.tailnet:
+  ttl: 300
+  type: A
+  value: 100.104.52.23
+hetzner-server-1.devices:
+  ttl: 300
+  type: A
+  value: 168.119.172.112
