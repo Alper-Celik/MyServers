@@ -17,7 +17,7 @@
     enableACME = true;
     acmeRoot = null;
 
-    # expose = true;
+    expose = true;
 
     locations."/" = {
       proxyWebsockets = true;
