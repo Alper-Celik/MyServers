@@ -2,7 +2,7 @@ name: auto update nixpkgs
 
 on:
   schedule:
-    - cron: 15 2 * * *
+    - cron: 30 22 * * * # every day 1:30 UTC+3
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
