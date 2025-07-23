@@ -59,6 +59,10 @@ pgadmin.lab:
   ttl: 300
   type: CNAME
   value: rpi5.tailnet.alper-celik.dev.
+music.lab:
+  ttl: 300
+  type: CNAME
+  value: rpi5.tailnet.alper-celik.dev.
 
   # Github pages:
 ym-pdf:
