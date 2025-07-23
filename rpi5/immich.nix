@@ -39,4 +39,16 @@
       '';
     };
   };
+
+  systemd.services."immich-backup" = {
+    serviceConfig = {
+      PAMName = "sudo";
+      ExecStart = "${./backups/immich-backup.sh}";
+      Type = "oneshot";
+      User = "root";
+      Group = "root";
+    };
+    startAt = "2:*";
+  };
+
 }
