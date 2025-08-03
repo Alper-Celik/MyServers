@@ -3,6 +3,7 @@
   services.nginx.virtualHosts."fileshare.alper-celik.dev" = {
     forceSSL = true;
     enableACME = true;
+    expose = true;
     locations."/" = {
       proxyPass = "http://localhost:18080";
     };
@@ -26,6 +27,7 @@
     forceSSL = true;
     enableACME = true;
     acmeRoot = null;
+    expose = true;
     locations."/" = {
       return = "301 https://fileshare.alper-celik.dev/cv%20resources/cv.pdf";
     };
