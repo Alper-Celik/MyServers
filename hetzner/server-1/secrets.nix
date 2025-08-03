@@ -15,7 +15,7 @@ in
     secrets = {
       CLOUDFLARE_API_KEY = { };
       CLOUDFLARE_EMAIL = { };
+      tailscale-auth-key-hetzner-server-1 = { };
     };
-
   };
 }
