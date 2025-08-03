@@ -64,6 +64,11 @@ music.lab:
   type: CNAME
   value: rpi5.tailnet.alper-celik.dev.
 
+  # hetzner-server-1
+adguardhome.lab:
+  type: CNAME
+  value: hetzner-server-1.tailnet.alper-celik.dev.
+
   # Github pages:
 ym-pdf:
   ttl: 300
@@ -89,6 +94,9 @@ rpi5.tailnet:
   ttl: 300
   type: A
   value: 100.104.52.23
+hetzner-server-1.tailnet:
+  type: A
+  value: 100.81.156.90
 hetzner-server-1.devices:
   ttl: 300
   type: A
