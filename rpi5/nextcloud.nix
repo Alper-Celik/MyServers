@@ -150,4 +150,16 @@
       }
     '';
   };
+
+  systemd.services."nextcloud-backup" = {
+    serviceConfig = {
+      PAMName = "sudo";
+      ExecStart = "${./backups/nextcloud-backup.sh}";
+      Type = "oneshot";
+      User = "root";
+      Group = "root";
+    };
+    startAt = "2:20";
+  };
+
 }
