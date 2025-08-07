@@ -44,6 +44,9 @@ in
       };
       restic-pass = { };
       rclone-onedrive-config = { };
+      b2-backup-rpi5-keyID = { };
+      b2-backup-rpi5-applicationKey = { };
+      REMOTE_RESTIC_PASSWORD = { };
     };
 
   };
