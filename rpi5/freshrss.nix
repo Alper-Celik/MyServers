@@ -28,4 +28,16 @@
     enableACME = true;
     acmeRoot = null;
   };
+
+  systemd.services."freshrss-backup" = {
+    serviceConfig = {
+      PAMName = "sudo";
+      ExecStart = "${./backups/freshrss-backup.sh}";
+      Type = "oneshot";
+      User = "root";
+      Group = "root";
+    };
+    startAt = "2:17";
+  };
+
 }
