@@ -46,4 +46,16 @@ in
       proxyPass = "http://localhost:${toString config.services.vaultwarden.config.ROCKET_PORT}";
     };
   };
+
+  systemd.services."vaultwarden-backup" = {
+    serviceConfig = {
+      PAMName = "sudo";
+      ExecStart = "${./backups/vaultwarden-backup.sh}";
+      Type = "oneshot";
+      User = "root";
+      Group = "root";
+    };
+    startAt = "1:55";
+  };
+
 }
