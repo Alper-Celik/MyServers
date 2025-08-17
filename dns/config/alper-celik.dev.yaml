@@ -1,4 +1,8 @@
 # internal services
+actual-budget.lab:
+  ttl: 300
+  type: CNAME
+  value: rpi5.tailnet.alper-celik.dev.
 beta.ym-pdf:
   ttl: 300
   type: CNAME
