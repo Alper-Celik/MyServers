@@ -1,6 +1,7 @@
 {
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     deploy-rs.url = "github:serokell/deploy-rs";
     my-blog.url = "github:Alper-Celik/MyBlog";
@@ -34,16 +35,12 @@
     inputs@{
       self,
       nixpkgs,
+      nixpkgs-unstable,
       deploy-rs,
       disko,
       ...
     }:
     let
-
-      dnsConfig = {
-        inherit (self) nixosConfigurations;
-        extraConfig = import ./dns.nix;
-      };
 
       supportedSystems = [
         "x86_64-linux"
@@ -81,19 +78,25 @@
     in
     {
 
-      nixosConfigurations = {
-        hetzner-server-1 = nixpkgs.lib.nixosSystem {
-          system = "aarch64-linux";
-          specialArgs = { inherit inputs trusted-ssh-keys; };
-          modules = all-file ./hetzner/server-1 ++ all-file ./common ++ [ inputs.disko.nixosModules.disko ];
-        };
+      nixosConfigurations =
+        let
+          pkgs-unstable = import nixpkgs-unstable {
+            system = "aarch64-linux";
+          };
+        in
+        {
+          hetzner-server-1 = nixpkgs.lib.nixosSystem {
+            system = "aarch64-linux";
+            specialArgs = { inherit inputs trusted-ssh-keys pkgs-unstable; };
+            modules = all-file ./hetzner/server-1 ++ all-file ./common ++ [ inputs.disko.nixosModules.disko ];
+          };
 
-        rpi5 = nixpkgs.lib.nixosSystem {
-          system = "aarch64-linux";
-          specialArgs = { inherit inputs trusted-ssh-keys; };
-          modules = all-file ./rpi5 ++ all-file ./common ++ [ ];
+          rpi5 = nixpkgs.lib.nixosSystem {
+            system = "aarch64-linux";
+            specialArgs = { inherit inputs trusted-ssh-keys pkgs-unstable; };
+            modules = all-file ./rpi5 ++ all-file ./common ++ [ ];
+          };
         };
-      };
 
       deploy.nodes = {
         rpi5 = {

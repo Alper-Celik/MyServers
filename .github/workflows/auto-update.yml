@@ -23,7 +23,7 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@main
 
       - name: update nixpkgs
-        run: nix flake update nixpkgs
+        run: nix flake update nixpkgs nixpkgs-unstable
 
       - name: push to main branch
         run: |
