@@ -1,4 +1,7 @@
 { config, ... }:
+let
+  domain = "documents.lab.alper-celik.dev";
+in
 {
   services.paperless = {
     enable = true;
@@ -11,7 +14,7 @@
         "desktop.ini"
       ];
       PAPERLESS_OCR_LANGUAGE = "tur+eng";
-      PAPERLESS_URL = "documents.lab.alper-celik.dev";
+      PAPERLESS_URL = "https://${domain}";
       PAPERLESS_USE_X_FORWARD_HOST = true;
       PAPERLESS_USE_X_FORWARD_PORT = true;
       PAPERLESS_PROXY_SSL_HEADER = [
@@ -21,7 +24,7 @@
     };
   };
 
-  services.nginx.virtualHosts."${config.services.paperless.settings.PAPERLESS_URL}" = {
+  services.nginx.virtualHosts."${domain}" = {
     forceSSL = true;
     enableACME = true;
     acmeRoot = null;
