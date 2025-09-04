@@ -67,6 +67,9 @@ music.lab:
   ttl: 300
   type: CNAME
   value: rpi5.tailnet.alper-celik.dev.
+documents.lab:
+  type: CNAME
+  value: rpi5.tailnet.alper-celik.dev.
 
   # hetzner-server-1
 adguardhome.lab:
