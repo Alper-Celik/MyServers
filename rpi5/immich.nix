@@ -10,35 +10,11 @@
     environment = {
       IMMICH_TELEMETRY_INCLUDE = "all";
     };
+    port = 2383;
+    host = "0.0.0.0";
   };
 
-  services.nginx.virtualHosts."photos.lab.alper-celik.dev" = {
-    forceSSL = true;
-    enableACME = true;
-    acmeRoot = null;
-
-    expose = true;
-
-    locations."/" = {
-      proxyWebsockets = true;
-      proxyPass = "http://[::1]:${toString config.services.immich.port}";
-      extraConfig = ''
-        # allow large file uploads
-        client_max_body_size 50000M;
-
-        # Set headers
-        proxy_set_header Host              $host;
-        proxy_set_header X-Real-IP         $remote_addr;
-        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-
-        # set timeout
-        proxy_read_timeout 600s;
-        proxy_send_timeout 600s;
-        send_timeout       600s;
-      '';
-    };
-  };
+  networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ config.services.immich.port ];
 
   systemd.services."immich-backup" = {
     serviceConfig = {

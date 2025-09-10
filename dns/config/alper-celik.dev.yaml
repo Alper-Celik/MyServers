@@ -90,7 +90,7 @@ blog:
 photos.lab:
   ttl: 300
   type: CNAME
-  value: rpi5.devices.alper-celik.dev.
+  value: hetzner-server-1.devices.alper-celik.dev.
 
   # Devices:
 rpi5.devices:

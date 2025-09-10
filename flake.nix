@@ -83,20 +83,38 @@
           pkgs-unstable = import nixpkgs-unstable {
             system = "aarch64-linux";
           };
-        in
-        {
+
+          all-configs = {
+            inherit hetzner-server-1 rpi5;
+          };
+
           hetzner-server-1 = nixpkgs.lib.nixosSystem {
             system = "aarch64-linux";
-            specialArgs = { inherit inputs trusted-ssh-keys pkgs-unstable; };
+            specialArgs = {
+              inherit
+                inputs
+                trusted-ssh-keys
+                pkgs-unstable
+                all-configs
+                ;
+            };
             modules = all-file ./hetzner/server-1 ++ all-file ./common ++ [ inputs.disko.nixosModules.disko ];
           };
 
           rpi5 = nixpkgs.lib.nixosSystem {
             system = "aarch64-linux";
-            specialArgs = { inherit inputs trusted-ssh-keys pkgs-unstable; };
+            specialArgs = {
+              inherit
+                inputs
+                trusted-ssh-keys
+                pkgs-unstable
+                all-configs
+                ;
+            };
             modules = all-file ./rpi5 ++ all-file ./common ++ [ ];
           };
-        };
+        in
+        all-configs;
 
       deploy.nodes = {
         rpi5 = {
