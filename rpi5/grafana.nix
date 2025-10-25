@@ -25,7 +25,7 @@
 
       server = {
         http_addr = "127.0.0.1";
-        http_port = 3000;
+        http_port = 45642;
         enforce_domain = true;
         enable_gzip = true;
         domain = "grafana.lab.alper-celik.dev";
