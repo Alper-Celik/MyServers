@@ -157,6 +157,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-deploy-rs": {
+      "locked": {
+        "lastModified": 1759733170,
+        "narHash": "sha256-TXnlsVb5Z8HXZ6mZoeOAIwxmvGHp1g4Dw89eLvIwKVI=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "8913c168d1c56dc49a7718685968f38752171c3b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "8913c168d1c56dc49a7718685968f38752171c3b",
+        "type": "github"
+      }
+    },
     "nixpkgs-unstable": {
       "locked": {
         "lastModified": 1761114652,
@@ -246,6 +262,7 @@
         "my-blog": "my-blog",
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_3",
+        "nixpkgs-deploy-rs": "nixpkgs-deploy-rs",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "octodns-cloudflare-src": "octodns-cloudflare-src",
         "octodns-ddns-src": "octodns-ddns-src",
