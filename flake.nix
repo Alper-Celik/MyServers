@@ -168,6 +168,7 @@
           octodns-ddns = pkgs.python3Packages.callPackage ./pkgs/octodns-ddns.nix {
             src = inputs.octodns-ddns-src;
           };
+          deploy-rs = pkgs.deploy-rs;
         }
       );
 
@@ -183,6 +184,7 @@
             packages = with pkgs; [
               yq
               self-pkgs.octodns
+              self-pkgs.deploy-rs
             ];
           };
         }
