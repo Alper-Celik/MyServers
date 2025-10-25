@@ -23,11 +23,11 @@
         "utils": "utils"
       },
       "locked": {
-        "lastModified": 1749105467,
-        "narHash": "sha256-hXh76y/wDl15almBcqvjryB50B0BaiXJKk20f314RoE=",
+        "lastModified": 1756719547,
+        "narHash": "sha256-N9gBKUmjwRKPxAafXEk1EGadfk2qDZPBQp4vXWPHINQ=",
         "owner": "serokell",
         "repo": "deploy-rs",
-        "rev": "6bc76b872374845ba9d645a2f012b764fecd765f",
+        "rev": "125ae9e3ecf62fb2c0fd4f2d894eb971f1ecaed2",
         "type": "github"
       },
       "original": {
@@ -43,11 +43,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1752113600,
-        "narHash": "sha256-7LYDxKxZgBQ8LZUuolAQ8UkIB+jb4A2UmiR+kzY9CLI=",
+        "lastModified": 1760701190,
+        "narHash": "sha256-y7UhnWlER8r776JsySqsbTUh2Txf7K30smfHlqdaIQw=",
         "owner": "nix-community",
         "repo": "disko",
-        "rev": "79264292b7e3482e5702932949de9cbb69fedf6d",
+        "rev": "3a9450b26e69dcb6f8de6e2b07b3fc1c288d85f5",
         "type": "github"
       },
       "original": {
@@ -127,11 +127,11 @@
     },
     "nixos-hardware": {
       "locked": {
-        "lastModified": 1752048960,
-        "narHash": "sha256-gATnkOe37eeVwKKYCsL+OnS2gU4MmLuZFzzWCtaKLI8=",
+        "lastModified": 1760958188,
+        "narHash": "sha256-2m1S4jl+GEDtlt2QqeHil8Ny456dcGSKJAM7q3j/BFU=",
         "owner": "NixOS",
         "repo": "nixos-hardware",
-        "rev": "7ced9122cff2163c6a0212b8d1ec8c33a1660806",
+        "rev": "d6645c340ef7d821602fd2cd199e8d1eed10afbc",
         "type": "github"
       },
       "original": {
@@ -208,11 +208,11 @@
     "octodns-cloudflare-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1752249385,
-        "narHash": "sha256-67qYR/7Iw9GlqdB9CGimxMHjWb7mTMMLKxZPuR8YWts=",
+        "lastModified": 1761275830,
+        "narHash": "sha256-IzxbiHNfWkBvDPMIpbcKxyRWOrwVVMtsBlIAebOIJNk=",
         "owner": "octodns",
         "repo": "octodns-cloudflare",
-        "rev": "6994b2295ad1a41864b49fe0fb2eab9d27b95e06",
+        "rev": "6f8f3b3ec9c0203d8c15b362ae45e73324fdb898",
         "type": "github"
       },
       "original": {
@@ -224,11 +224,11 @@
     "octodns-ddns-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1751386914,
-        "narHash": "sha256-kR6Zbwm17ae8q82iU58BJNj9NgjTX/Jwusxt5h+3B2I=",
+        "lastModified": 1761275975,
+        "narHash": "sha256-N3RT8BxphSCdoI1wQLXLgn7LtAGm8/YG+QL3pN26DYo=",
         "owner": "octodns",
         "repo": "octodns-ddns",
-        "rev": "2fad5a57720e9fb6f6cb9258d18be6f8fb563244",
+        "rev": "4fe8bd6b168d63905a7bd27b602928cdf5d91105",
         "type": "github"
       },
       "original": {
@@ -259,11 +259,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1751606940,
-        "narHash": "sha256-KrDPXobG7DFKTOteqdSVeL1bMVitDcy7otpVZWDE6MA=",
+        "lastModified": 1760998189,
+        "narHash": "sha256-ee2e1/AeGL5X8oy/HXsZQvZnae6XfEVdstGopKucYLY=",
         "owner": "mic92",
         "repo": "sops-nix",
-        "rev": "3633fc4acf03f43b260244d94c71e9e14a2f6e0d",
+        "rev": "5a7d18b5c55642df5c432aadb757140edfeb70b3",
         "type": "github"
       },
       "original": {
