@@ -2,7 +2,6 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-deploy-rs.url = "github:nixos/nixpkgs/8913c168d1c56dc49a7718685968f38752171c3b";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     deploy-rs.url = "github:serokell/deploy-rs";
     my-blog.url = "github:Alper-Celik/MyBlog";
@@ -59,7 +58,6 @@
                 system
                 ;
             };
-            pkgs-deploy-rs = import inputs.nixpkgs-deploy-rs { inherit system; };
           }
         );
 
@@ -153,12 +151,7 @@
       #   deploy-rs.lib;
 
       packages = forEachSupportedSystem (
-        {
-          pkgs,
-          pkgs-deploy-rs,
-          self-pkgs,
-          ...
-        }:
+        { pkgs, self-pkgs, ... }:
         {
           octodns =
             with pkgs;
@@ -175,7 +168,7 @@
           octodns-ddns = pkgs.python3Packages.callPackage ./pkgs/octodns-ddns.nix {
             src = inputs.octodns-ddns-src;
           };
-          deploy-rs = pkgs-deploy-rs.deploy-rs;
+          deploy-rs = pkgs.deploy-rs;
         }
       );
 
