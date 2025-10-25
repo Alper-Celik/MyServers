@@ -120,6 +120,7 @@
         rpi5 = {
           hostname = "rpi5.tailnet.alper-celik.dev";
           sshUser = "root";
+          remoteBuild = true;
           activationTimeout = 1000;
           confirmTimeout = 60;
 
@@ -133,6 +134,7 @@
         hetzner-server-1 = {
           hostname = "hetzner-server-1.devices.alper-celik.dev";
           sshUser = "root";
+          remoteBuild = true;
 
           profiles = {
             system = {
