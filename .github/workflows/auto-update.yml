@@ -19,8 +19,9 @@ jobs:
           ref: main
           token: ${{ secrets.PAT }}
 
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@main
+      - uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: update nixpkgs
         run: nix flake update nixpkgs nixpkgs-unstable
