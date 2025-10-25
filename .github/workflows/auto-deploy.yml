@@ -42,5 +42,11 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{secrets.SSH_PRIVATE_KEY}}
 
+      - name: Setup upterm session
+        uses: owenthereal/action-upterm@v1
+        with:
+          limit-access-to-actor: true # Restrict to the user who triggered the workflow
+          limit-access-to-users: Alper-Celik
+
       - name: deploy
         run: "nix run .#deploy-rs -- . --auto-rollback false --magic-rollback false"
