@@ -22,7 +22,6 @@ with lib;
   };
   config = {
     services.nginx = {
-      recommendedZstdSettings = true;
       recommendedGzipSettings = true;
 
       recommendedTlsSettings = true;
