@@ -3,6 +3,7 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
     deploy-rs.url = "github:serokell/deploy-rs";
     my-blog.url = "github:Alper-Celik/MyBlog";
 
@@ -38,6 +39,8 @@
       nixpkgs-unstable,
       deploy-rs,
       disko,
+      nixos-hardware,
+      nixos-raspberrypi,
       ...
     }:
     let
@@ -101,7 +104,7 @@
             modules = all-file ./hetzner/server-1 ++ all-file ./common ++ [ inputs.disko.nixosModules.disko ];
           };
 
-          rpi5 = nixpkgs.lib.nixosSystem {
+          rpi5 = nixos-raspberrypi.lib.nixosSystem {
             system = "aarch64-linux";
             specialArgs = {
               inherit
@@ -109,9 +112,44 @@
                 trusted-ssh-keys
                 pkgs-unstable
                 all-configs
+                nixos-raspberrypi
                 ;
             };
-            modules = all-file ./rpi5 ++ all-file ./common ++ [ ];
+            modules =
+              all-file ./rpi5
+              ++ all-file ./common
+              ++ [
+
+                {
+                  # Hardware specific configuration, see section below for a more complete
+                  # list of modules
+                  imports = with inputs.nixos-raspberrypi.nixosModules; [
+                    raspberry-pi-5.base
+                    raspberry-pi-5.page-size-16k
+                    raspberry-pi-5.display-vc4
+                    raspberry-pi-5.bluetooth
+                  ];
+                }
+
+                (
+                  {
+                    config,
+                    ...
+                  }:
+                  {
+                    boot.loader.raspberryPi.bootloader = "kernel";
+                    system.nixos.tags =
+                      let
+                        cfg = config.boot.loader.raspberryPi;
+                      in
+                      [
+                        "raspberry-pi-${cfg.variant}"
+                        cfg.bootloader
+                        config.boot.kernelPackages.kernel.version
+                      ];
+                  }
+                )
+              ];
           };
         in
         all-configs;
@@ -120,7 +158,6 @@
         rpi5 = {
           hostname = "rpi5.tailnet.alper-celik.dev";
           sshUser = "root";
-          remoteBuild = true;
           activationTimeout = 1000;
           confirmTimeout = 60;
 
@@ -134,7 +171,6 @@
         hetzner-server-1 = {
           hostname = "hetzner-server-1.devices.alper-celik.dev";
           sshUser = "root";
-          remoteBuild = true;
 
           profiles = {
             system = {
@@ -191,4 +227,13 @@
       );
 
     };
+
+  nixConfig = {
+    extra-substituters = [
+      "https://nixos-raspberrypi.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
+    ];
+  };
 }

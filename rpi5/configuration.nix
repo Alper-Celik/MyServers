@@ -29,7 +29,6 @@
   imports = [
     # Include the results of the hardware scan.
     inputs.impermanence.nixosModules.impermanence
-    inputs.nixos-hardware.nixosModules.raspberry-pi-5
   ];
 
   hardware.graphics.enable = true;
