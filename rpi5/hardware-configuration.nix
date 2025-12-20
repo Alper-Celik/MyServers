@@ -52,7 +52,7 @@
     ];
   };
 
-  fileSystems."/boot" = {
+  fileSystems."/boot/firmware" = {
     device = "/dev/disk/by-label/boot";
     fsType = "vfat";
   };

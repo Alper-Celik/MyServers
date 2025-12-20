@@ -125,7 +125,6 @@
                   # list of modules
                   imports = with inputs.nixos-raspberrypi.nixosModules; [
                     raspberry-pi-5.base
-                    raspberry-pi-5.page-size-16k
                     raspberry-pi-5.display-vc4
                     raspberry-pi-5.bluetooth
                   ];
@@ -134,10 +133,20 @@
                 (
                   {
                     config,
+                    pkgs,
                     ...
                   }:
                   {
-                    boot.loader.raspberryPi.bootloader = "kernel";
+                    boot =
+                      let
+                        # kernelBundle = pkgs.linuxAndFirmware.v6_6_31;
+                        kernelBundle = nixos-raspberrypi.packages.${pkgs.stdenv.hostPlatform.system};
+                      in
+                      {
+                        loader.raspberryPi.bootloader = "kernel";
+                        loader.raspberryPi.firmwarePackage = kernelBundle.raspberrypifw;
+                        kernelPackages = kernelBundle.linuxPackages_rpi5;
+                      };
                     system.nixos.tags =
                       let
                         cfg = config.boot.loader.raspberryPi;
