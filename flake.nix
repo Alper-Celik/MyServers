@@ -145,7 +145,7 @@
                       {
                         loader.raspberryPi.bootloader = "kernel";
                         loader.raspberryPi.firmwarePackage = kernelBundle.raspberrypifw;
-                        kernelPackages = kernelBundle.linuxPackages_rpi5;
+                        kernelPackages = kernelBundle.linuxPackages_rpi4;
                       };
                     system.nixos.tags =
                       let
