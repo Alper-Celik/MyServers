@@ -8,6 +8,7 @@ processors:
       - /devices/
       - /tailnet/
       - cv-redirect
+      - git
     class: octodns.processor.filter.NameAllowlistFilter
 
 providers:

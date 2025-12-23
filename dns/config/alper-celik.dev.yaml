@@ -91,6 +91,9 @@ photos.lab:
   ttl: 300
   type: CNAME
   value: hetzner-server-1.devices.alper-celik.dev.
+git:
+  type: CNAME
+  value: hetzner-server-1.devices.alper-celik.dev.
 
   # Devices:
 rpi5.devices:
