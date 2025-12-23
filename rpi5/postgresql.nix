@@ -32,7 +32,10 @@
       let
         # XXX specify the postgresql package you'd like to upgrade to.
         # Do not forget to list the extensions you need.
-        newPostgres = pkgs.postgresql_18_jit.withPackages (config.services.postgresql.extensions);
+        newPostgres = pkgs.postgresql_18_jit.withPackages (ps: [
+          ps.pgvector
+          ps.vectorchord
+        ]);
         cfg = config.services.postgresql;
       in
       pkgs.writeScriptBin "upgrade-pg-cluster" ''
