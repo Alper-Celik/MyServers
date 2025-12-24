@@ -21,10 +21,10 @@
   };
 
   fileSystems."/nix" = {
-    device = "/dev/disk/by-label/nixos";
+    device = "/dev/disk/by-label/nixos-nvme";
     fsType = "btrfs";
     options = [
-      "subvol=nix"
+      "subvol=@nix"
       "compress=zstd"
       "noatime"
     ];
@@ -32,10 +32,10 @@
 
   fileSystems."/persistent" = {
     neededForBoot = true;
-    device = "/dev/disk/by-label/nixos";
+    device = "/dev/disk/by-label/nixos-nvme";
     fsType = "btrfs";
     options = [
-      "subvol=persistent"
+      "subvol=@persistent"
       "compress=zstd"
       "noatime"
     ];
@@ -43,10 +43,10 @@
 
   fileSystems."/persistent-important" = {
     neededForBoot = true;
-    device = "/dev/disk/by-label/nixos";
+    device = "/dev/disk/by-label/nixos-nvme";
     fsType = "btrfs";
     options = [
-      "subvol=persistent-important"
+      "subvol=@persistent-important"
       "compress=zstd"
       "noatime"
     ];
