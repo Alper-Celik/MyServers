@@ -18,6 +18,7 @@
       "nofail"
       "noauto"
       "x-systemd.automount"
+      "x-systemd.requires-mounts-for=/var/lib/multimedia"
       "lowerdir=/var/lib/multimedia/lowerdir"
       "upperdir=/var/lib/multimedia/upperdir"
       "workdir=/var/lib/multimedia/.workdir"

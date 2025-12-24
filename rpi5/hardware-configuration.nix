@@ -10,11 +10,31 @@
 {
   imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
-  fileSystems."/" = {
+  fileSystems."/var/lib/multimedia" = {
     device = "/dev/disk/by-label/nixos";
     fsType = "btrfs";
     options = [
-      "subvol=root"
+      "subvol=@multimedia"
+      "compress=zstd"
+      "noatime"
+    ];
+  };
+
+  fileSystems."/backup-repo" = {
+    device = "/dev/disk/by-label/nixos";
+    fsType = "btrfs";
+    options = [
+      "subvol=@backup-repo"
+      "compress=zstd"
+      "noatime"
+    ];
+  };
+
+  fileSystems."/" = {
+    device = "/dev/disk/by-label/nixos-nvme";
+    fsType = "btrfs";
+    options = [
+      "subvol=@root"
       "compress=zstd"
       "noatime"
     ];
