@@ -43,7 +43,7 @@
     };
     database.createLocally = true;
 
-    package = pkgs.nextcloud31;
+    package = pkgs.nextcloud32;
     hostName = "nextcloud.lab.alper-celik.dev";
     https = true;
 

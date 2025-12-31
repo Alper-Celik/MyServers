@@ -35,6 +35,9 @@ jobs:
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           install_url: https://releases.nixos.org/nix/nix-2.31.2/install
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+        with:
+          use-flakehub: false
 
       - name: update dns
         run: ./dns/update-dns.sh --doit
