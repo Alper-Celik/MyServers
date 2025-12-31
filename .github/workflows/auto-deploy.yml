@@ -1,6 +1,9 @@
 name: auto deployment
 
 on:
+  push:
+    branches: ["main"]
+
   workflow_run:
     workflows: ["Update DNS"]
     types:
@@ -10,13 +13,13 @@ on:
   workflow_dispatch:
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+# However, do  cancel in-progress runs as we probably deployed older commits localy so we shouldn't rollback to old versions when we push
 concurrency:
   group: "deployment"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  updateDns-build-deploy:
     runs-on: ubuntu-24.04-arm
     steps:
       - name: Tailscale
@@ -33,6 +36,11 @@ jobs:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           install_url: https://releases.nixos.org/nix/nix-2.31.2/install
 
+      - name: update dns
+        run: ./dns/update-dns.sh --doit
+        env:
+          CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}
+
       - name: install ssh key
         run: |
           install -m 600 -D /dev/null ~/.ssh/id_rsa
@@ -47,6 +55,9 @@ jobs:
         uses: jlumbroso/free-disk-space@v1.3.1
         with:
           tool-cache: true
+
+      - name: build/check
+        run: nix flake check
 
       - name: deploy
         run: ./deploy.sh

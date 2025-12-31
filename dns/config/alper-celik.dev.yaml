@@ -70,6 +70,9 @@ music.lab:
 documents.lab:
   type: CNAME
   value: rpi5.tailnet.alper-celik.dev.
+syncthing-rpi.lab:
+  type: CNAME
+  value: rpi5.tailnet.alper-celik.dev.
 
   # hetzner-server-1
 adguardhome.lab:
