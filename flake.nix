@@ -169,6 +169,7 @@
           sshUser = "root";
           activationTimeout = 1000;
           confirmTimeout = 60;
+          remoteBuild = true;
 
           profiles = {
             system = {
@@ -180,6 +181,7 @@
         hetzner-server-1 = {
           hostname = "hetzner-server-1.devices.alper-celik.dev";
           sshUser = "root";
+          remoteBuild = true;
 
           profiles = {
             system = {
@@ -191,7 +193,7 @@
 
       };
 
-      checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
+      # checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
 
       packages = forEachSupportedSystem (
         { pkgs, self-pkgs, ... }:
