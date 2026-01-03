@@ -1,7 +1,6 @@
 { config, pkgs-unstable, ... }:
 {
   services.actual = {
-    package = pkgs-unstable.actual-server;
     enable = true;
     settings = {
       port = 3456;
