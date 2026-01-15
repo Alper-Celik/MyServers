@@ -3,7 +3,8 @@
   services.navidrome = {
     enable = true;
     settings = {
-      MusicFolder = "/var/lib/nextcloud/data/alper/files/Music";
+      MusicFolder = "${config.services.syncthing.dataDir}/Music";
+      EnableInsightsCollector = true;
     };
   };
 

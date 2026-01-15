@@ -38,11 +38,12 @@ in
     in
     [
       "d ${syncthing-base} 0771 ${cfg.user} ${cfg.group} - -" # let acl'ed users/groups pass through by setting executable bit on other
+      "d ${cfg.dataDir} 0771 ${cfg.user} ${cfg.group} - -"
 
       "d ${cfg.configDir} 0770 ${cfg.user} ${cfg.group} - -"
-      "d ${cfg.dataDir} 0770 ${cfg.user} ${cfg.group} - -"
 
       "A ${cfg.dataDir} - - - - ${acl "nextcloud" "rwX"}"
+      "A ${cfg.dataDir}/Music - - - - ${acl "navidrome" "rwX"},${acl "nextcloud" "rwX"}"
     ];
 
   services.nginx.virtualHosts."syncthing-rpi.lab.alper-celik.dev" = {
