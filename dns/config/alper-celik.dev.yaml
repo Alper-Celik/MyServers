@@ -73,9 +73,6 @@ documents.lab:
 syncthing-rpi.lab:
   type: CNAME
   value: rpi5.tailnet.alper-celik.dev.
-books.lab:
-  type: CNAME
-  value: rpi5.tailnet.alper-celik.dev.
 
   # hetzner-server-1
 adguardhome.lab:
@@ -95,6 +92,9 @@ blog:
   # "public" services:
 photos.lab:
   ttl: 300
+  type: CNAME
+  value: hetzner-server-1.devices.alper-celik.dev.
+books.lab:
   type: CNAME
   value: hetzner-server-1.devices.alper-celik.dev.
 git:

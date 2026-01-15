@@ -1,11 +1,14 @@
-{ config, ... }:
+{ config, lib, ... }:
 let
   cfg = config.services.syncthing;
   syncthing-base = "/var/lib/syncthing";
 in
 {
 
-  users.users.${config.services.syncthing.user}.home = config.services.syncthing.dataDir;
+  users.users.${cfg.user} = {
+    home = config.services.syncthing.dataDir;
+    createHome = lib.mkForce false;
+  };
   services.syncthing = {
     enable = true;
     dataDir = syncthing-base + "/data";

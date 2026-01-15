@@ -1,12 +1,14 @@
-{ config, ... }:
+{ config, pkgs, ... }:
 let
   cfg = config.services.calibre-web;
 in
 {
   services.calibre-web = {
     enable = true;
-    listen = {
-    };
+    package = pkgs.calibre-web.overridePythonAttrs (old: {
+      dependencies = old.dependencies ++ [ pkgs.calibre-web.optional-dependencies.kobo ];
+    });
+    listen.ip = "0.0.0.0";
     options = {
       enableBookConversion = true;
       enableKepubify = true;
@@ -14,12 +16,5 @@ in
     };
   };
 
-  services.nginx.virtualHosts."books.lab.alper-celik.dev" = {
-    forceSSL = true;
-    enableACME = true;
-    acmeRoot = null;
-    locations."/" = {
-      proxyPass = "http://localhost:${builtins.toString cfg.listen.port}";
-    };
-  };
+  networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ cfg.listen.port ];
 }
