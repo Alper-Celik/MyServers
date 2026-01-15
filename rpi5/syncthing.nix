@@ -59,4 +59,15 @@ in
     };
   };
 
+  systemd.services."syncthing-backup" = {
+    serviceConfig = {
+      PAMName = "sudo";
+      ExecStart = "${./backups/syncthing-backup.sh}";
+      Type = "oneshot";
+      User = "root";
+      Group = "root";
+    };
+    startAt = "2:25";
+  };
+
 }
