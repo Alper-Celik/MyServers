@@ -44,6 +44,7 @@ in
 
       "A ${cfg.dataDir} - - - - ${acl "nextcloud" "rwX"}"
       "A ${cfg.dataDir}/Music - - - - ${acl "navidrome" "rwX"},${acl "nextcloud" "rwX"}"
+      "A \"${cfg.dataDir}/Calibre Library\" - - - - ${acl "calibre-web" "rwX"}"
     ];
 
   services.nginx.virtualHosts."syncthing-rpi.lab.alper-celik.dev" = {
