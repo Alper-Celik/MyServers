@@ -10,6 +10,7 @@ in
     });
     listen.ip = "0.0.0.0";
     options = {
+      enableBookUploading = true;
       enableBookConversion = true;
       enableKepubify = true;
       calibreLibrary = "${config.services.syncthing.dataDir}/Calibre Library/";
