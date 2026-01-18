@@ -66,6 +66,7 @@
 
       personal-ssh-public-keys = [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKhCFPTP1/JLMCCJttaw88EgBQzPt5fF7EcjXIgDdeuM alper@alper-celik.dev"
+        "sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIHelSo03pLmvIUsR2BjQa8YroE5+qWGE5nyX7BFp/7VyAAAABHNzaDo= alper@alper-celik.dev" # yubikey key
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILIvcX+CPn9rgA6I4MutAQS5Ehybcc5tusPqCvTw8aH0"
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDEdpGzo/K4jrtmXtUDlsR8RYWa/Q87plonNjcfMgOPJ"
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOBZSTiDOsVRhcnOO/foEiy2gp3pJt+62QTFGvVJ0AOX u0_a413@localhost" # termux note 10 lite
