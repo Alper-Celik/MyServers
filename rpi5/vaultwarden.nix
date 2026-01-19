@@ -31,6 +31,7 @@ in
     enable = true;
     dbBackend = "postgresql";
     config = {
+      DOMAIN = "https://bitwarden.lab.alper-celik.dev";
       ROCKET_ADDRESS = "::1";
       ROCKET_PORT = 8222;
 
