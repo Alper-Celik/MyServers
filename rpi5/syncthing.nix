@@ -8,7 +8,12 @@ in
   users.users.${cfg.user} = {
     home = config.services.syncthing.dataDir;
     createHome = lib.mkForce false;
+    extraGroups = [
+      "calibre-web"
+      "nextcloud"
+    ];
   };
+
   services.syncthing = {
     enable = true;
     dataDir = syncthing-base + "/data";
