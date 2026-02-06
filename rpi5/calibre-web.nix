@@ -1,21 +1,37 @@
-{ config, pkgs, ... }:
+{ config, ... }:
 let
-  cfg = config.services.calibre-web;
+  cwa-port = 8083;
 in
 {
-  services.calibre-web = {
-    enable = true;
-    package = pkgs.calibre-web.overridePythonAttrs (old: {
-      dependencies = old.dependencies ++ [ pkgs.calibre-web.optional-dependencies.kobo ];
-    });
-    listen.ip = "0.0.0.0";
-    options = {
-      enableBookUploading = true;
-      enableBookConversion = true;
-      enableKepubify = true;
-      calibreLibrary = "${config.services.syncthing.dataDir}/Calibre Library/";
+
+  users = {
+    groups.calibre-web = {
+      gid = 962;
+    };
+    users.calibre-web = {
+      isSystemUser = true;
+      uid = 972;
+      group = config.users.groups.calibre-web.name;
     };
   };
 
-  networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ cfg.listen.port ];
+  virtualisation.oci-containers.containers."calibre-web-automated" = {
+    image = "docker.io/crocodilestick/calibre-web-automated:latest";
+    environment = {
+      PUID = builtins.toString config.users.users.calibre-web.uid;
+      PGID = builtins.toString config.users.groups.calibre-web.gid;
+      TZ = config.time.timeZone;
+    };
+    volumes = [
+      "/var/lib/calibre-web/:/config"
+      "/var/lib/syncthing/data/Calibre Library:/calibre-library"
+    ];
+    ports = [ "8083:8083" ];
+    labels = {
+      "io.containers.autoupdate" = "registry"; # thanks to https://indieweb.social/@MediocreWightMan/113595644096501287
+    };
+    autoStart = true;
+  };
+
+  networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ cwa-port ];
 }
