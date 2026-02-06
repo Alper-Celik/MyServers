@@ -24,6 +24,7 @@
       };
     };
   };
+  systemd.timers."podman-auto-update".wantedBy = [ "timers.target" ];
   systemd.enableEmergencyMode = false; # recommendation from https://schreibt.jetzt/@linus/111962725769108997
 
   imports = [
