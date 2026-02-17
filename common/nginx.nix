@@ -14,7 +14,7 @@ with lib;
             '';
           };
           config = lib.mkIf (!config.expose) {
-            locations."/".extraConfig = ''allow 0.0.0.0/0; '';
+            locations."/".extraConfig = "allow 0.0.0.0/0; ";
           };
         }
       )
@@ -35,6 +35,7 @@ with lib;
 
       virtualHosts."_".locations."/".extraConfig = ''
         allow 100.64.0.0/10;
+        allow 172.25.42.0/24;
 
         deny all;
       '';
