@@ -5,7 +5,8 @@
     extraSetFlags = [ "--advertise-exit-node" ];
     extraUpFlags = [
       "--advertise-exit-node"
-      "--advertise-routes=192.168.1.0/24"
+      "--snat-subnet-routes=false"
+      "--advertise-routes=172.25.42.0/24"
     ];
     enable = true;
     authKeyFile = config.sops.secrets.tailscale-auth-key.path;
