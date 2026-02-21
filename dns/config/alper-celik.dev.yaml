@@ -78,6 +78,9 @@ syncthing-rpi.lab:
 adguardhome.lab:
   type: CNAME
   value: hetzner-server-1.tailnet.alper-celik.dev.
+observe.lab:
+  type: CNAME
+  value: hetzner-server-1.tailnet.alper-celik.dev.
 
   # Github pages:
 ym-pdf:
