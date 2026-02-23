@@ -160,7 +160,7 @@ in
     enableACME = true;
     acmeRoot = null;
     locations."/" = {
-      proxyPass = "http://[::1]:${toString config.services.mimir.configuration.server.http_listen_port}";
+      proxyPass = "http://[::1]:${toString config.services.loki.configuration.server.http_listen_port}";
       extraConfig = ''
         proxy_set_header X-Scope-OrgID anonymous;
         proxy_read_timeout 300s;
@@ -172,7 +172,7 @@ in
   systemd.services.loki.serviceConfig.EnvironmentFile = config.sops.secrets.LOKI_S3_ENV_FILE.path;
   services.loki = {
     enable = true;
-    extraFlags = [ "-config.expand-env=true" ];
+    extraFlags = [ "--config.expand-env=true" ];
     configuration = {
       auth_enabled = false;
       server = {
@@ -211,8 +211,8 @@ in
       storage_config.aws = {
         endpoint = "s3.eu-central-003.backblazeb2.com";
         region = "eu-central-003";
-        access_key_id = "$S3_ACCESS_KEY_ID";
-        secret_access_key = "$S3_SECRET_ACCESS_KEY";
+        access_key_id = "$\{S3_ACCESS_KEY_ID\}";
+        secret_access_key = "$\{S3_SECRET_ACCESS_KEY\}";
         bucketnames = "loki-alper";
       };
     };
