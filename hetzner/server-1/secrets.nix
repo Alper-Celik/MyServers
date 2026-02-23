@@ -18,6 +18,7 @@ in
       tailscale-auth-key-hetzner-server-1 = { };
       GITLAB_RUNNER_AUTOCODE = { };
       MIMIR_S3_ENV_FILE = { };
+      LOKI_S3_ENV_FILE = { };
     };
   };
 }

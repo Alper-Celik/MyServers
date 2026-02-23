@@ -81,6 +81,12 @@ adguardhome.lab:
 observe.lab:
   type: CNAME
   value: hetzner-server-1.tailnet.alper-celik.dev.
+mimir.lab:
+  type: CNAME
+  value: hetzner-server-1.tailnet.alper-celik.dev.
+loki.lab:
+  type: CNAME
+  value: hetzner-server-1.tailnet.alper-celik.dev.
 
   # Github pages:
 ym-pdf:
