@@ -51,7 +51,7 @@ in
       "d ${cfg.configDir} 0770 ${cfg.user} ${cfg.group} - -"
 
       "A ${cfg.dataDir} - - - - ${acl "nextcloud" "rwX"}"
-      "A ${cfg.dataDir}/Music - - - - ${acl "navidrome" "rwX"},${acl "nextcloud" "rwX"}"
+      # "A ${cfg.dataDir}/Music - - - - ${acl "navidrome" "rwX"},${acl "nextcloud" "rwX"}"
       "A \"${cfg.dataDir}/Calibre Library\" - - - - ${acl "calibre-web" "rwX"}"
     ];
 
