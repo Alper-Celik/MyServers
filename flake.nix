@@ -144,13 +144,13 @@
                         kernelBundle = nixos-raspberrypi.packages.${pkgs.stdenv.hostPlatform.system};
                       in
                       {
-                        loader.raspberryPi.bootloader = "kernel";
-                        loader.raspberryPi.firmwarePackage = kernelBundle.raspberrypifw;
+                        loader.raspberry-pi.bootloader = "kernel";
+                        loader.raspberry-pi.firmwarePackage = kernelBundle.raspberrypifw;
                         kernelPackages = kernelBundle.linuxPackages_rpi4;
                       };
                     system.nixos.tags =
                       let
-                        cfg = config.boot.loader.raspberryPi;
+                        cfg = config.boot.loader.raspberry-pi;
                       in
                       [
                         "raspberry-pi-${cfg.variant}"
