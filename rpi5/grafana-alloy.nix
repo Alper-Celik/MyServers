@@ -3,15 +3,6 @@
   ...
 }:
 {
-  systemd.services.alloy.serviceConfig.SupplementaryGroups = [
-    "messagebus"
-
-    # for journal see https://grafana.com/docs/alloy/latest/reference/components/loki/loki.source.journal/
-    "adm"
-    "systemd-journal"
-  ];
-
-  networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ 12345 ];
   services.alloy = {
     enable = true;
     configPath = pkgs.writeText "simple-alloy-config" ''
