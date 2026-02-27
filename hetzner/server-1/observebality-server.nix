@@ -187,7 +187,10 @@ in
         replication_factor = 1;
         ring.kvstore.store = "inmemory";
       };
-      limits_config.retention_period = 0; # infinite consider tuning it if storage costs get out of control
+      limits_config = {
+        retention_period = 0; # infinite consider tuning it if storage costs get out of control
+        ingestion_rate_mb = 50;
+      };
 
       compactor = {
         working_directory = "/var/lib/loki/compactor";
