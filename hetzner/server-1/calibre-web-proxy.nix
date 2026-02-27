@@ -1,7 +1,7 @@
 { all-configs, ... }:
 {
   services.nginx.virtualHosts."books.lab.alper-celik.dev" = {
-    expose = true;
+    x-expose = true;
     forceSSL = true;
     enableACME = true;
     locations."/" = {

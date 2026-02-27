@@ -1,4 +1,7 @@
-{ lib, ... }:
+{ pkgs, lib, ... }:
+let
+  mkIfStr = cond: as: if cond then as else "";
+in
 with lib;
 {
   options.services.nginx.virtualHosts = lib.mkOption {
@@ -6,15 +9,36 @@ with lib;
       lib.types.submodule (
         { config, ... }:
         {
-          options.expose = mkOption {
+
+          options.x-disable-http3 = mkOption {
+            type = types.bool;
+            default = false;
+            description = ''
+              whether to disable http3/quick on this virtualHost
+            '';
+          };
+          options.x-expose = mkOption {
             type = types.bool;
             default = false;
             description = ''
               whether to expose to the internet without tailscale ip
             '';
           };
-          config = lib.mkIf (!config.expose) {
-            locations."/".extraConfig = "allow 0.0.0.0/0; ";
+          config = {
+            locations."/".extraConfig = (
+              mkIfStr (config.x-expose) ''
+                allow 0.0.0.0/0;
+              ''
+            );
+            extraConfig = (
+              mkIfStr (!config.x-disable-http3) ''
+                add_header Alt-Svc 'h3=":443"; ma=86400';
+              ''
+            );
+
+            quic = true;
+            http3 = true;
+
           };
         }
       )
@@ -22,7 +46,12 @@ with lib;
   };
   config = {
     services.nginx = {
+      package = pkgs.nginxMainline;
+
+      enableQuicBPF = true;
+
       recommendedGzipSettings = true;
+      recommendedBrotliSettings = true;
 
       recommendedTlsSettings = true;
       recommendedProxySettings = true;
@@ -31,6 +60,7 @@ with lib;
       appendHttpConfig = ''
         proxy_headers_hash_bucket_size 128;
         proxy_headers_hash_max_size 1024;
+
       '';
 
       virtualHosts."_".locations."/".extraConfig = ''

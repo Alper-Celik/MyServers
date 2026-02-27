@@ -11,7 +11,7 @@ in
 {
   services.nginx = {
     virtualHosts.${cfg.settings.server.DOMAIN} = {
-      expose = true;
+      x-expose = true;
       forceSSL = true;
       enableACME = true;
       extraConfig = ''

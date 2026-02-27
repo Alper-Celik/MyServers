@@ -5,7 +5,7 @@
     enableACME = true;
     acmeRoot = null;
 
-    expose = true;
+    x-expose = true;
 
     locations."/" = {
       proxyWebsockets = true;
