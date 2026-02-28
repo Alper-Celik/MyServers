@@ -1,5 +1,8 @@
 { lib, config, ... }:
 # lib.mkIf config.services.alloy.enable
+let
+  mkIfArr = cond: val: if cond then val else [ ];
+in
 {
 
   networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ 12345 ];
@@ -13,7 +16,8 @@
         # for journal see https://grafana.com/docs/alloy/latest/reference/components/loki/loki.source.journal/
         "adm"
         "systemd-journal"
-      ];
+      ]
+      ++ mkIfArr config.services.nginx.enable [ "nginx" ];
     };
     groups.alloy = { };
   };
