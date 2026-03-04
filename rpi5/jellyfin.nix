@@ -1,16 +1,34 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
 {
-
-  services.jellyfin = {
-    enable = true;
-    group = "nextcloud";
-    # openFirewall = true;
+  users = {
+    groups.jellyfin = {
+      gid = 976;
+    };
+    users.jellyfin = {
+      uid = 981;
+      isSystemUser = true;
+      group = config.users.groups.jellyfin.name;
+    };
   };
-  environment.systemPackages = [
-    pkgs.jellyfin
-    pkgs.jellyfin-web
-    pkgs.jellyfin-ffmpeg
-  ];
+
+  virtualisation.oci-containers.containers."jellyfin" = {
+    image = "docker.io/jellyfin/jellyfin:latest";
+    user = "${builtins.toString config.users.users.jellyfin.uid}:${builtins.toString config.users.groups.jellyfin.gid}";
+
+    ports = [ "8096:8096" ];
+
+    volumes = [
+      "/var/lib/jellyfin/config:/config"
+      "/var/lib/jellyfin/cache:/cache"
+
+      "/var/lib/syncthing/data/Music:/music"
+    ];
+
+    labels = {
+      "io.containers.autoupdate" = "registry";
+    };
+    autoStart = true;
+  };
 
   services.nginx.virtualHosts."jellyfin.lab.alper-celik.dev" = {
     forceSSL = true;
