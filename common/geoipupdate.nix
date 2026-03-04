@@ -1,16 +1,13 @@
 {
   inputs,
   config,
-  lib,
   ...
 }:
 let
   secrets = inputs.MyServersSecrets;
 in
 {
-
   config = {
-
     sops.secrets = {
       geoipupdate_license_key = {
         sopsFile = "${secrets}/secrets/common.yaml";
@@ -18,7 +15,6 @@ in
       };
     };
     services.geoipupdate = {
-      enable = true;
       interval = "daily";
       settings = {
         AccountID = 1305508;

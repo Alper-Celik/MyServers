@@ -89,7 +89,7 @@
           };
 
           all-configs = {
-            inherit hetzner-server-1 rpi5;
+            inherit hetzner-server-1 rpi5 ent-box;
           };
 
           hetzner-server-1 = nixpkgs.lib.nixosSystem {
@@ -103,6 +103,19 @@
                 ;
             };
             modules = all-file ./hetzner/server-1 ++ all-file ./common ++ [ inputs.disko.nixosModules.disko ];
+          };
+
+          ent-box = nixpkgs.lib.nixosSystem {
+            system = "x86_64-linux";
+            specialArgs = {
+              inherit
+                inputs
+                trusted-ssh-keys
+                pkgs-unstable
+                all-configs
+                ;
+            };
+            modules = all-file ./ent-box ++ all-file ./common ++ [ ];
           };
 
           rpi5 = nixos-raspberrypi.lib.nixosSystem {
@@ -188,6 +201,19 @@
             system = {
               user = "root";
               path = deploy-rs.lib.aarch64-linux.activate.nixos self.nixosConfigurations.hetzner-server-1;
+            };
+          };
+        };
+
+        ent-box = {
+          hostname = "172.25.42.61";
+          sshUser = "root";
+          remoteBuild = true;
+
+          profiles = {
+            system = {
+              user = "root";
+              path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.ent-box;
             };
           };
         };

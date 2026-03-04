@@ -3,7 +3,7 @@
 let
   mkIfArr = cond: val: if cond then val else [ ];
 in
-{
+lib.mkIf config.services.alloy.enable {
 
   networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ 12345 ];
   users = {

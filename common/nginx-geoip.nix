@@ -8,7 +8,7 @@
   options = {
     services.nginx.x-enable-geoip = lib.mkOption {
       type = lib.types.bool;
-      default = config.services.geoipupdate.enable;
+      default = false;
 
       description = ''
         whether to setup geoip2 for nginx
@@ -16,6 +16,8 @@
     };
   };
   config = lib.mkIf config.services.nginx.x-enable-geoip {
+
+    services.geoipupdate.enable = true;
     services.nginx = {
       additionalModules = with pkgs.nginxModules; [
         geoip2
