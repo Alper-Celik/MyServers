@@ -9,11 +9,11 @@ fi
 # stop immich before backup
 start_syncthing() {
 	systemctl start syncthing.service
-	systemctl start calibre-web.service
+	systemctl start podman-calibre-web-automated.service
 }
 trap start_syncthing EXIT
 systemctl stop syncthing.service
-systemctl stop calibre-web.service
+systemctl stop podman-calibre-web-automated.service
 
 restic -v -r /backup-repo/ --insecure-no-password backup /var/lib/syncthing
 
