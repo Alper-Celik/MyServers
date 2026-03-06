@@ -11,6 +11,10 @@
     };
   };
 
+  systemd.services.${config.virtualisation.oci-containers.containers."jellyfin".serviceName}.after = [
+    "var-lib-multimedia-media.mount"
+  ];
+
   virtualisation.oci-containers.containers."jellyfin" = {
     image = "docker.io/jellyfin/jellyfin:latest";
     user = "${builtins.toString config.users.users.jellyfin.uid}:${builtins.toString config.users.groups.jellyfin.gid}";
@@ -22,6 +26,7 @@
       "/var/lib/jellyfin/cache:/cache"
 
       "/var/lib/syncthing/data/Music:/music"
+      "/var/lib/multimedia/media:/media"
     ];
 
     labels = {
