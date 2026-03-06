@@ -205,18 +205,18 @@
           };
         };
 
-        ent-box = {
-          hostname = "172.25.42.61";
-          sshUser = "root";
-          remoteBuild = true;
-
-          profiles = {
-            system = {
-              user = "root";
-              path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.ent-box;
-            };
-          };
-        };
+        # ent-box = {
+        #   hostname = "172.25.42.61";
+        #   sshUser = "root";
+        #   remoteBuild = true;
+        #
+        #   profiles = {
+        #     system = {
+        #       user = "root";
+        #       path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.ent-box;
+        #     };
+        #   };
+        # };
 
       };
 
