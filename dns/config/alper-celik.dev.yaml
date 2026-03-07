@@ -75,6 +75,9 @@ audiomuse.lab:
 p2p.lab:
   type: CNAME
   value: rpi5.tailnet.alper-celik.dev.
+chat.lab:
+  type: CNAME
+  value: rpi5.tailnet.alper-celik.dev.
 
   # hetzner-server-1
 adguardhome.lab:

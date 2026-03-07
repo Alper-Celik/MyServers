@@ -42,7 +42,7 @@ in
       b2-backup-rpi5-applicationKey = { };
       REMOTE_RESTIC_PASSWORD = { };
       audiomuse_env = { };
-
+      librechat_creds = { };
     };
 
   };
