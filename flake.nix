@@ -81,9 +81,11 @@
         );
     in
     {
-
       nixosConfigurations =
         let
+          pkgs-stable = import nixpkgs {
+            system = "aarch64-linux";
+          };
           pkgs-unstable = import nixpkgs-unstable {
             system = "aarch64-linux";
           };
@@ -119,12 +121,14 @@
           };
 
           rpi5 = nixos-raspberrypi.lib.nixosSystem {
+            nixpkgs = inputs.nixpkgs-unstable;
             system = "aarch64-linux";
             specialArgs = {
               inherit
                 inputs
                 trusted-ssh-keys
                 pkgs-unstable
+                pkgs-stable
                 all-configs
                 nixos-raspberrypi
                 ;
@@ -133,6 +137,14 @@
               all-file ./rpi5
               ++ all-file ./common
               ++ [
+                {
+                  nixpkgs.overlays = [
+                    (final: prev: {
+                      triton-llvm = null;
+
+                    })
+                  ];
+                }
 
                 {
                   # Hardware specific configuration, see section below for a more complete
