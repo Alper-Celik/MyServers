@@ -35,10 +35,6 @@ freshrss.lab:
   ttl: 300
   type: CNAME
   value: rpi5.tailnet.alper-celik.dev.
-grafana.lab:
-  ttl: 300
-  type: CNAME
-  value: rpi5.tailnet.alper-celik.dev.
 home.lab:
   ttl: 300
   type: CNAME

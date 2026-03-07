@@ -36,12 +36,6 @@ in
         group = owner;
       };
 
-      "postgres/grafana-pass" = {
-        owner = config.systemd.services.grafana.serviceConfig.User;
-      };
-      "postgres/keycloak-pass" = {
-        mode = "444";
-      };
       restic-pass = { };
       rclone-onedrive-config = { };
       b2-backup-rpi5-keyID = { };
