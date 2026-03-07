@@ -8,8 +8,9 @@
   nixpkgs.config.allowUnfreePredicate =
     pkg:
     builtins.elem (lib.getName pkg) [
-      "mongodb"
+      "mongodb-ce"
     ];
+  services.mongodb.package = pkgs.mongodb-ce;
   services.librechat = {
     enable = true;
     enableLocalDB = true;
@@ -24,7 +25,7 @@
     acmeRoot = null;
     forceSSL = true;
     locations."/" = {
-      proxyPass = "http://127.0.0.1:${builtins.toString config.services.librechat.env.PORT}";
+      proxyPass = "http://[::1]:${builtins.toString config.services.librechat.env.PORT}";
       extraConfig = ''
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
