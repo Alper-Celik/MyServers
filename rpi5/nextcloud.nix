@@ -29,7 +29,6 @@
         groupfolders
         twofactor_webauthn
         previewgenerator
-        recognize
         ;
     };
 
@@ -42,7 +41,7 @@
     };
     database.createLocally = true;
 
-    package = pkgs.nextcloud32;
+    package = pkgs.nextcloud33;
     hostName = "nextcloud.lab.alper-celik.dev";
     https = true;
 
