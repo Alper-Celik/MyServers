@@ -32,7 +32,6 @@
         recognize
         ;
     };
-    extraAppsEnable = false;
 
     caching.redis = true;
     configureRedis = true;
@@ -47,8 +46,8 @@
     hostName = "nextcloud.lab.alper-celik.dev";
     https = true;
 
-    autoUpdateApps.enable = false;
-    appstoreEnable = false;
+    autoUpdateApps.enable = true;
+    appstoreEnable = true;
 
     settings = {
       "memories.exiftool" = "/run/current-system/sw/bin/exiftool";
