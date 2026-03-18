@@ -13,7 +13,6 @@
     };
     port = 2383;
     host = "0.0.0.0";
-    database.enableVectors = false;
   };
 
   networking.firewall.interfaces."tailscale0".allowedTCPPorts = [ config.services.immich.port ];
