@@ -269,6 +269,7 @@
               yq
               self-pkgs.octodns
               self-pkgs.deploy-rs
+              nix
             ];
           };
         }
