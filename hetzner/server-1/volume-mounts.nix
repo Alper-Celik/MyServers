@@ -28,4 +28,15 @@
       "subvol=@forgejo"
     ];
   };
+
+  fileSystems."/var/lib/docker" = {
+    device = "/dev/disk/by-label/server-1-vol-1";
+    fsType = "btrfs";
+    options = [
+      "compress=zstd"
+      "noatime"
+      "subvol=@docker"
+    ];
+  };
+
 }
