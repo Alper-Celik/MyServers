@@ -6,7 +6,7 @@
 
     ffmpeg-headless
     exiftool
-    nodePackages.nodejs
+    nodejs
     python3
     gnumake
     gcc
