@@ -111,6 +111,9 @@ photos.lab:
 books.lab:
   type: CNAME
   value: hetzner-server-1.devices.alper-celik.dev.
+koinsight.lab:
+  type: CNAME
+  value: hetzner-server-1.devices.alper-celik.dev.
 git:
   type: CNAME
   value: hetzner-server-1.devices.alper-celik.dev.
