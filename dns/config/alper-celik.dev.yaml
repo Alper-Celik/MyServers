@@ -113,7 +113,7 @@ books.lab:
   value: hetzner-server-1.devices.alper-celik.dev.
 koinsight.lab:
   type: CNAME
-  value: hetzner-server-1.devices.alper-celik.dev.
+  value: rpi5.tailnet.alper-celik.dev.
 git:
   type: CNAME
   value: hetzner-server-1.devices.alper-celik.dev.
