@@ -39,4 +39,14 @@
     ];
   };
 
+  fileSystems."/var/lib/nixos-containers/riscv-tr" = {
+    device = "/dev/disk/by-label/server-1-vol-1";
+    fsType = "btrfs";
+    options = [
+      "compress=zstd"
+      "noatime"
+      "subvol=@riscv-tr"
+    ];
+  };
+
 }

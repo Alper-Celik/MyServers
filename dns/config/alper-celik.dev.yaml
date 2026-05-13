@@ -131,6 +131,9 @@ hetzner-server-1.tailnet:
   type: A
   value: 100.81.156.90
 hetzner-server-1.devices:
-  ttl: 300
-  type: A
-  value: 168.119.172.112
+  - type: A
+    ttl: 300
+    value: 168.119.172.112
+  - type: AAAA
+    ttl: 300
+    value: 2a01:4f8:c0c:57f0::1

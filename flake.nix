@@ -7,6 +7,8 @@
     deploy-rs.url = "github:serokell/deploy-rs";
     my-blog.url = "github:Alper-Celik/MyBlog";
 
+    riscv-tr.url = "github:riscv-turkiye/Infra";
+
     impermanence.url = "github:nix-community/impermanence";
     sops-nix = {
       url = "github:mic92/sops-nix";

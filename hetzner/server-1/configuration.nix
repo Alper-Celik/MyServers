@@ -19,7 +19,6 @@
     fish
   ];
 
-  networking.hostName = "hetzner-server-1";
   time.timeZone = "Europe/Istanbul";
   # Enable the OpenSSH daemon.
   services.openssh = {
@@ -48,8 +47,6 @@
     efiSupport = true;
     efiInstallAsRemovable = true;
   };
-
-  networking.useDHCP = true;
 
   system.stateVersion = "24.05"; # Did you read the comment?
 
