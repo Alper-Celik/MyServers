@@ -11,6 +11,7 @@
       autocode-alper = {
         authenticationTokenConfigFile = config.sops.secrets.GITLAB_RUNNER_AUTOCODE.path;
         dockerImage = "ubuntu";
+        dockerPrivileged = true;
       };
     };
   };
