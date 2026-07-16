@@ -77,10 +77,76 @@
     };
   };
 
-  services.nginx.virtualHosts.${config.services.nextcloud.hostName} = {
-    forceSSL = true;
-    enableACME = true;
-    acmeRoot = null;
+  services.caddy.virtualHosts.${config.services.nextcloud.hostName} = {
+    extraConfig = ''
+      root ${config.services.nginx.virtualHosts.${config.services.nextcloud.hostName}.root}
+      # Rule borrowed from `.htaccess` to handle Microsoft DAV clients
+      @mswebdav {
+        path /
+        header User-Agent DavClnt*
+      }
+      redir @mswebdav /remote.php/webdav/ temporary
+      redir /.well-known/carddav /remote.php/dav/ 301
+      redir /.well-known/caldav /remote.php/dav/ 301
+
+      @hidden {
+        # Rules borrowed from `.htaccess` to hide certain paths from clients
+        path_regexp ^/(?:build|tests|config|lib|3rdparty|templates|data)(?:$|/)
+        path_regexp ^/(?:\.|autotest|occ|issue|indie|db_|console)
+
+        # Hide metadata files which would otherwise be served as plain files and
+        # leak dependency information (composer.json, package.json, core/shipped.json).
+        path_regexp ^/(?:composer\.(?:json|lock)|package(?:-lock)?\.json|core/shipped\.json)$
+      }
+      error @hidden 404
+
+
+      @static_files {
+        file
+        path_regexp \.(?:css|js|mjs|svg|gif|ico|jpg|png|webp|wasm|tflite|map|ogg|flac|mp4|webm)$
+      }
+      @immutable_files {
+        file
+        path_regexp \.(?:css|js|mjs|svg|gif|ico|jpg|png|webp|wasm|tflite|map|ogg|flac|mp4|webm)$
+        query v=*
+      }
+      header @static_files {
+        # HTTP response headers borrowed from Nextcloud `.htaccess`
+        Cache-Control                     "public, max-age=15778463"
+        Referrer-Policy                   "no-referrer"
+        X-Content-Type-Options            "nosniff"
+        X-Frame-Options                   "SAMEORIGIN"
+        X-Permitted-Cross-Domain-Policies "none"
+        X-Robots-Tag                      "noindex, nofollow"
+      }
+      header @immutable_files Cache-Control "public, max-age=15778463, immutable"
+
+      @font_files {
+        file
+        path_regexp \.(?:otf|woff2?)$
+      }
+      header @font_files Cache-Control "public, max-age=604800"
+
+      header {
+        # HTTP response headers borrowed from Nextcloud `.htaccess`
+        Referrer-Policy                   "no-referrer"
+        X-Content-Type-Options            "nosniff"
+        X-Frame-Options                   "SAMEORIGIN"
+        X-Permitted-Cross-Domain-Policies "none"
+        X-Robots-Tag                      "noindex, nofollow"
+
+        # Remove X-Powered-By, which is an information leak
+        -X-Powered-By
+      }
+
+      php_fastcgi unix/${config.services.phpfpm.pools.nextcloud.socket} {
+        root ${config.services.nginx.virtualHosts.${config.services.nextcloud.hostName}.root}
+        env front_controller_active true
+        env modHeadersAvailable true
+      }
+      redir /remote* /remote.php{uri} permanent
+      try_files {path} {path}/ /index.php{uri}
+    '';
   };
 
   services.collabora-online = {
