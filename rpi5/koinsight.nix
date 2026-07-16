@@ -33,13 +33,8 @@ in
     };
     autoStart = true;
   };
-  services.nginx.virtualHosts."koinsight.lab.alper-celik.dev" = {
-    forceSSL = true;
-    enableACME = true;
-    acmeRoot = null;
-    locations."/" = {
-      proxyPass = "http://127.0.0.1:${port}";
-    };
+  services.caddy.virtualHosts."koinsight.lab.alper-celik.dev" = {
+    extraConfig = "reverse_proxy http://127.0.0.1:${port}";
   };
 
 }
