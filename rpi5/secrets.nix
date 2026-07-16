@@ -20,6 +20,7 @@ in
       CLOUDFLARE_TOKEN-dns = {
         owner = config.users.users.octo-dns.name;
       };
+      CLOUDFLARE_CADDY_TOKEN = { };
       tailscale-auth-key = { };
       freshrss-admin-pass = rec {
         owner = config.services.freshrss.user;

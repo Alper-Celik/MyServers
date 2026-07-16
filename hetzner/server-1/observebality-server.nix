@@ -60,32 +60,19 @@ in
 
   };
 
-  services.nginx.virtualHosts.${grafana-domain} = {
-    forceSSL = true;
-    enableACME = true;
-    acmeRoot = null;
-    locations."/" = {
-      proxyPass = "http://${toString config.services.grafana.settings.server.http_addr}:${toString config.services.grafana.settings.server.http_port}";
-      proxyWebsockets = true;
-      recommendedProxySettings = true;
-    };
+  services.caddy.virtualHosts.${grafana-domain} = {
+    extraConfig = "reverse_proxy http://${toString config.services.grafana.settings.server.http_addr}:${toString config.services.grafana.settings.server.http_port}";
   };
 
   # mimir (time series database)
 
-  services.nginx.virtualHosts.${mimir-domain} = {
-    forceSSL = true;
-    enableACME = true;
-    acmeRoot = null;
-    locations."/" = {
-      proxyPass = "http://[::1]:${toString config.services.mimir.configuration.server.http_listen_port}";
-      extraConfig = ''
-        proxy_set_header X-Scope-OrgID anonymous;
-        proxy_read_timeout 300s;
-        proxy_send_timeout 300s;
-        client_max_body_size 512m;
-      '';
-    };
+  services.caddy.virtualHosts.${mimir-domain} = {
+    extraConfig = ''
+      header {
+        X-Scope-OrgID anonymous
+      }
+      reverse_proxy http://[::1]:${toString config.services.mimir.configuration.server.http_listen_port}
+    '';
   };
 
   systemd.services.mimir.serviceConfig.EnvironmentFile = config.sops.secrets.MIMIR_S3_ENV_FILE.path;
@@ -155,19 +142,13 @@ in
   };
 
   # loki (log database)
-  services.nginx.virtualHosts.${loki-domain} = {
-    forceSSL = true;
-    enableACME = true;
-    acmeRoot = null;
-    locations."/" = {
-      proxyPass = "http://[::1]:${toString config.services.loki.configuration.server.http_listen_port}";
-      extraConfig = ''
-        proxy_set_header X-Scope-OrgID anonymous;
-        proxy_read_timeout 300s;
-        proxy_send_timeout 300s;
-        client_max_body_size 512m;
-      '';
-    };
+  services.caddy.virtualHosts.${loki-domain} = {
+    extraConfig = ''
+      header {
+        X-Scope-OrgID anonymous
+      }
+      reverse_proxy http://[::1]:${toString config.services.loki.configuration.server.http_listen_port}
+    '';
   };
   systemd.services.loki.serviceConfig.EnvironmentFile = config.sops.secrets.LOKI_S3_ENV_FILE.path;
   services.loki = {

@@ -1,10 +1,14 @@
 { config, lib, ... }@args:
 with lib;
 {
-
   config = {
-    services.nginx = {
+
+    services.caddy = {
       enable = true;
+    };
+
+    services.nginx = {
+      enable = false;
     };
 
     security.acme = {

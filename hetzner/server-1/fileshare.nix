@@ -1,35 +1,15 @@
-{ config, ... }:
+{ ... }:
 {
-  services.nginx.virtualHosts."fileshare.alper-celik.dev" = {
-    forceSSL = true;
-    enableACME = true;
+  services.caddy.virtualHosts."fileshare.alper-celik.dev" = {
     x-expose = true;
-    locations."/" = {
-      proxyPass = "http://localhost:18080";
-    };
-  };
-
-  services.caddy = {
-    enable = true;
-    virtualHosts."http://fileshare.alper-celik.dev" = {
-      extraConfig = ''
-        root /var/lib/fileshare
-        file_server browse
-      '';
-    };
-    globalConfig = ''
-        http_port    18080
-      	https_port   44380
+    extraConfig = ''
+      root /var/lib/fileshare
+      file_server browse
     '';
   };
 
-  services.nginx.virtualHosts."cv-redirect.alper-celik.dev" = {
-    forceSSL = true;
-    enableACME = true;
-    acmeRoot = null;
+  services.caddy.virtualHosts."cv-redirect.alper-celik.dev" = {
     x-expose = true;
-    locations."/" = {
-      return = "301 https://fileshare.alper-celik.dev/cv%20resources/cv.pdf";
-    };
+    extraConfig = "redir https://fileshare.alper-celik.dev/cv%20resources/cv.pdf permanent";
   };
 }

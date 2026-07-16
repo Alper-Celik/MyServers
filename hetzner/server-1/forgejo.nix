@@ -9,16 +9,9 @@ let
   srv = cfg.settings.server;
 in
 {
-  services.nginx = {
-    virtualHosts.${cfg.settings.server.DOMAIN} = {
-      x-expose = true;
-      forceSSL = true;
-      enableACME = true;
-      extraConfig = ''
-        client_max_body_size 512M;
-      '';
-      locations."/".proxyPass = "http://localhost:${toString srv.HTTP_PORT}";
-    };
+  services.caddy.virtualHosts.${cfg.settings.server.DOMAIN} = {
+    x-expose = true;
+    extraConfig = "reverse_proxy http://localhost:${toString srv.HTTP_PORT}";
   };
 
   services.forgejo = {
