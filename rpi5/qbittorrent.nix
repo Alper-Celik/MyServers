@@ -18,7 +18,13 @@
     };
   };
 
-  services.caddy.virtualHosts."p2p.lab.alper-celik.dev" = {
-    extraConfig = "reverse_proxy http://127.0.0.1:${toString config.services.qbittorrent.webuiPort}";
+  services.nginx.virtualHosts."p2p.lab.alper-celik.dev" = {
+    enableACME = true;
+    acmeRoot = null;
+    forceSSL = true;
+    locations."/" = {
+      proxyPass = "http://127.0.0.1:${builtins.toString config.services.qbittorrent.webuiPort}";
+      proxyWebsockets = true;
+    };
   };
 }

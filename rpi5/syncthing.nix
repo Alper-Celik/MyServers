@@ -55,8 +55,13 @@ in
       "A \"${cfg.dataDir}/Calibre Library\" - - - - ${acl "calibre-web" "rwX"}"
     ];
 
-  services.caddy.virtualHosts."syncthing-rpi.lab.alper-celik.dev" = {
-    extraConfig = "reverse_proxy http://${config.services.syncthing.guiAddress}";
+  services.nginx.virtualHosts."syncthing-rpi.lab.alper-celik.dev" = {
+    forceSSL = true;
+    enableACME = true;
+    acmeRoot = null;
+    locations."/" = {
+      proxyPass = "http://${config.services.syncthing.guiAddress}";
+    };
   };
 
   systemd.services."syncthing-backup" = {

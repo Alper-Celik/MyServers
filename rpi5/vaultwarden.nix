@@ -39,8 +39,13 @@ in
     };
   };
 
-  services.caddy.virtualHosts."bitwarden.lab.alper-celik.dev" = {
-    extraConfig = "reverse_proxy http://localhost:${toString config.services.vaultwarden.config.ROCKET_PORT}";
+  services.nginx.virtualHosts."bitwarden.lab.alper-celik.dev" = {
+    enableACME = true;
+    forceSSL = true;
+    acmeRoot = null;
+    locations."/" = {
+      proxyPass = "http://localhost:${toString config.services.vaultwarden.config.ROCKET_PORT}";
+    };
   };
 
   systemd.services."vaultwarden-backup" = {

@@ -21,7 +21,15 @@
     autoStart = true;
   };
 
-  services.caddy.virtualHosts."home.lab.alper-celik.dev" = {
-    extraConfig = "reverse_proxy http://[::1]:8123";
+  services.nginx = {
+    virtualHosts."home.lab.alper-celik.dev" = {
+      forceSSL = true;
+      enableACME = true;
+      acmeRoot = null;
+      locations."/" = {
+        proxyPass = "http://[::1]:8123";
+        proxyWebsockets = true;
+      };
+    };
   };
 }

@@ -20,7 +20,19 @@
     };
   };
 
-  services.caddy.virtualHosts."chat.lab.alper-celik.dev" = {
-    extraConfig = "reverse_proxy http://[::1]:${toString config.services.librechat.env.PORT}";
+  services.nginx.virtualHosts."chat.lab.alper-celik.dev" = {
+    enableACME = true;
+    acmeRoot = null;
+    forceSSL = true;
+    locations."/" = {
+      proxyPass = "http://[::1]:${builtins.toString config.services.librechat.env.PORT}";
+      extraConfig = ''
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+      '';
+    };
   };
 }

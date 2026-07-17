@@ -21,8 +21,13 @@
   };
   systemd.services.pgadmin.serviceConfig.TimeoutStartSec = "10min";
 
-  services.caddy.virtualHosts."pgadmin.lab.alper-celik.dev" = {
-    extraConfig = "reverse_proxy http://127.0.0.1:${toString config.services.pgadmin.port}";
+  services.nginx.virtualHosts."pgadmin.lab.alper-celik.dev" = {
+    enableACME = true;
+    forceSSL = true;
+    acmeRoot = null;
+    locations."/" = {
+      proxyPass = "http://127.0.0.1:${toString config.services.pgadmin.port}";
+    };
   };
 
 }
