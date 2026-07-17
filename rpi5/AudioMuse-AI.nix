@@ -103,13 +103,8 @@ in
     };
   };
 
-  services.nginx.virtualHosts."audiomuse.lab.alper-celik.dev" = {
-    forceSSL = true;
-    enableACME = true;
-    acmeRoot = null;
-    locations."/" = {
-      proxyPass = "http://127.0.0.1:8980";
-    };
+  services.caddy.virtualHosts."audiomuse.lab.alper-celik.dev" = {
+    extraConfig = "reverse_proxy http://127.0.0.1:8980";
   };
 
 }

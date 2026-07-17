@@ -14,6 +14,7 @@
     enable = true;
     baseUrl = "https://${config.services.freshrss.virtualHost}";
     virtualHost = "freshrss.lab.alper-celik.dev";
+    webserver = "caddy";
     passwordFile = config.sops.secrets.freshrss-admin-pass.path;
     database = {
       name = "freshrss";
@@ -21,12 +22,6 @@
       type = "pgsql";
       host = "/run/postgresql";
     };
-  };
-
-  services.nginx.virtualHosts.${config.services.freshrss.virtualHost} = {
-    forceSSL = true;
-    enableACME = true;
-    acmeRoot = null;
   };
 
   systemd.services."freshrss-backup" = {

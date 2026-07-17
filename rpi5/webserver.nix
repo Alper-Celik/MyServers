@@ -8,8 +8,9 @@ in
 {
 
   config = {
+    services.caddy.enable = true;
     services.nginx = {
-      enable = true;
+      enable = false;
     };
 
     security.acme = {
