@@ -52,16 +52,16 @@ in
 
       globalConfig = lib.mkBefore ''
         servers {
-          0rtt off
+          trusted_proxies static private_ranges ${mkIfStr config.services.tailscale.enable "100.64.0.0/10"}
         }
       '';
 
       extraConfig = ''
-        *.lab.alper-celik.dev, *.alper-celik.dev {
-          tls {
-            dns cloudflare {env.CF_API_TOKEN}
-          }
-          abort
+        http:// {
+            @acme path /.well-known/acme-challenge/*
+            handle @acme {
+                reverse_proxy rpi5.bobtail-stonecat.ts.net:80
+            }
         }
       '';
 
