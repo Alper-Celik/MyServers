@@ -41,35 +41,14 @@ in
 
   config = {
 
-    sops.templates."caddy.env".content = ''
-      CF_API_TOKEN=${config.sops.placeholder.CLOUDFLARE_CADDY_TOKEN}
-    '';
-
     services.caddy = {
       enable = true;
       email = "alper@alper-celik.dev";
-      environmentFile = config.sops.templates."caddy.env".path;
-
       globalConfig = lib.mkBefore ''
         servers {
           trusted_proxies static private_ranges ${mkIfStr config.services.tailscale.enable "100.64.0.0/10"}
         }
       '';
-
-      extraConfig = ''
-        http:// {
-            @acme path /.well-known/acme-challenge/*
-            handle @acme {
-                reverse_proxy rpi5.bobtail-stonecat.ts.net:80
-            }
-        }
-      '';
-
-      package = pkgs.caddy.withPlugins {
-        plugins = [ "github.com/caddy-dns/cloudflare@v0.2.4" ];
-        hash = "sha256-hEHgAG0F0ozHRAPuxEqLyTATBrE+pajeXDiSNwniorg=";
-      };
     };
-
   };
 }
