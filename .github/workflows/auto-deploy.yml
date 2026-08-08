@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   updateDns-build-deploy:
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-latest
     steps:
       - name: Tailscale
         uses: tailscale/github-action@v2
@@ -54,11 +54,6 @@ jobs:
           # ssh-keyscan network-vm > ~/.ssh/known_hosts
         env:
           SSH_PRIVATE_KEY: ${{secrets.SSH_PRIVATE_KEY}}
-
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@v1.3.1
-        with:
-          tool-cache: true
 
       - name: build/check
         run: nix flake check
