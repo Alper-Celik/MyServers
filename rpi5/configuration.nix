@@ -6,6 +6,7 @@
   config,
   lib,
   pkgs,
+  pkgs-stable,
   inputs,
   trusted-ssh-keys,
   ...
@@ -119,7 +120,7 @@
     vim
     fish
     tmux
-    waypipe
+    # pkgs-stable.waypipe
   ];
 
   # Enable the OpenSSH daemon.
