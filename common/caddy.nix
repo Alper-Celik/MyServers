@@ -45,6 +45,11 @@ in
       enable = true;
       email = "alper@alper-celik.dev";
       globalConfig = lib.mkBefore ''
+        metrics {
+          per_host
+          otlp
+        }
+
         servers {
           trusted_proxies static private_ranges ${mkIfStr config.services.tailscale.enable "100.64.0.0/10"}
         }
