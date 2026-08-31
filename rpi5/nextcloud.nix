@@ -90,13 +90,16 @@
       redir /.well-known/caldav /remote.php/dav/ 301
 
       @hidden {
+        # rules merged by LLM
+        path_regexp ^/(?:(?:build|tests|config|lib|3rdparty|templates|data)(?:$|/)|(?:\.|autotest|occ|issue|indie|db_|console)|(?:composer\.(?:json|lock)|package(?:-lock)?\.json|core/shipped\.json)$)
+
         # Rules borrowed from `.htaccess` to hide certain paths from clients
-        path_regexp ^/(?:build|tests|config|lib|3rdparty|templates|data)(?:$|/)
-        path_regexp ^/(?:\.|autotest|occ|issue|indie|db_|console)
+        #path_regexp ^/(?:build|tests|config|lib|3rdparty|templates|data)(?:$|/)
+        #path_regexp ^/(?:\.|autotest|occ|issue|indie|db_|console)
 
         # Hide metadata files which would otherwise be served as plain files and
         # leak dependency information (composer.json, package.json, core/shipped.json).
-        path_regexp ^/(?:composer\.(?:json|lock)|package(?:-lock)?\.json|core/shipped\.json)$
+        #path_regexp ^/(?:composer\.(?:json|lock)|package(?:-lock)?\.json|core/shipped\.json)$
       }
       error @hidden 404
 

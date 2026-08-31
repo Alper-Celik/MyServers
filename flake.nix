@@ -88,39 +88,56 @@
     {
       nixosConfigurations =
         let
-          pkgs-stable = import nixpkgs {
-            system = "aarch64-linux";
-          };
-          pkgs-unstable = import nixpkgs-unstable {
-            system = "aarch64-linux";
-          };
+          pkgs-stable =
+            system:
+            import nixpkgs {
+              inherit system;
+            };
+          pkgs-unstable =
+            system:
+            import nixpkgs-unstable {
+              inherit system;
+            };
 
           all-configs = {
-            inherit hetzner-server-1 rpi5;
+            inherit hetzner-server-1 rpi5 ovhcloud-server-1;
           };
 
-          hetzner-server-1 = nixpkgs.lib.nixosSystem {
-            system = "aarch64-linux";
+          ovhcloud-server-1 = nixpkgs.lib.nixosSystem rec {
+            system = "x86_64-linux";
             specialArgs = {
+              pkgs-unstable = (pkgs-unstable system);
               inherit
                 inputs
                 trusted-ssh-keys
-                pkgs-unstable
+                all-configs
+                ;
+            };
+            modules = all-file ./ovhcloud/server-1 ++ all-file ./common ++ [ inputs.disko.nixosModules.disko ];
+          };
+
+          hetzner-server-1 = nixpkgs.lib.nixosSystem rec {
+            system = "aarch64-linux";
+            specialArgs = {
+              pkgs-unstable = (pkgs-unstable system);
+              inherit
+                inputs
+                trusted-ssh-keys
                 all-configs
                 ;
             };
             modules = all-file ./hetzner/server-1 ++ all-file ./common ++ [ inputs.disko.nixosModules.disko ];
           };
 
-          rpi5 = nixos-raspberrypi.lib.nixosSystem {
+          rpi5 = nixos-raspberrypi.lib.nixosSystem rec {
             nixpkgs = inputs.nixpkgs-unstable;
             system = "aarch64-linux";
             specialArgs = {
+              pkgs-stable = (pkgs-stable system);
+              pkgs-unstable = (pkgs-unstable system);
               inherit
                 inputs
                 trusted-ssh-keys
-                pkgs-unstable
-                pkgs-stable
                 all-configs
                 nixos-raspberrypi
                 ;
@@ -182,20 +199,32 @@
         all-configs;
 
       deploy.nodes = {
-        rpi5 = {
-          hostname = "rpi5.tailnet.alper-celik.dev";
+        ovhcloud-server-1 = {
+          hostname = "api.projectread.ing";
           sshUser = "root";
-          activationTimeout = 1000;
-          confirmTimeout = 60;
-          # remoteBuild = true;
-
+          remoteBuild = true;
           profiles = {
             system = {
               user = "root";
-              path = deploy-rs.lib.aarch64-linux.activate.nixos self.nixosConfigurations.rpi5;
+              path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.ovhcloud-server-1;
             };
           };
+
         };
+        # rpi5 = {
+        #   hostname = "rpi5.tailnet.alper-celik.dev";
+        #   sshUser = "root";
+        #   activationTimeout = 1000;
+        #   confirmTimeout = 60;
+        #   # remoteBuild = true;
+        #
+        #   profiles = {
+        #     system = {
+        #       user = "root";
+        #       path = deploy-rs.lib.aarch64-linux.activate.nixos self.nixosConfigurations.rpi5;
+        #     };
+        #   };
+        # };
         hetzner-server-1 = {
           hostname = "hetzner-server-1.devices.alper-celik.dev";
           sshUser = "root";
@@ -210,7 +239,7 @@
         };
       };
 
-      checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
+      # checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
 
       packages = forEachSupportedSystem (
         { pkgs, self-pkgs, ... }:
