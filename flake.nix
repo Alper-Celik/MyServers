@@ -7,7 +7,10 @@
       url = "github:nvmd/nixos-raspberrypi/develop";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
-    deploy-rs.url = "github:serokell/deploy-rs";
+    deploy-rs = {
+      url = "github:serokell/deploy-rs";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
     my-blog.url = "github:Alper-Celik/MyBlog";
 
     riscv-tr.url = "github:riscv-turkiye/Infra";
