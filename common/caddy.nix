@@ -22,6 +22,8 @@ in
             '';
           };
           config = {
+            useACMEHost = config.hostName;
+
             extraConfig = lib.mkOrder 400 (
               # even before mkBefore see : https://github.com/NixOS/nixpkgs/blob/dcd5b741d586068371ac436a5bd558ef76bbfb4d/nixos/doc/manual/development/option-def.section.md?plain=1#L107
               ''
@@ -45,6 +47,7 @@ in
       enable = true;
       email = "alper@alper-celik.dev";
       globalConfig = lib.mkBefore ''
+        auto_https disable_certs # automated using nixos module of lego
         metrics {
           per_host
           otlp
