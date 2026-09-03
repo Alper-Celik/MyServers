@@ -7,6 +7,5 @@
       "--advertise-exit-node"
     ];
     enable = true;
-    authKeyFile = config.sops.secrets.tailscale-auth-key-hetzner-server-1.path;
   };
 }

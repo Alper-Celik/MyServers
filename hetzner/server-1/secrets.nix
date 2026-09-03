@@ -13,10 +13,6 @@ in
       generateKey = true;
     };
     secrets = {
-      CLOUDFLARE_API_KEY = { };
-      CLOUDFLARE_EMAIL = { };
-      CLOUDFLARE_CADDY_TOKEN = { };
-      tailscale-auth-key-hetzner-server-1 = { };
       GITLAB_RUNNER_AUTOCODE = { };
       MIMIR_S3_ENV_FILE = { };
       LOKI_S3_ENV_FILE = { };
