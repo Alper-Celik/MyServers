@@ -15,18 +15,10 @@ collabora-online.lab:
   ttl: 300
   type: CNAME
   value: rpi5.tailnet.alper-celik.dev.
-couchdb.lab:
-  ttl: 300
-  type: CNAME
-  value: rpi5.tailnet.alper-celik.dev.
 cv-redirect:
   ttl: 300
   type: A
   value: 168.119.172.112
-do-vm:
-  ttl: 300
-  type: A
-  value: 146.190.206.52
 fileshare:
   ttl: 300
   type: A
@@ -39,18 +31,10 @@ home.lab:
   ttl: 300
   type: CNAME
   value: rpi5.tailnet.alper-celik.dev.
-id.lab:
-  ttl: 300
-  type: CNAME
-  value: rpi5.tailnet.alper-celik.dev.
 jellyfin.lab:
   ttl: 300
   type: CNAME
   value: rpi5.tailnet.alper-celik.dev.
-modded-mc:
-  ttl: 300
-  type: CNAME
-  value: do-vm.alper-celik.dev.
 nextcloud.lab:
   ttl: 300
   type: CNAME
@@ -75,9 +59,9 @@ audiomuse.lab:
 p2p.lab:
   type: CNAME
   value: rpi5.tailnet.alper-celik.dev.
-chat.lab:
+llm.lab:
   type: CNAME
-  value: rpi5.tailnet.alper-celik.dev.
+  value: hetzner-server-1.tailnet.alper-celik.dev.
 
   # hetzner-server-1
 adguardhome.lab:
