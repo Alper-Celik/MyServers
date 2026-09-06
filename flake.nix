@@ -231,7 +231,7 @@
         hetzner-server-1 = {
           hostname = "hetzner-server-1.devices.alper-celik.dev";
           sshUser = "root";
-          # remoteBuild = true;
+          remoteBuild = true;
 
           profiles = {
             system = {
