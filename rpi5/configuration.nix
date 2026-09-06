@@ -12,21 +12,6 @@
   ...
 }:
 {
-
-  virtualisation = {
-    oci-containers = {
-      backend = "podman";
-    };
-    podman = {
-      enable = true;
-      defaultNetwork.settings.dns_enabled = true;
-      autoPrune = {
-        enable = true;
-        dates = "weekly";
-      };
-    };
-  };
-  systemd.timers."podman-auto-update".wantedBy = [ "timers.target" ];
   systemd.enableEmergencyMode = false; # recommendation from https://schreibt.jetzt/@linus/111962725769108997
 
   imports = [
