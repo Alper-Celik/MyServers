@@ -30,7 +30,7 @@ jobs:
 
       - name: Tailscale
         id: tailscale
-        uses: tailscale/github-action@v2
+        uses: tailscale/github-action@v4
         background: true
         with:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
