@@ -121,3 +121,11 @@ hetzner-server-1.devices:
   - type: AAAA
     ttl: 300
     value: 2a01:4f8:c0c:57f0::1
+ovhcloud-server-1.tailnet:
+  type: A
+  value: 100.105.99.91
+ovhcloud-server-1.devices:
+  - type: A
+    value: 57.131.137.204
+  - type: AAAA
+    value: 2001:41d0:701:1100::42
