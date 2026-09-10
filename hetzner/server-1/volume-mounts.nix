@@ -9,6 +9,16 @@
     ];
   };
 
+  fileSystems."/var" = {
+    device = "/dev/disk/by-label/server-1-vol-1";
+    fsType = "btrfs";
+    options = [
+      "compress=zstd"
+      "noatime"
+      "subvol=@var"
+    ];
+  };
+
   fileSystems."/var/lib/postgresql" = {
     device = "/dev/disk/by-label/server-1-vol-1";
     fsType = "btrfs";
