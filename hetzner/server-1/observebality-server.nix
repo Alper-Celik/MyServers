@@ -22,7 +22,6 @@ in
   services.grafana = {
     enable = true;
     settings = {
-      security.secret_key = "SW2YcwTIb9zpOOhoPsMm"; # TODO: Please lets not keep it ok 🥹
       server = {
         http_addr = "127.0.0.1";
         http_port = 3080;

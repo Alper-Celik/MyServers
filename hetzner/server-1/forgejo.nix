@@ -30,5 +30,5 @@ in
     };
   };
 
-  services.openssh.settings.AcceptEnv = [ "GIT_PROTOCOL" ];
+  services.openssh.settings.AcceptEnv = "GIT_PROTOCOL";
 }
