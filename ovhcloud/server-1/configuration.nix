@@ -6,7 +6,6 @@
   ...
 }:
 {
-  networking.hostName = "ovhcloud-server-1";
   boot.initrd.availableKernelModules = [
     "ata_piix"
     "uhci_hcd"
