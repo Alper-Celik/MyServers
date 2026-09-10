@@ -1,4 +1,4 @@
-{ config, pkgs-stable, ... }:
+{ config, pkgs-unstable, ... }:
 {
   users.users.immich.extraGroups = [
     "video"
@@ -6,7 +6,7 @@
     config.users.groups.media.name
   ];
   services.immich = {
-    package = pkgs-stable.immich;
+    package = pkgs-unstable.immich;
     enable = true;
     environment = {
       IMMICH_TELEMETRY_INCLUDE = "all";
