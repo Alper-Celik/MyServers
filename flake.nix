@@ -214,20 +214,20 @@
           };
 
         };
-        # rpi5 = {
-        #   hostname = "rpi5.tailnet.alper-celik.dev";
-        #   sshUser = "root";
-        #   activationTimeout = 1000;
-        #   confirmTimeout = 60;
-        #   # remoteBuild = true;
-        #
-        #   profiles = {
-        #     system = {
-        #       user = "root";
-        #       path = deploy-rs.lib.aarch64-linux.activate.nixos self.nixosConfigurations.rpi5;
-        #     };
-        #   };
-        # };
+        rpi5 = {
+          hostname = "rpi5.tailnet.alper-celik.dev";
+          sshUser = "root";
+          activationTimeout = 1000;
+          confirmTimeout = 60;
+          remoteBuild = true;
+
+          profiles = {
+            system = {
+              user = "root";
+              path = deploy-rs.lib.aarch64-linux.activate.nixos self.nixosConfigurations.rpi5;
+            };
+          };
+        };
         hetzner-server-1 = {
           hostname = "hetzner-server-1.devices.alper-celik.dev";
           sshUser = "root";
