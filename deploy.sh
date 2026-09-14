@@ -156,19 +156,25 @@ for node in "${deploy_nodes[@]}"; do
     host="${node_host[$node]}"
     ssh_user="${node_ssh_user[$node]}"
     closure="${node_closure[$node]}"
+    tag="$(printf '%-18s' "$node")"
 
-    if [ -z "${NIXBUILDNET_TOKEN:-}" ]; then
-      echo "==> NIXBUILDNET_TOKEN not set; copying $node via this runner" >&2
-      copy_via_runner "$ssh_user" "$host" "$closure" "$node"
-    elif [ "$nb_host" = "$remote_store" ]; then
-      echo "==> REMOTE_STORE=$remote_store is not ssh-ng://; copying $node via this runner" >&2
-      copy_via_runner "$ssh_user" "$host" "$closure" "$node"
-    elif pull_on_host "$ssh_user" "$host" "$closure"; then
-      echo "==> $node pulled $closure directly from ssh://$nb_host"
-    else
-      echo "==> host-side pull failed for $node; copying via this runner" >&2
-      copy_via_runner "$ssh_user" "$host" "$closure" "$node"
-    fi
+    # Prefix every line with the node name; the copies run in parallel and
+    # would otherwise interleave. pipefail (inherited) keeps the pipeline's
+    # status equal to the body's, so `wait` still detects failures.
+    {
+      if [ -z "${NIXBUILDNET_TOKEN:-}" ]; then
+        echo "NIXBUILDNET_TOKEN not set; copying via this runner" >&2
+        copy_via_runner "$ssh_user" "$host" "$closure" "$node"
+      elif [ "$nb_host" = "$remote_store" ]; then
+        echo "REMOTE_STORE=$remote_store is not ssh-ng://; copying via this runner" >&2
+        copy_via_runner "$ssh_user" "$host" "$closure" "$node"
+      elif pull_on_host "$ssh_user" "$host" "$closure"; then
+        echo "pulled $closure directly from ssh://$nb_host"
+      else
+        echo "host-side pull failed; copying via this runner" >&2
+        copy_via_runner "$ssh_user" "$host" "$closure" "$node"
+      fi
+    } 2>&1 | sed -u "s|^|$tag > |"
   ) &
   pids+=("$!")
 done
