@@ -188,17 +188,41 @@ for i in "${!pids[@]}"; do
   fi
 done
 
-# 3) Deploy only the nodes that were prepared successfully (the remote build
-#    deploy-rs performs finds the closure already valid, so it just activates).
-targets=()
+# 3) Deploy each prepared node independently, so a failure on one host does not
+#    stop the others (the remote build deploy-rs performs finds the closure
+#    already valid, so each just activates).
+deploy_nodes_ok=()
 for node in "${deploy_nodes[@]}"; do
   [ -n "${push_failed[$node]:-}" ] && continue
-  targets+=("$repo#$node")
+  deploy_nodes_ok+=("$node")
 done
 
-if [ ${#targets[@]} -eq 0 ]; then
+if [ ${#deploy_nodes_ok[@]} -eq 0 ]; then
   echo "==> ERROR: no hosts were successfully prepared" >&2
   exit 1
 fi
 
-exec deploy --targets "${targets[@]}" --auto-rollback false --magic-rollback false --skip-checks "$@" -- --accept-flake-config --extra-experimental-features flakes -L
+pids=()
+for node in "${deploy_nodes_ok[@]}"; do
+  (
+    tag="$(printf '%-18s' "$node")"
+    {
+      deploy "$repo#$node" --auto-rollback false --magic-rollback false --skip-checks "$@" -- --accept-flake-config --extra-experimental-features flakes -L
+    } 2>&1 | sed -u "s|^|$tag > |"
+  ) &
+  pids+=("$!")
+done
+
+deploy_failed=()
+for i in "${!pids[@]}"; do
+  node="${deploy_nodes_ok[$i]}"
+  if ! wait "${pids[$i]}"; then
+    echo "==> WARNING: deployment to $node failed; other nodes were still deployed" >&2
+    deploy_failed+=("$node")
+  fi
+done
+
+if [ ${#deploy_failed[@]} -gt 0 ]; then
+  echo "==> ERROR: deployment failed on: ${deploy_failed[*]}" >&2
+  exit 1
+fi
