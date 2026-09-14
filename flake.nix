@@ -205,7 +205,7 @@
         ovhcloud-server-1 = {
           hostname = "api.projectread.ing";
           sshUser = "root";
-          # remoteBuild = true;
+          remoteBuild = true;
           profiles = {
             system = {
               user = "root";
@@ -219,7 +219,7 @@
           sshUser = "root";
           activationTimeout = 1000;
           confirmTimeout = 60;
-          # remoteBuild = true;
+          remoteBuild = true;
 
           profiles = {
             system = {
@@ -231,7 +231,7 @@
         hetzner-server-1 = {
           hostname = "hetzner-server-1.devices.alper-celik.dev";
           sshUser = "root";
-          # remoteBuild = true;
+          remoteBuild = true;
 
           profiles = {
             system = {

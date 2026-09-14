@@ -82,11 +82,16 @@ jobs:
         run: |
           install -m 600 -D /dev/null ~/.ssh/id_rsa
           echo  "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          ssh-keyscan rpi5.tailnet.alper-celik.dev > ~/.ssh/known_hosts
-          ssh-keyscan hetzner-server-1.devices.alper-celik.dev >> ~/.ssh/known_hosts
-          ssh-keyscan api.projectread.ing >> ~/.ssh/known_hosts
-          # ssh-keyscan 172.25.42.61 >> ~/.ssh/known_hosts
-          # ssh-keyscan network-vm > ~/.ssh/known_hosts
+          # Best-effort host key scan: a host being down must not fail the job.
+          : > ~/.ssh/known_hosts
+          for host in \
+            rpi5.tailnet.alper-celik.dev \
+            hetzner-server-1.devices.alper-celik.dev \
+            api.projectread.ing \
+            eu.nixbuild.net; do
+            ssh-keyscan -T 10 "$host" >> ~/.ssh/known_hosts 2>/dev/null \
+              || echo "warning: could not scan $host" >&2
+          done
         env:
           SSH_PRIVATE_KEY: ${{secrets.SSH_PRIVATE_KEY}}
 
