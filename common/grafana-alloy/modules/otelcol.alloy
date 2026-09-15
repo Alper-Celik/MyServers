@@ -1,4 +1,4 @@
-declare "otelcol" {
+declare "otelcol_stack" {
 	argument "host" { }
 
 	argument "arch" { }
@@ -36,7 +36,7 @@ declare "otelcol" {
 	}
 
 	loki.relabel "otelcol_loki_label" {
-		forward_to = [argument.forward_to_loki.value]
+		forward_to = argument.forward_to_loki.value
 
 		rule {
 			target_label = "host"
@@ -54,7 +54,7 @@ declare "otelcol" {
 	}
 
 	prometheus.relabel "otelcol_mimir_label" {
-		forward_to = [argument.forward_to_mimir.value]
+		forward_to = argument.forward_to_mimir.value
 
 		rule {
 			target_label = "host"

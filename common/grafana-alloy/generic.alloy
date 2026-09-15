@@ -1,0 +1,54 @@
+import.file "node_collector" {
+	filename = file.path_join(module_path, "modules/node_collector.alloy")
+}
+
+import.file "logs" {
+	filename = file.path_join(module_path, "modules/systemd_journal.alloy")
+}
+
+import.file "otel" {
+	filename = file.path_join(module_path, "modules/otelcol.alloy")
+}
+
+// Shared stack for every server.
+//
+// Imported modules may only contain `import` and `declare` blocks, so all of
+// the generic stack lives inside a custom component that host configs
+// instantiate with `generic.base "default" { }`.
+declare "base" {
+	prometheus.remote_write "mimir" {
+		endpoint {
+			url = "https://mimir.lab.alper-celik.dev/api/v1/push"
+		}
+	}
+
+	loki.write "loki" {
+		endpoint {
+			url = "https://loki.lab.alper-celik.dev/loki/api/v1/push"
+		}
+	}
+
+	node_collector.node_metrics "node_metrics" {
+		arch       = constants.arch
+		host       = constants.hostname
+		forward_to = [prometheus.remote_write.mimir.receiver]
+	}
+
+	logs.systemd_journal "systemd_journal" {
+		arch       = constants.arch
+		host       = constants.hostname
+		forward_to = [loki.write.loki.receiver]
+	}
+
+	otel.otelcol_stack "otelcol" {
+		arch             = constants.arch
+		host             = constants.hostname
+		forward_to_loki  = [loki.write.loki.receiver]
+		forward_to_mimir = [prometheus.remote_write.mimir.receiver]
+	}
+
+	// Host configs forward their own extra scrapes here.
+	export "mimir_receiver" {
+		value = prometheus.remote_write.mimir.receiver
+	}
+}

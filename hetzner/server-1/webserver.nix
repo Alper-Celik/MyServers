@@ -5,18 +5,6 @@ with lib;
 
     services.caddy = {
       enable = true;
-      extraConfig = ''
-        http:// {
-            @acme path /.well-known/acme-challenge/*
-            handle @acme {
-                reverse_proxy rpi5.bobtail-stonecat.ts.net:80
-            }
-        }
-      '';
-    };
-
-    services.nginx = {
-      enable = false;
     };
 
     #open web server to firewall

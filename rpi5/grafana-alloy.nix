@@ -1,6 +1,6 @@
 {
   services.alloy = {
     enable = true;
-    configPath = "${../common/alloy-configs}/rpi5.alloy";
+    configPath = "${../common/grafana-alloy}/rpi5.alloy";
   };
 }

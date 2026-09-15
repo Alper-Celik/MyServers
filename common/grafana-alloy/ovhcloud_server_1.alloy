@@ -1,0 +1,5 @@
+import.file "generic" {
+	filename = file.path_join(module_path, "generic.alloy")
+}
+
+generic.base "default" { }

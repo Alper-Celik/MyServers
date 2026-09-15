@@ -1,0 +1,33 @@
+import.file "generic" {
+	filename = file.path_join(module_path, "generic.alloy")
+}
+
+generic.base "default" { }
+
+// openwrt
+prometheus.scrape "openwrt_cuddy" {
+	targets         = discovery.relabel.labels_openwrt_cuddy.output
+	forward_to      = [generic.base.default.mimir_receiver]
+	scrape_interval = "15s"
+}
+
+discovery.relabel "labels_openwrt_cuddy" {
+	targets = [{
+		__address__ = "172.25.42.1:9100",
+	}]
+
+	rule {
+		target_label = "host"
+		replacement  = "openwrt_cuddy"
+	}
+
+	rule {
+		target_label = "nodename"
+		replacement  = "openwrt_cuddy"
+	}
+
+	rule {
+		target_label = "arch"
+		replacement  = "arm64"
+	}
+}
