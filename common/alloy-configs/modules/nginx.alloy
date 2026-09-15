@@ -1,0 +1,48 @@
+declare "nginx" {
+	argument "host" { }
+
+	argument "arch" { }
+
+	argument "forward_to" { }
+
+	loki.process "nginx" {
+		forward_to = argument.forward_to.value
+
+		stage.json {
+			expressions = {
+				"status"    = "status",
+				"method"    = "request_method",
+				"vhost"     = "server_name",
+				"protocol"  = "server_protocol",
+				"country"   = "geoip_country_code",
+				"continent" = "geoip_continent_name",
+			}
+		}
+
+		stage.labels {
+			values = {
+				"status"    = "status",
+				"method"    = "method",
+				"vhost"     = "vhost",
+				"protocol"  = "protocol",
+				"country"   = "country",
+				"continent" = "continent",
+			}
+		}
+
+		stage.static_labels {
+			values = {
+				host = argument.host.value,
+				arch = argument.arch.value,
+			}
+		}
+	}
+
+	loki.source.file "json_access" {
+		targets = [
+			{__path__ = "/var/log/nginx/json_access.log"},
+			{__path__ = "/var/log/nginx/json_access.log.*"},
+		]
+		forward_to = [loki.process.nginx.receiver]
+	}
+}

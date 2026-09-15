@@ -1,0 +1,80 @@
+import.file "node_collector" {
+	filename = file.path_join(module_path, "modules/node_collector.alloy")
+}
+
+import.file "logs" {
+	filename = file.path_join(module_path, "modules/systemd_journal.alloy")
+}
+
+import.file "nginx" {
+	filename = file.path_join(module_path, "modules/nginx.alloy")
+}
+
+import.file "otelcol" {
+	filename = file.path_join(module_path, "modules/otelcol.alloy")
+}
+
+prometheus.remote_write "mimir" {
+	endpoint {
+		url = "https://mimir.lab.alper-celik.dev/api/v1/push"
+	}
+}
+
+loki.write "loki" {
+	endpoint {
+		url = "https://loki.lab.alper-celik.dev/loki/api/v1/push"
+	}
+}
+
+node_collector.node_metrics "rpi5_node_metrics" {
+	arch       = "arm64"
+	host       = "rpi5"
+	forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+logs.systemd_journal "rpi5_journal" {
+	arch       = "arm64"
+	host       = "rpi5"
+	forward_to = [loki.write.loki.receiver]
+}
+
+nginx.nginx "nginx_logs" {
+	arch       = "arm64"
+	host       = "rpi5"
+	forward_to = [loki.write.loki.receiver]
+}
+
+otelcol.otelcol "otelcol" {
+	arch             = "arm64"
+	host             = "rpi5"
+	forward_to_loki  = [loki.write.loki.receiver]
+	forward_to_mimir = [prometheus.remote_write.mimir.receiver]
+}
+
+// openwrt
+prometheus.scrape "openwrt_cuddy" {
+	targets         = discovery.relabel.labels_openwrt_cuddy.output
+	forward_to      = [prometheus.remote_write.mimir.receiver]
+	scrape_interval = "15s"
+}
+
+discovery.relabel "labels_openwrt_cuddy" {
+	targets = [{
+		__address__ = "172.25.42.1:9100",
+	}]
+
+	rule {
+		target_label = "host"
+		replacement  = "openwrt_cuddy"
+	}
+
+	rule {
+		target_label = "nodename"
+		replacement  = "openwrt_cuddy"
+	}
+
+	rule {
+		target_label = "arch"
+		replacement  = "arm64"
+	}
+}

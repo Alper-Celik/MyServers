@@ -1,0 +1,42 @@
+declare "node_metrics" {
+	argument "host" { }
+
+	argument "arch" { }
+
+	argument "forward_to" { }
+
+	prometheus.exporter.unix "node" {
+		enable_collectors = ["drm", "logind", "processes", "systemd", "wifi"]
+
+		systemd {
+			start_time   = true
+			task_metrics = true
+			unit_exclude = ""
+		}
+	}
+
+	discovery.relabel "labels" {
+		targets = prometheus.exporter.unix.node.targets
+
+		rule {
+			target_label = "host"
+			replacement  = argument.host.value
+		}
+
+		rule {
+			target_label = "nodename"
+			replacement  = argument.host.value
+		}
+
+		rule {
+			target_label = "arch"
+			replacement  = argument.arch.value
+		}
+	}
+
+	prometheus.scrape "node" {
+		targets         = discovery.relabel.labels.output
+		forward_to      = argument.forward_to.value
+		scrape_interval = "15s"
+	}
+}

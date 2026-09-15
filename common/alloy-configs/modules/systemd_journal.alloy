@@ -1,0 +1,58 @@
+declare "systemd_journal" {
+	argument "host" { }
+
+	argument "arch" { }
+
+	argument "forward_to" { }
+
+	loki.relabel "labels" {
+		forward_to = []
+
+		rule {
+			target_label = "host"
+			replacement  = argument.host.value
+		}
+
+		rule {
+			target_label = "arch"
+			replacement  = argument.arch.value
+		}
+
+		rule {
+			source_labels = ["__journal__HOSTNAME"]
+			target_label  = "real_host"
+		}
+
+		rule {
+			source_labels = ["__journal__SYSTEMD_SLICE"]
+			target_label  = "slice"
+		}
+
+		rule {
+			source_labels = ["__journal__systemd_unit"]
+			target_label  = "unit"
+		}
+
+		rule {
+			source_labels = ["__journal_priority"]
+			target_label  = "priority"
+		}
+
+		rule {
+			source_labels = ["__journal_priority_keyword"]
+			target_label  = "priority_keyword"
+		}
+
+		rule {
+			source_labels = ["__journal__TRANSPORT"]
+			target_label  = "transport"
+		}
+	}
+
+	loki.source.journal "system" {
+		forward_to     = argument.forward_to.value
+		relabel_rules  = loki.relabel.labels.rules
+		max_age        = "168h"
+		format_as_json = true
+	}
+}

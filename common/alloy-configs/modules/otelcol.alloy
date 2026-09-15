@@ -1,0 +1,69 @@
+declare "otelcol" {
+	argument "host" { }
+
+	argument "arch" { }
+
+	argument "forward_to_loki" { }
+
+	argument "forward_to_mimir" { }
+
+	otelcol.receiver.otlp "otelcol" {
+		grpc {
+			endpoint = "localhost:4317"
+		}
+
+		http {
+			endpoint = "localhost:4318"
+		}
+
+		output {
+			metrics = [otelcol.processor.batch.otelcol_batch.input]
+			logs    = [otelcol.processor.batch.otelcol_batch.input]
+			traces  = [otelcol.processor.batch.otelcol_batch.input]
+		}
+	}
+
+	otelcol.processor.batch "otelcol_batch" {
+		output {
+			metrics = [otelcol.exporter.prometheus.default.input]
+			logs    = [otelcol.exporter.loki.default.input]
+			//traces  = [otelcol.exporter.otlp.default.input]
+		}
+	}
+
+	otelcol.exporter.loki "default" {
+		forward_to = [loki.relabel.otelcol_loki_label.receiver]
+	}
+
+	loki.relabel "otelcol_loki_label" {
+		forward_to = [argument.forward_to_loki.value]
+
+		rule {
+			target_label = "host"
+			replacement  = argument.host.value
+		}
+
+		rule {
+			target_label = "arch"
+			replacement  = argument.arch.value
+		}
+	}
+
+	otelcol.exporter.prometheus "default" {
+		forward_to = [prometheus.relabel.otelcol_mimir_label.receiver]
+	}
+
+	prometheus.relabel "otelcol_mimir_label" {
+		forward_to = [argument.forward_to_mimir.value]
+
+		rule {
+			target_label = "host"
+			replacement  = argument.host.value
+		}
+
+		rule {
+			target_label = "arch"
+			replacement  = argument.arch.value
+		}
+	}
+}
