@@ -1,0 +1,3 @@
+import.file "generic" {
+  filename = "generic.alloy"
+}

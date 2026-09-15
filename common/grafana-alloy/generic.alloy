@@ -6,10 +6,6 @@ import.file "logs" {
 	filename = file.path_join(module_path, "modules/systemd_journal.alloy")
 }
 
-import.file "nginx" {
-	filename = file.path_join(module_path, "modules/nginx.alloy")
-}
-
 import.file "otelcol" {
 	filename = file.path_join(module_path, "modules/otelcol.alloy")
 }
@@ -26,27 +22,23 @@ loki.write "loki" {
 	}
 }
 
-node_collector.node_metrics "hetzner_node_metrics" {
-	arch       = "arm64"
-	host       = "hetzner-server-1"
+node_collector.node_metrics "rpi5_node_metrics" {
+	arch       = constants.arch
+	host       = constants.hostname
 	forward_to = [prometheus.remote_write.mimir.receiver]
 }
 
-logs.systemd_journal "hetzner_journal" {
-	arch       = "arm64"
-	host       = "hetzner-server-1"
+logs.systemd_journal "rpi5_journal" {
+	arch       = constants.arch
+	host       = constants.hostname
 	forward_to = [loki.write.loki.receiver]
 }
 
-nginx.nginx "nginx_logs" {
-	arch       = "arm64"
-	host       = "hetzner-server-1"
-	forward_to = [loki.write.loki.receiver]
-}
 
 otelcol.otelcol "otelcol" {
-	arch             = "arm64"
-	host             = "hetzner-server-1"
+	arch             = constants.arch
+	host             = constants.hostname
 	forward_to_loki  = [loki.write.loki.receiver]
 	forward_to_mimir = [prometheus.remote_write.mimir.receiver]
 }
+
