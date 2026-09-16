@@ -10,6 +10,10 @@ import.file "otel" {
 	filename = file.path_join(module_path, "modules/otelcol.alloy")
 }
 
+import.file "access_logs" {
+	filename = file.path_join(module_path, "modules/access_logs.alloy")
+}
+
 // Shared stack for every server.
 //
 // Imported modules may only contain `import` and `declare` blocks, so all of
@@ -35,6 +39,12 @@ declare "base" {
 	}
 
 	logs.systemd_journal "systemd_journal" {
+		arch       = constants.arch
+		host       = constants.hostname
+		forward_to = [loki.write.loki.receiver]
+	}
+
+	access_logs.access_logs "access_logs" {
 		arch       = constants.arch
 		host       = constants.hostname
 		forward_to = [loki.write.loki.receiver]

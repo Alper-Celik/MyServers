@@ -14,7 +14,10 @@ in
         format = "yaml";
       };
     };
+    # the maxmind databases are read by grafana-alloy (modules/access_logs.alloy)
+    # for geo enrichment of web access logs.
     services.geoipupdate = {
+      enable = true;
       interval = "daily";
       settings = {
         AccountID = 1305508;

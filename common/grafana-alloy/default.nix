@@ -17,15 +17,23 @@ lib.mkIf config.services.alloy.enable {
         "adm"
         "systemd-journal"
       ]
+      ++ mkIfArr config.services.caddy.enable [ "caddy" ]
       ++ mkIfArr config.services.nginx.enable [ "nginx" ];
     };
     groups.alloy = { };
   };
 
-  systemd.services.alloy.serviceConfig = {
-    DynamicUser = lib.mkForce false;
-    User = "alloy";
-    Group = "alloy";
+  systemd.services.alloy = {
+    # modules/access_logs.alloy reads the maxmind databases, and alloy refuses
+    # to start while they are missing, so start after the first geoipupdate run.
+    after = [ "geoipupdate.service" ];
+    wants = [ "geoipupdate.service" ];
+
+    serviceConfig = {
+      DynamicUser = lib.mkForce false;
+      User = "alloy";
+      Group = "alloy";
+    };
   };
 
   # Default OTLP export settings for every systemd unit on this host.

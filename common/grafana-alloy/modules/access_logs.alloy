@@ -1,0 +1,148 @@
+// ai generated
+// Web server access logs.
+//
+// caddy writes one json access log per virtual host (common/caddy.nix),
+// nginx writes a single json access log (common/nginx-access-log.nix).
+// Both are tailed here, geo-enriched with the maxmind databases from
+// services.geoipupdate and forwarded to loki.
+//
+// Labels stay low cardinality (service/host/arch); everything else is
+// attached as structured metadata so it can be filtered in LogQL, e.g.
+//   {service="caddy", host="ovhcloud-server-1"} | http_status=404
+declare "access_logs" {
+	argument "host" { }
+
+	argument "arch" { }
+
+	argument "forward_to" { }
+
+	argument "caddy_glob" {
+		default = "/var/log/caddy/access-*.log"
+	}
+
+	argument "nginx_glob" {
+		default = "/var/log/nginx/json_access.log"
+	}
+
+	argument "geoip_city_db" {
+		default = "/var/lib/GeoIP/GeoLite2-City.mmdb"
+	}
+
+	argument "geoip_asn_db" {
+		default = "/var/lib/GeoIP/GeoLite2-ASN.mmdb"
+	}
+
+	local.file_match "web_access" {
+		path_targets = [
+			{
+				__path__ = argument.caddy_glob.value,
+				service  = "caddy",
+			},
+			{
+				__path__ = argument.nginx_glob.value,
+				service  = "nginx",
+			},
+		]
+	}
+
+	loki.source.file "web_access" {
+		targets    = local.file_match.web_access.targets
+		forward_to = [loki.process.web_access.receiver]
+	}
+
+	loki.process "web_access" {
+		forward_to = argument.forward_to.value
+
+		// caddy: nested json, native access log plus the log_append fields.
+		stage.match {
+			selector = "{service=\"caddy\"}"
+
+			stage.json {
+				expressions = {
+					remote_ip           = "request.remote_ip",
+					http_method         = "request.method",
+					http_status         = "status",
+					uri                 = "request.uri",
+					host_header         = "request.host",
+					user_agent          = "request.headers.\"User-Agent\"[0]",
+					duration_ms         = "request_duration_ms",
+					upstream_host       = "upstream_host",
+					upstream_latency_ms = "upstream_latency_ms",
+					tls_protocol        = "request.tls.proto",
+					tls_cipher          = "request.tls.cipher_suite",
+				}
+			}
+		}
+
+		// nginx: flat json, log_format json_analytics.
+		stage.match {
+			selector = "{service=\"nginx\"}"
+
+			stage.json {
+				expressions = {
+					remote_ip                = "remote_addr",
+					http_method              = "request_method",
+					http_status              = "status",
+					uri                      = "request_uri",
+					host_header              = "http_host",
+					user_agent               = "http_user_agent",
+					request_time_s           = "request_time",
+					upstream_host            = "upstream",
+					upstream_response_time_s = "upstream_response_time",
+					tls_protocol             = "ssl_protocol",
+					tls_cipher               = "ssl_cipher",
+				}
+			}
+		}
+
+		stage.geoip {
+			source  = "remote_ip"
+			db      = argument.geoip_city_db.value
+			db_type = "city"
+		}
+
+		stage.geoip {
+			source  = "remote_ip"
+			db      = argument.geoip_asn_db.value
+			db_type = "asn"
+		}
+
+		stage.static_labels {
+			values = {
+				host = argument.host.value,
+				arch = argument.arch.value,
+			}
+		}
+
+		stage.structured_metadata {
+			values = {
+				remote_ip                = "",
+				http_method              = "",
+				http_status              = "",
+				host_header              = "",
+				uri                      = "",
+				user_agent               = "",
+				duration_ms              = "",
+				request_time_s           = "",
+				upstream_host            = "",
+				upstream_latency_ms      = "",
+				upstream_response_time_s = "",
+				tls_protocol             = "",
+				tls_cipher               = "",
+				geoip_country_code       = "",
+				geoip_country_name       = "",
+				geoip_continent_code     = "",
+				geoip_continent_name     = "",
+				geoip_city_name          = "",
+				geoip_subdivision_name   = "",
+				geoip_subdivision_code   = "",
+				geoip_postal_code        = "",
+				geoip_timezone           = "",
+				geoip_location_latitude  = "",
+				geoip_location_longitude = "",
+				geoip_asn_number         = "geoip_autonomous_system_number",
+				geoip_asn_org            = "geoip_autonomous_system_organization",
+			}
+		}
+	}
+}
