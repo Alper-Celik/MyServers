@@ -23,6 +23,11 @@ in
     reloadServices = [ config.systemd.services.kanidm.name ];
   };
 
+  # The caddy module sets security.acme.certs.<useACMEHost>.group = services.caddy.group
+  # ("caddy"), and acme chowns the cert dir acme:caddy with g=r. Kanidm terminates TLS
+  # itself on the loopback listener, so it needs the caddy group to read these files.
+  users.users.kanidm.extraGroups = [ "caddy" ];
+
   services.caddy.virtualHosts.${cfg.settings.domain} = {
     x-expose = true;
     extraConfig = "reverse_proxy https://${cfg.settings.bindaddress}";
@@ -32,7 +37,7 @@ in
   services.kanidm.server = {
     enable = true;
     settings = {
-      tls_chain = "${certDir}/chain.pem";
+      tls_chain = "${certDir}/fullchain.pem";
       tls_key = "${certDir}/key.pem";
       bindaddress = "[::1]:8443";
       domain = "id.auth.how";
