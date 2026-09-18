@@ -83,9 +83,9 @@ in
   };
 
   config = {
-
     services.caddy = {
       enable = true;
+      openFirewall = true;
       email = "alper@alper-celik.dev";
       globalConfig = lib.mkBefore ''
         auto_https disable_certs # automated using nixos module of lego
