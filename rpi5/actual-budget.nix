@@ -8,7 +8,7 @@
     };
   };
 
-  services.nginx.virtualHosts."actual-budget.lab.alper-celik.dev" = {
+  services.caddy.virtualHosts."actual-budget.lab.alper-celik.dev" = {
     extraConfig = "reverse_proxy http://127.0.0.1:${toString config.services.actual.settings.port}";
   };
 }

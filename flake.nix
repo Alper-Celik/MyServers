@@ -9,7 +9,6 @@
     };
     deploy-rs = {
       url = "github:serokell/deploy-rs";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
     my-blog.url = "github:Alper-Celik/MyBlog";
 
@@ -18,7 +17,6 @@
     impermanence.url = "github:nix-community/impermanence";
     sops-nix = {
       url = "github:mic92/sops-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
     };
     MyServersSecrets = {
       url = "git+ssh://git@github.com/Alper-Celik/MyServersSecrets.git";
