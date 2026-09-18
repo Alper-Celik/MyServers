@@ -30,7 +30,19 @@ in
 
   services.caddy.virtualHosts.${cfg.settings.domain} = {
     x-expose = true;
-    extraConfig = "reverse_proxy https://${cfg.settings.bindaddress}";
+    # ai generated
+    # kanidm's certificate is issued for the domain, not for the loopback address
+    # caddy dials, so pin the verification name (otherwise caddy answers 502 with
+    # an empty body: "cannot validate certificate for ::1 because it doesn't
+    # contain any IP SANs").
+    extraConfig = ''
+      reverse_proxy https://${cfg.settings.bindaddress} {
+        transport http {
+          tls_server_name ${cfg.settings.domain}
+        }
+      }
+    '';
+    # ai generated
   };
 
   services.kanidm.package = kanidm;
