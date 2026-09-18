@@ -45,9 +45,13 @@ declare "base" {
 	}
 
 	access_logs.access_logs "access_logs" {
-		arch       = constants.arch
-		host       = constants.hostname
-		forward_to = [loki.write.loki.receiver]
+		arch          = constants.arch
+		host          = constants.hostname
+		caddy_glob    = "/var/log/caddy/access-*.log"
+		nginx_glob    = "/var/log/nginx/json_access.log"
+		geoip_city_db = "/var/lib/GeoIP/GeoLite2-City.mmdb"
+		geoip_asn_db  = "/var/lib/GeoIP/GeoLite2-ASN.mmdb"
+		forward_to    = [loki.write.loki.receiver]
 	}
 
 	otel.otelcol_stack "otelcol" {

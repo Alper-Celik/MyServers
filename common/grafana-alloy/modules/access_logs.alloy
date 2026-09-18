@@ -16,21 +16,16 @@ declare "access_logs" {
 
 	argument "forward_to" { }
 
-	argument "caddy_glob" {
-		default = "/var/log/caddy/access-*.log"
-	}
+	// conventional values, supplied by the caller:
+	//   /var/log/caddy/access-*.log and /var/log/nginx/json_access.log
+	//   /var/lib/GeoIP/GeoLite2-City.mmdb and /var/lib/GeoIP/GeoLite2-ASN.mmdb
+	argument "caddy_glob" { }
 
-	argument "nginx_glob" {
-		default = "/var/log/nginx/json_access.log"
-	}
+	argument "nginx_glob" { }
 
-	argument "geoip_city_db" {
-		default = "/var/lib/GeoIP/GeoLite2-City.mmdb"
-	}
+	argument "geoip_city_db" { }
 
-	argument "geoip_asn_db" {
-		default = "/var/lib/GeoIP/GeoLite2-ASN.mmdb"
-	}
+	argument "geoip_asn_db" { }
 
 	local.file_match "web_access" {
 		path_targets = [
