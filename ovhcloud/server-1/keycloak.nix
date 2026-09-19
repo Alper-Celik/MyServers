@@ -49,9 +49,9 @@ in
 
     settings = {
       https-port = 4338;
-      hostname = domain;
+      hostname = "https://${domain}";
       proxy-headers = "xforwarded";
-      hostname-admin = admin-domain;
+      hostname-admin = "https://${admin-domain}";
       http-enabled = false;
     };
 
