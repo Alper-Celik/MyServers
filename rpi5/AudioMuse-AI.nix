@@ -84,6 +84,9 @@ in
       ports = [
         "8980:8000"
       ];
+      labels = {
+        "io.containers.autoupdate" = "registry";
+      };
       autoStart = true;
     };
 
@@ -95,6 +98,9 @@ in
       ];
       environment = shared_env // {
         SERVICE_TYPE = "worker";
+      };
+      labels = {
+        "io.containers.autoupdate" = "registry";
       };
       environmentFiles = [ config.sops.secrets.audiomuse_env.path ];
       autoStart = true;
