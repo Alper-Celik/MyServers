@@ -261,6 +261,21 @@
             src = inputs.octodns-ddns-src;
           };
           deploy-rs = pkgs.deploy-rs;
+
+          # ai generated start
+          # Runtime environment for deploy.py (see its `nix shell` shebang).
+          # NB: must not be named `deploy` — `nix eval .#deploy` resolves
+          # packages.<system>.deploy before the top-level `deploy` output,
+          # which deploy-rs evaluates (and would then decode as a store path).
+          deploy-env = pkgs.buildEnv {
+            name = "deploy-env";
+            paths = [
+              pkgs.nix
+              pkgs.python3
+              pkgs.deploy-rs
+            ];
+          };
+          # ai generated end
         }
       );
 
@@ -278,6 +293,7 @@
               self-pkgs.octodns
               self-pkgs.deploy-rs
               nix
+              python3
             ];
           };
         }

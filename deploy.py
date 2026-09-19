@@ -1,0 +1,466 @@
+#!/usr/bin/env nix
+#! nix shell .#deploy-env --command python3
+# ai generated (port of the bash deploy.sh this replaces)
+"""Deploy this flake's NixOS hosts.
+
+Subcommands:
+  deploy      build on the remote store, then copy closures and activate
+  deploy-ci   copy closures and activate (CI already built them)
+  build       run the CI build step against the remote store
+  resolve     resolve reachable hosts and their closure paths
+  copy        resolve hosts, then get each closure onto its host
+  activate    resolve hosts, then activate with deploy-rs
+
+Any extra arguments are forwarded to deploy-rs.
+
+Closures are pulled from the remote store either by the host itself (using
+NIXBUILDNET_TOKEN, or a short-lived store:read token minted from the local
+nixbuild.net SSH key via the admin shell) or, as a fallback, copied through
+this runner — so a machine with only an SSH key to nixbuild.net works too.
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import shlex
+import subprocess
+import sys
+import tempfile
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parent
+REMOTE_STORE = os.environ.get("REMOTE_STORE", "ssh-ng://eu.nixbuild.net")
+NODES = ["ovhcloud-server-1", "hetzner-server-1", "rpi5"]
+NIX_ARGS = ["--extra-experimental-features", "nix-command flakes"]
+SSH_OPTS = ["-o", "ConnectTimeout=10", "-o", "BatchMode=yes"]
+
+# Attribute checked by the CI build step (builds/validates every deploy node).
+CHECK_ATTR = "checks.aarch64-linux.deploy-activate"
+
+# Pinned nixbuild.net host key (same one nixbuild-action uses).
+NB_HOST = REMOTE_STORE.removeprefix("ssh-ng://")
+NB_HOST_KEY = (
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPIQCZc54poJ8vqawd8TraNryQeJnvH1eLpIDgbiqymM"
+)
+REMOTE_DIR = "/run/deploy-nixbuild"
+
+SETUP_SCRIPT = """\
+set -euo pipefail
+umask 077
+rm -rf "$1"
+mkdir -p "$1"
+"""
+
+PULL_SCRIPT = """\
+set -euo pipefail
+remote_dir="$1"; pull_store="$2"; closure="$3"
+nixbin=""
+for c in /run/current-system/sw/bin/nix /nix/var/nix/profiles/default/bin/nix; do
+  [ -x "$c" ] && nixbin="$c" && break
+done
+[ -n "$nixbin" ] || nixbin=nix
+NIXBUILDNET_TOKEN="$(cat "$remote_dir/token")" \\
+  NIX_SSHOPTS="-F $remote_dir/ssh_config" \\
+  "$nixbin" --extra-experimental-features nix-command \\
+  copy --from "$pull_store" --no-check-sigs "$closure"
+"""
+
+
+def warn(msg: str) -> None:
+    print(f"==> {msg}", file=sys.stderr, flush=True)
+
+
+def stream(argv, *, stdin_data=None, env=None, tag=None) -> int:
+    """Run argv, forwarding merged stdout+stderr line by line, optionally
+    prefixed with the node name (output of parallel nodes would otherwise
+    interleave)."""
+    p = subprocess.Popen(
+        argv,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        env=env,
+    )
+    if stdin_data is not None:
+        p.stdin.write(stdin_data)
+    p.stdin.close()
+    prefix = f"{tag} > " if tag else ""
+    for line in p.stdout:
+        sys.stdout.write(f"{prefix}{line}")
+        sys.stdout.flush()
+    p.stdout.close()
+    return p.wait()
+
+
+def ssh_cmd(user: str, host: str, remote: str, *, stdin_data=None, tag=None) -> int:
+    return stream(
+        ["ssh", *SSH_OPTS, f"{user}@{host}", remote],
+        stdin_data=stdin_data,
+        tag=tag,
+    )
+
+
+def say(tag: str, msg: str, *, err: bool = False) -> None:
+    print(f"{tag} > {msg}", file=sys.stderr if err else sys.stdout, flush=True)
+
+
+def pull_on_host(ssh_user: str, host: str, closure: str, tag: str) -> bool:
+    """Pull the closure directly on the target from nixbuild.net using the
+    token for this run only. nixbuild -> host traffic then never touches this
+    runner (no download-then-upload hop) and every host pulls at its own
+    speed. The token is written into a 0600 ssh config on the target (tmpfs)
+    and removed afterwards.
+
+    The remote login shell may be fish, so every command is run explicitly
+    through bash instead of relying on the target's shell.
+
+    Returns False if the target could not pull, so the caller can fall back to
+    copying through this runner."""
+    token = os.environ["NIXBUILDNET_TOKEN"].strip("\r\n")
+    rdir = shlex.quote(REMOTE_DIR)
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        (tmp / "known_hosts").write_text(f"{NB_HOST} {NB_HOST_KEY}\n")
+        (tmp / "token").write_text(token)
+        (tmp / "ssh_config").write_text(
+            f"Host {NB_HOST}\n"
+            f"  HostName {NB_HOST}\n"
+            "  User authtoken\n"
+            "  PreferredAuthentications none\n"
+            "  PubkeyAcceptedKeyTypes ssh-ed25519\n"
+            "  StrictHostKeyChecking yes\n"
+            f"  UserKnownHostsFile {REMOTE_DIR}/known_hosts\n"
+            "  ControlPath none\n"
+            "  ServerAliveInterval 60\n"
+            "  IPQoS throughput\n"
+            f"  SetEnv token={token}\n"
+            "  SendEnv NIXBUILDNET_TOKEN\n"
+        )
+
+        ok = (
+            ssh_cmd(ssh_user, host, f"bash -s -- {rdir}", stdin_data=SETUP_SCRIPT, tag=tag)
+            == 0
+        )
+        if ok:
+            for name in ("known_hosts", "ssh_config", "token"):
+                data = (tmp / name).read_text()
+                ok &= (
+                    ssh_cmd(
+                        ssh_user,
+                        host,
+                        f"bash -c 'umask 077; cat > \"$1\"' _ {rdir}/{name}",
+                        stdin_data=data,
+                        tag=tag,
+                    )
+                    == 0
+                )
+        if ok:
+            say(
+                tag,
+                f"==> {host}: pulling {closure} from ssh://{NB_HOST} on the host",
+                err=True,
+            )
+            ok &= (
+                ssh_cmd(
+                    ssh_user,
+                    host,
+                    f"bash -s -- {rdir} {shlex.quote(f'ssh://{NB_HOST}')} {shlex.quote(closure)}",
+                    stdin_data=PULL_SCRIPT,
+                    tag=tag,
+                )
+                == 0
+            )
+
+        ssh_cmd(ssh_user, host, f"bash -c 'rm -rf \"$1\"' _ {rdir}", tag=tag)
+        return ok
+
+
+def copy_via_runner(ssh_user: str, host: str, closure: str, node: str, tag: str) -> bool:
+    """Copy a closure through this runner (nixbuild -> runner -> host). Used
+    when the host-side pull is unavailable or failed."""
+    to_host = ["--to", f"ssh://{ssh_user}@{host}", "--no-check-sigs", "-s", closure]
+    if stream(["nix", *NIX_ARGS, "copy", "--from", REMOTE_STORE, *to_host], tag=tag) == 0:
+        return True
+    # nixbuild.net documents that direct copies from a remote store can be
+    # inconsistent; fall back to staging the closure locally first.
+    say(tag, f"==> direct copy for {node} failed, retrying via local store", err=True)
+    if stream(["nix", *NIX_ARGS, "copy", "--from", REMOTE_STORE, "--no-check-sigs", closure], tag=tag) != 0:
+        return False
+    return stream(["nix", *NIX_ARGS, "copy", *to_host], tag=tag) == 0
+
+
+def prepare_node(node: str, meta: dict) -> bool:
+    host, ssh_user, closure = meta[node]
+    tag = f"{node:<18}"
+    if "NIXBUILDNET_TOKEN" not in os.environ:
+        say(tag, "NIXBUILDNET_TOKEN not set; copying via this runner", err=True)
+        return copy_via_runner(ssh_user, host, closure, node, tag)
+    if NB_HOST == REMOTE_STORE:
+        say(
+            tag,
+            f"REMOTE_STORE={REMOTE_STORE} is not ssh-ng://; copying via this runner",
+            err=True,
+        )
+        return copy_via_runner(ssh_user, host, closure, node, tag)
+    if pull_on_host(ssh_user, host, closure, tag):
+        say(tag, f"pulled {closure} directly from ssh://{NB_HOST}")
+        return True
+    say(tag, "host-side pull failed; copying via this runner", err=True)
+    return copy_via_runner(ssh_user, host, closure, node, tag)
+
+
+def resolve_hosts() -> tuple[dict[str, tuple[str, str, str]], list[str]] | None:
+    """Resolve every reachable host's closure path. The closures are already
+    built in the remote store by the CI build step, so this only evaluates the
+    flake (no build). Hosts that are unreachable are skipped.
+
+    Returns (meta, deploy_nodes), or None on evaluation failure."""
+    meta: dict[str, tuple[str, str, str]] = {}
+    deploy_nodes: list[str] = []
+    for node in NODES:
+        p = subprocess.run(
+            [
+                "nix",
+                *NIX_ARGS,
+                "eval",
+                "--raw",
+                f"{REPO}#deploy.nodes.{node}",
+                "--apply",
+                'n: "${n.hostname} ${n.sshUser}"',
+            ],
+            stdout=subprocess.PIPE,
+            text=True,
+        )
+        if p.returncode != 0:
+            warn("ERROR: failed to evaluate deploy.nodes")
+            return None
+        host, ssh_user = p.stdout.split()
+        print(f"==> checking {node} at {ssh_user}@{host}", flush=True)
+        if subprocess.run(["ssh", *SSH_OPTS, f"{ssh_user}@{host}", "true"]).returncode != 0:
+            warn(f"WARNING: {node} ({ssh_user}@{host}) is unreachable, skipping")
+            continue
+
+        print(f"==> resolving {node} closure", flush=True)
+        p = subprocess.run(
+            [
+                "nix",
+                *NIX_ARGS,
+                "eval",
+                "--raw",
+                f"{REPO}#deploy.nodes.{node}.profiles.system.path.outPath",
+            ],
+            stdout=subprocess.PIPE,
+            text=True,
+        )
+        if p.returncode != 0:
+            warn(f"WARNING: failed to resolve {node} closure, skipping")
+            continue
+
+        meta[node] = (host, ssh_user, p.stdout.strip())
+        deploy_nodes.append(node)
+
+    if not deploy_nodes:
+        warn("ERROR: no hosts were reachable and deployable")
+        return None
+    return meta, deploy_nodes
+
+
+def mint_token() -> str | None:
+    """Mint a store-read-only auth token from the local SSH key
+    through the nixbuild.net administration shell. Hosts need a token to pull
+    from the remote store themselves; on failure this runner copies instead.
+    Two hours: big closures over slow home links (e.g. the rpi5) can take a
+    while, and the token is store:read-only so a longer TTL is low risk."""
+    ttl = 7200
+    p = subprocess.run(
+        [
+            "ssh",
+            *SSH_OPTS,
+            NB_HOST,
+            "tokens",
+            "create",
+            "--ttl-seconds",
+            str(ttl),
+            "-p",
+            "store:read",
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    # The shell prints the token framed by two dashed separator lines.
+    lines = p.stdout.splitlines()
+    for i, line in enumerate(lines):
+        token = lines[i + 1].strip() if i + 1 < len(lines) else ""
+        if line.startswith("---") and token and not token.startswith("---"):
+            warn(f"minted a nixbuild.net store:read token from the local SSH key (ttl {ttl}s)")
+            return token
+    reason = next((line.strip() for line in reversed(p.stderr.splitlines()) if line.strip()), "")
+    warn(
+        "could not mint a nixbuild.net token from the local SSH key; copying via this runner"
+        + (f": {reason}" if reason else "")
+    )
+    return None
+
+
+def copy_nodes(meta: dict, deploy_nodes: list[str]) -> set[str]:
+    """Get each closure onto the host, in parallel. Preferred path: the host
+    pulls straight from the remote store (using NIXBUILDNET_TOKEN, or one
+    minted from the local SSH key). Fallback: copy through this runner.
+    Returns the set of successfully prepared nodes."""
+    if "NIXBUILDNET_TOKEN" not in os.environ and NB_HOST != REMOTE_STORE:
+        token = mint_token()
+        if token:
+            os.environ["NIXBUILDNET_TOKEN"] = token
+
+    push_failed: set[str] = set()
+    with ThreadPoolExecutor(max_workers=len(deploy_nodes)) as ex:
+        for node, ok in zip(deploy_nodes, ex.map(lambda n: prepare_node(n, meta), deploy_nodes)):
+            if not ok:
+                host, ssh_user, _ = meta[node]
+                warn(f"WARNING: failed to prepare {node} on {ssh_user}@{host}, skipping")
+                push_failed.add(node)
+    return set(deploy_nodes) - push_failed
+
+
+def activate_nodes(meta: dict, deploy_nodes_ok: list[str], extra: list[str]) -> int:
+    """Deploy each prepared node independently, so a failure on one host does
+    not stop the others (the remote build deploy-rs performs finds the closure
+    already valid, so each just activates)."""
+    deploy_failed: list[str] = []
+    with ThreadPoolExecutor(max_workers=len(deploy_nodes_ok)) as ex:
+        for node, ok in zip(
+            deploy_nodes_ok,
+            ex.map(lambda n: deploy_node(n, extra), deploy_nodes_ok),
+        ):
+            if not ok:
+                warn(f"WARNING: deployment to {node} failed; other nodes were still deployed")
+                deploy_failed.append(node)
+
+    if deploy_failed:
+        warn(f"ERROR: deployment failed on: {' '.join(deploy_failed)}")
+        return 1
+    return 0
+
+
+def deploy_node(node: str, extra: list[str]) -> bool:
+    tag = f"{node:<18}"
+    return (
+        stream(
+            [
+                "deploy",
+                f"{REPO}#{node}",
+                "--auto-rollback",
+                "false",
+                "--magic-rollback",
+                "false",
+                "--skip-checks",
+                *extra,
+                "--",
+                "--accept-flake-config",
+                "--extra-experimental-features",
+                "flakes",
+                "-L",
+            ],
+            tag=tag,
+        )
+        == 0
+    )
+
+
+def cmd_build(extra: list[str]) -> int:
+    """Same build step as the workflow's build/check job: build the deploy
+    checks on the remote store (nixbuild.net), leaving the closures there for
+    the hosts to pull."""
+    return stream(
+        [
+            "nix",
+            *NIX_ARGS,
+            "build",
+            f"{REPO}#{CHECK_ATTR}",
+            "-L",
+            "--print-build-logs",
+            "--builders",
+            "",
+            "--max-jobs",
+            "2",
+            "--eval-store",
+            "auto",
+            "--store",
+            REMOTE_STORE,
+            *extra,
+        ]
+    )
+
+
+def cmd_resolve(extra: list[str]) -> int:
+    if resolve_hosts() is None:
+        return 1
+    return 0
+
+
+def cmd_copy(extra: list[str]) -> int:
+    resolved = resolve_hosts()
+    if resolved is None:
+        return 1
+    meta, deploy_nodes = resolved
+    prepared = copy_nodes(meta, deploy_nodes)
+    if not prepared:
+        warn("ERROR: no hosts were successfully prepared")
+        return 1
+    return 0
+
+
+def cmd_activate(extra: list[str]) -> int:
+    resolved = resolve_hosts()
+    if resolved is None:
+        return 1
+    meta, deploy_nodes = resolved
+    return activate_nodes(meta, deploy_nodes, extra)
+
+
+def cmd_deploy_ci(extra: list[str]) -> int:
+    resolved = resolve_hosts()
+    if resolved is None:
+        return 1
+    meta, deploy_nodes = resolved
+    prepared = copy_nodes(meta, deploy_nodes)
+    if not prepared:
+        warn("ERROR: no hosts were successfully prepared")
+        return 1
+    return activate_nodes(meta, [n for n in deploy_nodes if n in prepared], extra)
+
+
+def cmd_deploy(extra: list[str]) -> int:
+    if cmd_build([]) != 0:
+        return 1
+    return cmd_deploy_ci(extra)
+
+
+COMMANDS = {
+    "deploy": ("build on the remote store, then copy closures and activate", cmd_deploy),
+    "deploy-ci": ("copy closures and activate (CI already built them)", cmd_deploy_ci),
+    "build": ("run the CI build step against the remote store", cmd_build),
+    "resolve": ("resolve reachable hosts and their closure paths", cmd_resolve),
+    "copy": ("resolve hosts, then get each closure onto its host", cmd_copy),
+    "activate": ("resolve hosts, then activate with deploy-rs", cmd_activate),
+}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        prog="deploy.py",
+        description="Deploy this flake's NixOS hosts (closures live on the remote store).",
+    )
+    sub = parser.add_subparsers(dest="command", required=True)
+    for name, (help_text, _) in COMMANDS.items():
+        sub.add_parser(name, help=help_text)
+    ns, extra = parser.parse_known_args()
+    return COMMANDS[ns.command][1](extra)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

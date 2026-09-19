@@ -83,6 +83,7 @@ in
   };
 
   config = {
+    services.nginx.enable = false;
     services.caddy = {
       enable = true;
       openFirewall = true;

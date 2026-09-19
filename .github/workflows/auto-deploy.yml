@@ -110,4 +110,4 @@ jobs:
           --store ssh-ng://eu.nixbuild.net \
 
       - name: deploy
-        run: ./deploy.sh
+        run: ./deploy.py deploy-ci
