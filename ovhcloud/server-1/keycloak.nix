@@ -32,7 +32,7 @@ in
 
   # The caddy module sets security.acme.certs.<useACMEHost>.group = services.caddy.group
   # ("caddy"), and acme chowns the cert dir acme:caddy with g=r.
-  users.users.keycloak.extraGroups = [ "caddy" ];
+  systemd.services.keycloak.unitConfig.SupplementaryGroups = [ "caddy" ];
 
   services.keycloak = {
     enable = true;
