@@ -5,6 +5,7 @@
     package = pkgs-unstable.navidrome;
     plugins = with pkgs-unstable.navidromePlugins; [ audiomuseai ];
     settings = {
+      Agents = "audiomuseai,lastfm,deezer,listenbrainz";
       Backup = {
         Path = "./backups";
         Schedule = "0 0 * * *";
