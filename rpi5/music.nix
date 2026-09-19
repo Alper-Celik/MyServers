@@ -1,7 +1,9 @@
-{ config, ... }:
+{ config, pkgs-unstable, ... }:
 {
   services.navidrome = {
     enable = true;
+    package = pkgs-unstable.navidrome;
+    plugins = with pkgs-unstable.navidromePlugins; [ audiomuseai ];
     settings = {
       Backup = {
         Path = "./backups";

@@ -7,8 +7,6 @@ let
   pg_db_name = "audiomuse";
   pg_port = config.services.postgresql.settings.port;
   shared_env = {
-    MEDIASERVER_TYPE = "jellyfin";
-    JELLYFIN_URL = "https://jellyfin.lab.alper-celik.dev";
     TZ = "Europe/Istanbul";
     POSTGRES_USER = pg_db_name;
     POSTGRES_DB = pg_db_name;
