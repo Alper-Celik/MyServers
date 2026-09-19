@@ -109,5 +109,18 @@ jobs:
           --eval-store auto \
           --store ssh-ng://eu.nixbuild.net \
 
+          # deploy.py's shebang runs `nix shell .#deploy-env` on the runner. That
+          # buildEnv exists in no binary cache, so with max-jobs = 0 nix would hand
+          # the build to the `nixbuild` builder over ssh and fail. Build it on
+          # nixbuild.net here and copy it into the runner's store instead.
+          nix build .#deploy-env --no-link -L \
+          --print-build-logs \
+          --builders "" \
+          --max-jobs 2 \
+          --eval-store auto \
+          --store ssh-ng://eu.nixbuild.net
+          nix copy --from ssh-ng://eu.nixbuild.net --no-check-sigs \
+          "$(nix eval --raw .#deploy-env.outPath)"
+
       - name: deploy
         run: ./deploy.py deploy-ci
