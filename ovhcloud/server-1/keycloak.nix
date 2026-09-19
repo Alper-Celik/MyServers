@@ -34,11 +34,21 @@ in
   # ("caddy"), and acme chowns the cert dir acme:caddy with g=r.
   systemd.services.keycloak.unitConfig.SupplementaryGroups = [ "caddy" ];
 
+  services.postgresql = {
+    ensureDatabases = [ "keycloak" ];
+    ensureUsers = [
+      {
+        name = "keycloak";
+        ensureDBOwnership = true;
+      }
+    ];
+  };
+
   services.keycloak = {
     enable = true;
     database = {
       host = "/run/postgresql";
-      createLocally = true;
+      createLocally = false;
     };
     plugins = with pkgs.keycloak.plugins; [
       junixsocket-common
