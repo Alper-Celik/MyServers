@@ -27,7 +27,13 @@ in
     ports = [ "${toString openwebui-port}:8080" ];
     volumes = [
       "/var/lib/openwebui:/app/backend/data"
+      "openwebui-pylibs:/opt/pylibs:U"
     ];
+    environment = {
+      PIP_OPTIONS = "--target=/opt/pylibs";
+      PYTHONPATH = "/opt/pylibs";
+      PIP_NO_CACHE_DIR = "1";
+    };
     environmentFiles = [ config.sops.secrets.OPENWEBUI_SECRET_KEY.path ];
   };
   services.caddy.virtualHosts."llm.lab.alper-celik.dev" = {
