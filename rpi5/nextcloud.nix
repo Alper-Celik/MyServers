@@ -77,6 +77,15 @@
     };
   };
 
+  services.phpfpm.pools.nextcloud.settings = {
+    "listen.owner" = config.services.caddy.user;
+    "listen.group" = config.services.caddy.group;
+  };
+  users.groups.nextcloud.members = [
+    "nextcloud"
+    config.services.caddy.user
+  ];
+
   services.caddy.virtualHosts.${config.services.nextcloud.hostName} = {
     extraConfig = ''
       root ${config.services.nginx.virtualHosts.${config.services.nextcloud.hostName}.root}
@@ -149,6 +158,7 @@
       }
       redir /remote* /remote.php{uri} permanent
       try_files {path} {path}/ /index.php{uri}
+      file_server
     '';
   };
 
