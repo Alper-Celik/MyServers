@@ -19,6 +19,7 @@ in
     acceptTerms = true;
     defaults = {
       profile = "shortlived";
+      dnsResolver = "1.1.1.1:53";
       email = "alper@alper-celik.dev";
       renewInterval = "6h";
       renewJitter = "2h";
