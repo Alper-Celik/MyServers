@@ -100,6 +100,7 @@
 
       @hidden {
         # rules merged by LLM
+        not path /.well-known/* /.well-known
         path_regexp ^/(?:(?:build|tests|config|lib|3rdparty|templates|data)(?:$|/)|(?:\.|autotest|occ|issue|indie|db_|console)|(?:composer\.(?:json|lock)|package(?:-lock)?\.json|core/shipped\.json)$)
 
         # Rules borrowed from `.htaccess` to hide certain paths from clients
@@ -156,7 +157,11 @@
         env front_controller_active true
         env modHeadersAvailable true
       }
-      redir /remote* /remote.php{uri} permanent
+
+      handle_path /remote/* {
+          redir /remote.php{uri} permanent
+      }
+
       try_files {path} {path}/ /index.php{uri}
       file_server
     '';
