@@ -29,6 +29,7 @@
         groupfolders
         twofactor_webauthn
         previewgenerator
+        richdocuments
         ;
     };
 
@@ -38,6 +39,7 @@
     config = {
       adminpassFile = config.sops.secrets.nextcloud-admin-pass.path;
       dbtype = "pgsql";
+      trustedProxies = [ "::1" ];
     };
     database.createLocally = true;
 
@@ -49,7 +51,6 @@
     appstoreEnable = true;
 
     settings = {
-      "memories.exiftool" = "/run/current-system/sw/bin/exiftool";
       "social_login_auto_redirect" = false;
       maintenance_window_start = "0"; # 3 am in utc+3
       default_phone_region = "TR";
@@ -60,9 +61,6 @@
         "OC\\Preview\\OpenDocument"
         "OC\\Preview\\XBitmap"
         "OC\\Preview\\TXT"
-        "OC\\Preview\\MarkDown"
-        "OC\\Preview\\OpenDocument"
-        "OC\\Preview\\Krita"
 
         "OC\\Preview\\Image"
         "OC\\Preview\\HEIC"
@@ -73,7 +71,6 @@
 
     phpOptions = {
       "opcache.interned_strings_buffer" = 20;
-
     };
   };
 
@@ -81,10 +78,7 @@
     "listen.owner" = config.services.caddy.user;
     "listen.group" = config.services.caddy.group;
   };
-  users.groups.nextcloud.members = [
-    "nextcloud"
-    config.services.caddy.user
-  ];
+  users.users.caddy.extraGroups = [ "nextcloud" ];
 
   services.caddy.virtualHosts.${config.services.nextcloud.hostName} = {
     extraConfig = ''
@@ -94,7 +88,6 @@
         path /
         header User-Agent DavClnt*
       }
-      redir @mswebdav /remote.php/webdav/ temporary
       redir /.well-known/carddav /remote.php/dav/ 301
       redir /.well-known/caldav /remote.php/dav/ 301
 
@@ -126,11 +119,6 @@
       header @static_files {
         # HTTP response headers borrowed from Nextcloud `.htaccess`
         Cache-Control                     "public, max-age=15778463"
-        Referrer-Policy                   "no-referrer"
-        X-Content-Type-Options            "nosniff"
-        X-Frame-Options                   "SAMEORIGIN"
-        X-Permitted-Cross-Domain-Policies "none"
-        X-Robots-Tag                      "noindex, nofollow"
       }
       header @immutable_files Cache-Control "public, max-age=15778463, immutable"
 
@@ -158,10 +146,6 @@
         env modHeadersAvailable true
       }
 
-      handle_path /remote/* {
-          redir /remote.php{uri} permanent
-      }
-
       try_files {path} {path}/ /index.php{uri}
       file_server
     '';
@@ -184,7 +168,12 @@
   };
 
   services.caddy.virtualHosts."collabora-online.lab.alper-celik.dev" = {
-    extraConfig = "reverse_proxy https://localhost:9980";
+    extraConfig = ''
+      reverse_proxy https://localhost:9980 {
+        transport http {
+          tls_insecure_skip_verify
+        }
+      }'';
     # extraConfig = ''
     #   # static files
     #   location ^~ /browser {
