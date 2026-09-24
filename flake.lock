@@ -500,11 +500,11 @@
         "sops-nix": "sops-nix"
       },
       "locked": {
-        "lastModified": 1778885340,
-        "narHash": "sha256-22sRT6lvi9xlGRF4Vtb9cuPNZnqkWTZ8KCCuz9Q5toc=",
+        "lastModified": 1790287789,
+        "narHash": "sha256-GWJU8iRyKLKKQ4JHE67VQg/39GcXnx/CYv2CkebySN4=",
         "owner": "riscv-turkiye",
         "repo": "Infra",
-        "rev": "7f923a30983ad68de4a58e112075f73afd3abf20",
+        "rev": "7d906ee1ef4c844f2b63a1ecac80b2772f0fabe1",
         "type": "github"
       },
       "original": {
