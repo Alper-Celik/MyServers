@@ -6,6 +6,7 @@ let
   grafana-domain = "observe.lab.alper-celik.dev";
   mimir-domain = "mimir.lab.alper-celik.dev";
   loki-domain = "loki.lab.alper-celik.dev";
+  mimir-version = config.services.mimir.package.version;
 in
 {
   # grafana (data dashboard)
@@ -48,6 +49,7 @@ in
           jsonData = {
             httpMethod = "POST";
             prometheusType = "Mimir";
+            prometheusVersion = mimir-version;
           };
         }
         {
