@@ -2,6 +2,7 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    hermes-agent.url = "github:NousResearch/hermes-agent";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     nixos-raspberrypi = {
       url = "github:nvmd/nixos-raspberrypi/develop";

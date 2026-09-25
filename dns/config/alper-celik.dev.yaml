@@ -62,6 +62,12 @@ p2p.lab:
 llm.lab:
   type: CNAME
   value: hetzner-server-1.tailnet.alper-celik.dev.
+hermes.lab:
+  type: CNAME
+  value: hetzner-server-1.tailnet.alper-celik.dev.
+hermes-api.lab:
+  type: CNAME
+  value: hetzner-server-1.tailnet.alper-celik.dev.
 
   # hetzner-server-1
 adguardhome.lab:
