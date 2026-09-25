@@ -8,9 +8,6 @@
       url = "github:nvmd/nixos-raspberrypi/develop";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
-    deploy-rs = {
-      url = "github:serokell/deploy-rs";
-    };
     my-blog.url = "github:Alper-Celik/MyBlog";
 
     riscv-tr.url = "github:riscv-turkiye/Infra";
@@ -44,7 +41,6 @@
       self,
       nixpkgs,
       nixpkgs-unstable,
-      deploy-rs,
       disko,
       nixos-hardware,
       nixos-raspberrypi,
@@ -200,48 +196,44 @@
         in
         all-configs;
 
-      deploy.nodes = {
+      # Hosts deployed by deploy.py: where to reach them and the system closure
+      # to switch them to. deploy.py evaluates this once, copies each toplevel
+      # from the remote store and runs switch-to-configuration on the host.
+      deploy-nodes = {
         ovhcloud-server-1 = {
           hostname = "api.projectread.ing";
           sshUser = "root";
-          remoteBuild = true;
-          profiles = {
-            system = {
-              user = "root";
-              path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.ovhcloud-server-1;
-            };
-          };
-
-        };
-        rpi5 = {
-          hostname = "rpi5.tailnet.alper-celik.dev";
-          sshUser = "root";
-          activationTimeout = 1000;
-          confirmTimeout = 60;
-          remoteBuild = true;
-
-          profiles = {
-            system = {
-              user = "root";
-              path = deploy-rs.lib.aarch64-linux.activate.nixos self.nixosConfigurations.rpi5;
-            };
-          };
+          toplevel = self.nixosConfigurations.ovhcloud-server-1.config.system.build.toplevel;
         };
         hetzner-server-1 = {
           hostname = "hetzner-server-1.devices.alper-celik.dev";
           sshUser = "root";
-          remoteBuild = true;
-
-          profiles = {
-            system = {
-              user = "root";
-              path = deploy-rs.lib.aarch64-linux.activate.nixos self.nixosConfigurations.hetzner-server-1;
-            };
-          };
+          toplevel = self.nixosConfigurations.hetzner-server-1.config.system.build.toplevel;
+        };
+        rpi5 = {
+          hostname = "rpi5.tailnet.alper-celik.dev";
+          sshUser = "root";
+          toplevel = self.nixosConfigurations.rpi5.config.system.build.toplevel;
         };
       };
 
-      checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
+      # Same build step as the workflow's build/check job: build (and thereby
+      # validate) every deploy node's system closure so the hosts can pull them
+      # from the remote store.
+      checks.aarch64-linux.deploy-toplevels =
+        let
+          pkgs = nixpkgs.legacyPackages.aarch64-linux;
+          toplevels = pkgs.lib.mapAttrsToList (_: node: node.toplevel) self.deploy-nodes;
+        in
+        pkgs.runCommand "deploy-toplevels" { } ''
+          for p in ${pkgs.lib.concatStringsSep " " toplevels}; do
+            test -x "$p/bin/switch-to-configuration" || {
+              echo "$p is missing switch-to-configuration"
+              exit 1
+            }
+          done
+          touch $out
+        '';
 
       packages = forEachSupportedSystem (
         { pkgs, self-pkgs, ... }:
@@ -261,19 +253,15 @@
           octodns-ddns = pkgs.python3Packages.callPackage ./pkgs/octodns-ddns.nix {
             src = inputs.octodns-ddns-src;
           };
-          deploy-rs = pkgs.deploy-rs;
 
           # ai generated start
-          # Runtime environment for deploy.py (see its `nix shell` shebang).
-          # NB: must not be named `deploy` — `nix eval .#deploy` resolves
-          # packages.<system>.deploy before the top-level `deploy` output,
-          # which deploy-rs evaluates (and would then decode as a store path).
+          # Runtime environment for deploy.py (see its `nix shell` shebang):
+          # nix for eval/copy and python3 to run the script.
           deploy-env = pkgs.buildEnv {
             name = "deploy-env";
             paths = [
               pkgs.nix
               pkgs.python3
-              pkgs.deploy-rs
             ];
           };
           # ai generated end
@@ -292,7 +280,6 @@
             packages = with pkgs; [
               yq
               self-pkgs.octodns
-              self-pkgs.deploy-rs
               nix
               python3
             ];
