@@ -117,6 +117,25 @@ in
         status_online = "🟢 Online";
         status_offline = "🔴 Offline";
       };
+
+      # Home channel = where cron output and proactive notifications land when a
+      # job does not name its own target. Declared here rather than in the
+      # sops-rendered .env on purpose: activation rewrites .env from scratch, so
+      # a hand-added TELEGRAM_HOME_CHANNEL would be deleted by the next deploy.
+      # config.yaml is the canonical store (what `/sethome` persists); the env
+      # var is only a best-effort mirror of it.
+      #
+      # thread_id is REQUIRED on this account: the DM runs in topic mode, and a
+      # delivery with no thread id lands in Telegram's system-only lobby, where
+      # Alper cannot reply and the gateway drops reply_to_message_id. 1089 is the
+      # topic Alper actually chats in; TELEGRAM_CRON_THREAD_ID would override it
+      # for cron only. `platform` is required by HomeChannel.from_dict.
+      gateway.platforms.telegram.home_channel = {
+        platform = "telegram";
+        chat_id = "1228209533";
+        name = "Home";
+        thread_id = "1089";
+      };
       gateway.streaming = {
         enabled = true;
         transport = "auto";
