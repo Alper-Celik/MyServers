@@ -7,6 +7,27 @@
 let
   api-port = 8642; # OpenAI-compatible API server (gateway platform)
   dashboard-port = 9119; # web dashboard / desktop backend
+
+  # Voice-note transcription goes through a multimodal model on OpenRouter (ZDR
+  # is enforced account-level and requested per call). The script itself is
+  # pkgs/hermes-openrouter-stt.js; the shebang is added here so the source file
+  # stays plain JS (no `''${` escaping) and node comes from the store rather
+  # than the unit PATH.
+  sttScript = pkgs.writeTextFile {
+    name = "hermes-openrouter-stt";
+    executable = true;
+    destination = "/bin/hermes-openrouter-stt";
+    text = "#!${pkgs.nodejs}/bin/node\n" + builtins.readFile ../../pkgs/hermes-openrouter-stt.js;
+  };
+
+  # Offline fallback model for that script (whisper.cpp): small is the
+  # speed/quality compromise that still fits the 300 s local-STT timeout on 4
+  # cores. large-v3-turbo transcribes far better (and is what OpenRouter is
+  # asked for) but runs ~10-15x realtime here.
+  whisperModel = pkgs.fetchurl {
+    url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin";
+    hash = "sha256-G+OpsgY4Z7k35k4ux0gzZKeZF+FX+pjF2UtcH//qmHs=";
+  };
 in
 {
   imports = [ inputs.hermes-agent.nixosModules.default ];
@@ -116,6 +137,10 @@ in
       gh
       mcp-grafana
       github-mcp-server
+      # whisper-cli: OFFLINE fallback for the STT script below (node itself is
+      # pinned by the script's store shebang). ffmpeg, needed to turn the
+      # Telegram .ogg into 16 kHz wav, is already on the unit PATH from the module.
+      whisper-cpp
     ];
     extraDependencyGroups = [
       "messaging"
@@ -292,6 +317,28 @@ in
       GIT_CONFIG_COUNT = "1";
       GIT_CONFIG_KEY_0 = "credential.https://github.com.helper";
       GIT_CONFIG_VALUE_0 = "store";
+
+      # Voice-note transcription (Telegram voice messages). Without this, every
+      # voice note fails with "No STT provider available":
+      #   - the bundled default (faster-whisper) cannot be lazy-installed on a
+      #     nixos-managed install ("Feature 'stt.faster_whisper' unavailable:
+      #     unsupported on nixos-managed installs"), and the dependency group
+      #     would compile 31 derivations from source on aarch64;
+      #   - Hermes' local-CLI detector looks for a binary named exactly
+      #     `whisper`, while whisper.cpp ships `whisper-cli` — no match;
+      #   - no first-party cloud STT key is configured.
+      # HERMES_LOCAL_STT_COMMAND is the documented escape hatch: the value runs
+      # through shlex.split (no shell — no pipes/globs) and must leave a .txt in
+      # {output_dir}. It points at a small script (pkgs/hermes-openrouter-stt.js)
+      # that posts the audio to a multimodal model on OpenRouter — ~2 s per note
+      # and no CPU load, versus ~10-15x realtime for a local whisper.cpp model on
+      # this box's 4 cores. ZDR is enforced account-level and requested per call
+      # (provider.zdr). The script falls back to whisper-cli below if the API is
+      # unreachable, so an outage degrades to slow, not broken.
+      # It also asks the model to tag non-neutral delivery ([sarcastic],
+      # [joking], …) so tone survives the transcription; OR_STT_TONE=0 disables.
+      HERMES_LOCAL_STT_COMMAND = "${sttScript}/bin/hermes-openrouter-stt {input_path} {output_dir}";
+      OR_STT_WHISPER_MODEL = "${whisperModel}";
     };
 
     # Workspace policy file, installed on every activation (nix-managed —
