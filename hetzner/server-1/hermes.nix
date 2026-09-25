@@ -43,33 +43,24 @@ in
     ];
   };
 
-  # gh CLI credentials for the AGENT's shell (gh comes from extraPackages).
+  # Git HTTPS credentials for the AGENT's shell — the replacement for the gh
+  # CLI credential helper. gh is no longer installed (the GitHub MCP server
+  # below does the API work), so `git push` over HTTPS authenticates from this
+  # file through git's `store` helper, wired up by the GIT_CONFIG_* variables
+  # in `environment` further down.
   # Why a file and not the environment: hermes strips Tier-1 secrets —
   # GITHUB_TOKEN / GH_TOKEN — from every terminal and execute_code child, and
   # `terminal.env_passthrough` cannot re-allow them (provider/tool credentials
   # are blocked on purpose, GHSA-rhgp-j443-p4rf; docs: "Hermes-managed provider
-  # credentials can never be re-allowed this way"). gh reads
-  # ~/.config/gh/hosts.yml instead, and on the LOCAL terminal backend files are
+  # credentials can never be re-allowed this way"). git's store helper reads
+  # $HOME/.git-credentials instead, and on the LOCAL terminal backend files are
   # simply accessible — the documented route for file credentials.
-  # Shape: the bundled github skill's headless fallback (users map + flat
-  # oauth_token + user). Verified on this host with
-  # `env -u GITHUB_TOKEN -u GH_TOKEN gh auth status` / `gh api /user`. The
-  # users map ALONE is rejected by gh ("the token ... is invalid"); the flat
-  # `oauth_token:` line is what it actually uses.
-  # ~/.gitconfig already runs `gh auth setup-git`, so `git push` over HTTPS
-  # picks this up too, and `gh auth token` gives the agent a token for push
-  # URLs without any env var.
-  sops.templates."gh-hosts" = {
+  # Format: one `https://user:token@host` line per host, 0600, owner hermes.
+  sops.templates."git-credentials" = {
     content = ''
-      github.com:
-          users:
-              Alper-Celiks-Agent:
-                  oauth_token: ${config.sops.placeholder.GITHUB_TOKEN_AI}
-          git_protocol: https
-          oauth_token: ${config.sops.placeholder.GITHUB_TOKEN_AI}
-          user: Alper-Celiks-Agent
+      https://Alper-Celiks-Agent:${config.sops.placeholder.GITHUB_TOKEN_AI}@github.com
     '';
-    path = "/var/lib/hermes/.config/gh/hosts.yml";
+    path = "/var/lib/hermes/.git-credentials";
     mode = "0600";
     owner = config.users.users.hermes.name;
     group = config.users.groups.hermes.name;
@@ -81,6 +72,10 @@ in
     # nix on PATH so the agent can run throwaway tools: nix shell/run/nix-shell
     # mcp-grafana: the Grafana MCP stdio server below, as a nix-built binary —
     #   uvx cannot run it on this host (see the grafana MCP server comment)
+    # github-mcp-server: the GitHub MCP stdio server below, likewise a
+    #   nix-built Go binary (no interpreter). `gh` used to live here; it is
+    #   gone — GitHub API work is done by the MCP server, git push by the
+    #   sops-rendered ~/.git-credentials.
     extraPackages = with pkgs; [
       nix
       chromium
@@ -88,8 +83,8 @@ in
       fd
       ripgrep
       uv
-      gh
       mcp-grafana
+      github-mcp-server
     ];
     extraDependencyGroups = [
       "messaging"
@@ -138,9 +133,35 @@ in
     # `\${VAR}` placeholders are resolved by hermes at startup from .env
     # (sops-rendered above); Nix only ever sees the literal placeholder, so no
     # secret value lands in the nix store or config.yaml.
-    # GitHub is served by the gh CLI (extraPackages above) instead of an MCP
-    # server; Exa is the native web-search backend (exa dependency group).
+    # GitHub is served by the entry below (pkgs.github-mcp-server, extraPackages
+    # above) — the gh CLI is no longer installed; Exa is the native web-search
+    # backend (exa dependency group).
     mcpServers = {
+      # GitHub — the official MCP server, nix-packaged so it needs no uvx/npx
+      # interpreter (uv's managed CPython cannot run on this host; see the
+      # grafana comment below). Tools register as mcp__github__* — repos,
+      # issues, PRs and reviews, branch/commit/file writes, code search, and
+      # via `actions` the CI runs/jobs (`gh pr checks` equivalent, so
+      # "is CI green" stays answerable).
+      # `--toolsets`: default = context, copilot, issues, pull_requests, repos,
+      # users (43 tools); +actions = 47. Use `all` for 82 (gists, notifications,
+      # dependabot, discussions, projects, …) — every tool costs context in
+      # every conversation, so widen only when a task needs it.
+      # The token MUST ride in this env map: stdio children inherit only a
+      # filtered env (PATH/HOME/USER/XDG_*), and ${GITHUB_TOKEN} is resolved by
+      # hermes at startup from the sops-rendered .env — never from Nix.
+      # Writes are enabled (the agent opens PRs); add "--read-only" to args to
+      # make the server hard-read-only for non-PR work.
+      github = {
+        command = "github-mcp-server";
+        args = [
+          "stdio"
+          "--toolsets=default,actions"
+        ];
+        env.GITHUB_PERSONAL_ACCESS_TOKEN = "\${GITHUB_TOKEN}";
+        timeout = 300;
+      };
+
       # Context7 library docs. Works anonymously without the key — to go
       # anonymous, delete both the headers line here and its sops entries.
       context7 = {
@@ -192,13 +213,23 @@ in
 
     # Commit attribution: agent-made commits carry the automation account's
     # identity, never Alper-Celik's personal one. Requires agent@alper-celik.dev
-    # to be a verified email on the bot GitHub account (gh API actions —
-    # PRs/issues — attribute to the GITHUB_TOKEN account automatically).
+    # to be a verified email on the bot GitHub account (MCP/API actions — PRs,
+    # issues — attribute to the GITHUB_TOKEN account automatically).
+    # GIT_CONFIG_* wires git's credential `store` helper to the sops-rendered
+    # ~/.git-credentials without editing ~/.gitconfig (hand-managed on the
+    # host, and still carrying a `gh auth git-credential` line whose store path
+    # goes away with the gh package). Env-config entries outrank file config
+    # and git falls through to the next helper when one fails, so HTTPS push
+    # keeps working; verified with `git credential fill` against a failing
+    # file-level helper. git >= 2.31 (host runs 2.54).
     environment = {
       GIT_AUTHOR_NAME = "hermes-agent";
       GIT_COMMITTER_NAME = "hermes-agent";
       GIT_AUTHOR_EMAIL = "agent@alper-celik.dev";
       GIT_COMMITTER_EMAIL = "agent@alper-celik.dev";
+      GIT_CONFIG_COUNT = "1";
+      GIT_CONFIG_KEY_0 = "credential.https://github.com.helper";
+      GIT_CONFIG_VALUE_0 = "store";
     };
 
     # Workspace policy file, installed on every activation (nix-managed —
