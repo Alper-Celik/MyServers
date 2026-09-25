@@ -197,8 +197,8 @@
         all-configs;
 
       # Hosts deployed by deploy.py: where to reach them and the system closure
-      # to switch them to. deploy.py evaluates this once, copies each toplevel
-      # from the remote store and runs switch-to-configuration on the host.
+      # to switch them to. deploy.py copies each toplevel from the remote store
+      # and runs switch-to-configuration on the host.
       deploy-nodes = {
         ovhcloud-server-1 = {
           hostname = "api.projectread.ing";
@@ -217,9 +217,27 @@
         };
       };
 
+      # The deploy table as JSON: what deploy.py needs to reach each host and
+      # switch it to its closure. Shipping it as a build output is what lets the
+      # deploy phase reuse the build step's evaluation instead of evaluating the
+      # flake (and every NixOS configuration) a second time.
+      deploy-manifest =
+        let
+          pkgs = nixpkgs.legacyPackages.aarch64-linux;
+        in
+        pkgs.writeText "deploy-manifest.json" (
+          builtins.toJSON (
+            pkgs.lib.mapAttrs (_: node: {
+              inherit (node) hostname sshUser;
+              closure = node.toplevel.outPath;
+            }) self.deploy-nodes
+          )
+        );
+
       # Same build step as the workflow's build/check job: build (and thereby
       # validate) every deploy node's system closure so the hosts can pull them
-      # from the remote store.
+      # from the remote store. The output is the deploy manifest, so deploy.py
+      # reads the hosts and closures out of the build it just ran.
       checks.aarch64-linux.deploy-toplevels =
         let
           pkgs = nixpkgs.legacyPackages.aarch64-linux;
@@ -232,7 +250,7 @@
               exit 1
             }
           done
-          touch $out
+          cp ${self.deploy-manifest} $out
         '';
 
       packages = forEachSupportedSystem (

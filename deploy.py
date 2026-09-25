@@ -24,8 +24,9 @@ Extra arguments are only forwarded to the build step.
 
 Closures are pulled from the remote store either by the host itself (using
 NIXBUILDNET_TOKEN, or a short-lived store:read token minted from the local
-nixbuild.net SSH key via the admin shell) or, as a fallback, copied through
-this runner — so a machine with only an SSH key to nixbuild.net works too.
+nixbuild.net SSH key through the administration shell, which needs that key to
+hold account:write) or, as a fallback, copied through this runner — so a
+machine with only an SSH key to nixbuild.net works too, just slower.
 """
 
 from __future__ import annotations
@@ -37,6 +38,7 @@ import shlex
 import subprocess
 import sys
 import tempfile
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -55,6 +57,11 @@ NB_HOST_KEY = (
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPIQCZc54poJ8vqawd8TraNryQeJnvH1eLpIDgbiqymM"
 )
 REMOTE_DIR = "/run/deploy-nixbuild"
+
+# Suffix of the nixbuild.net administration shell's prompt ("nixbuild.net> ",
+# "eu.nixbuild.net> "). Session output is prefixed with it, command-argument
+# output is not.
+PROMPT = "nixbuild.net>"
 
 # Run on each host (via `bash -s`, since the remote login shell may be fish):
 # install the copied closure as the system profile generation, then run
@@ -276,19 +283,19 @@ def select_nodes(hosts: list[str]) -> list[str] | None:
     return [n for n in NODES if n in hosts]
 
 
-def resolve_hosts(hosts: list[str]) -> tuple[dict[str, tuple[str, str, str]], list[str]] | None:
-    """Resolve the selected nodes' hosts and closure paths in a single flake
-    evaluation.
+def evaluate_nodes(selected: list[str]) -> dict | None:
+    """Evaluate the selected nodes' hosts and closure paths from the flake.
 
-    The closures are already built in the remote store by the CI build step,
-    so this evaluates but does not build. One evaluation covers all nodes
-    (instead of one full flake/config evaluation per node); hosts that are
-    unreachable are skipped.
+    The closures are already built in the remote store by the build step, so
+    this evaluates but does not build. One evaluation covers every selected
+    node (instead of one full flake/config evaluation per node), and it is
+    masked to the selection so that an unselected node's closure is never
+    evaluated.
 
-    Returns (meta, deploy_nodes), or None on evaluation or selection failure."""
-    selected = select_nodes(hosts)
-    if selected is None:
-        return None
+    Returns the deploy table (node -> hostname/sshUser/closure), or None."""
+    # Only force the selected nodes: the JSON output realises every value it
+    # prints, and each closure costs a full NixOS evaluation.
+    mask = " ".join(f"{json.dumps(node)} = null;" for node in selected)
     p = subprocess.run(
         [
             "nix",
@@ -301,7 +308,7 @@ def resolve_hosts(hosts: list[str]) -> tuple[dict[str, tuple[str, str, str]], li
             " hostname = v.hostname;"
             " sshUser = v.sshUser;"
             " closure = v.toplevel.outPath;"
-            " }) nodes",
+            f" }}) (builtins.intersectAttrs {{ {mask} }} nodes)",
         ],
         stdout=subprocess.PIPE,
         text=True,
@@ -310,10 +317,30 @@ def resolve_hosts(hosts: list[str]) -> tuple[dict[str, tuple[str, str, str]], li
         warn("ERROR: failed to evaluate deploy-nodes")
         return None
     try:
-        nodes = json.loads(p.stdout)
+        return json.loads(p.stdout)
     except json.JSONDecodeError:
         warn("ERROR: failed to decode deploy-nodes evaluation")
         return None
+
+
+def resolve_hosts(
+    hosts: list[str], nodes: dict | None = None
+) -> tuple[dict[str, tuple[str, str, str]], list[str]] | None:
+    """Resolve the selected nodes' hosts and closure paths.
+
+    `nodes` is the deploy table a previous build step produced (see
+    build_nodes). When it is absent — a deploy that did not build, e.g. CI
+    where the build ran in an earlier job — the table is evaluated from the
+    flake here, in one evaluation covering the whole selection.
+
+    Returns (meta, deploy_nodes), or None on evaluation or selection failure."""
+    selected = select_nodes(hosts)
+    if selected is None:
+        return None
+    if nodes is None:
+        nodes = evaluate_nodes(selected)
+        if nodes is None:
+            return None
 
     meta: dict[str, tuple[str, str, str]] = {}
     deploy_nodes: list[str] = []
@@ -336,41 +363,90 @@ def resolve_hosts(hosts: list[str]) -> tuple[dict[str, tuple[str, str, str]], li
     return meta, deploy_nodes
 
 
+def shell_lines(text: str) -> list[str]:
+    """Non-empty lines of nixbuild.net shell output, with the shell prompt
+    removed (session output prefixes each line with it, command-argument
+    output does not)."""
+    lines = (line.split(PROMPT)[-1].strip() for line in text.splitlines())
+    return [line for line in lines if line]
+
+
 def mint_token() -> str | None:
     """Mint a store-read-only auth token from the local SSH key
     through the nixbuild.net administration shell. Hosts need a token to pull
     from the remote store themselves; on failure this runner copies instead.
     Two hours: big closures over slow home links (e.g. the rpi5) can take a
-    while, and the token is store:read-only so a longer TTL is low risk."""
+    while, and the token is store:read-only so a longer TTL is low risk.
+
+    The admin shell requires a name for manually created tokens, and names must
+    be unique among the account's active tokens (a name can only be reused once
+    the previous token expired), so every run mints under its own name.
+
+    The command is written to a plain shell session instead of being passed as
+    an ssh argument: a command argument is authorized as one `run` operation
+    (run:write), while a session command is authorized as the shell command
+    itself (account:write, what the docs list for the administration shell)."""
     ttl = 7200
+    name = f"deploy-{uuid.uuid4().hex[:8]}"
+    # Connect without a remote command and write the command (plus `exit`, so
+    # the session terminates even if the shell ignores EOF) to its stdin.
     p = subprocess.run(
-        [
-            "ssh",
-            *SSH_OPTS,
-            NB_HOST,
-            "tokens",
-            "create",
-            "--ttl-seconds",
-            str(ttl),
-            "-p",
-            "store:read",
-        ],
+        ["ssh", *SSH_OPTS, NB_HOST],
+        input=f"tokens create --name {name} --ttl-seconds {ttl} -p store:read\nexit\n",
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
     )
-    # The shell prints the token framed by two dashed separator lines.
-    lines = p.stdout.splitlines()
-    for i, line in enumerate(lines):
-        token = lines[i + 1].strip() if i + 1 < len(lines) else ""
-        if line.startswith("---") and token and not token.startswith("---"):
-            warn(f"minted a nixbuild.net store:read token from the local SSH key (ttl {ttl}s)")
-            return token
-    reason = next((line.strip() for line in reversed(p.stderr.splitlines()) if line.strip()), "")
-    warn(
-        "could not mint a nixbuild.net token from the local SSH key; copying via this runner"
-        + (f": {reason}" if reason else "")
+    # The shell prints the token framed by dashed rules and splits its output
+    # over both ssh streams (banner/prompt on one, command output on the
+    # other), so parse the two together. The minted token is the only line that
+    # is a long run of base64url characters; matching it by shape avoids
+    # depending on which stream carried the rules.
+    output = shell_lines(p.stderr) + shell_lines(p.stdout)
+    token = next(
+        (
+            line
+            for line in output
+            if len(line) >= 64
+            and any(c.isalnum() for c in line)
+            and all(c.isalnum() or c in "-_=" for c in line)
+        ),
+        None,
     )
+    if token:
+        warn(
+            f"minted a nixbuild.net store:read token {name} from the local SSH key"
+            f" (ttl {ttl}s)"
+        )
+        return token
+
+    # Show everything the shell said: its authorization errors put the reason
+    # above a trailing hint line (e.g. about max-cpu-hours-per-month).
+    detail = "".join(f"\n      {ln}" for ln in output) or f" ssh exited {p.returncode} with no output"
+    warn(
+        "could not mint a nixbuild.net token from the local SSH key; copying via this runner:"
+        f"{detail}"
+    )
+    # The shell lists the permissions it wanted after this marker; only those
+    # lines name a missing permission (elsewhere "store:read" and friends
+    # appear as token permissions).
+    marker = next(
+        (i for i, ln in enumerate(output) if "one or more of these permissions" in ln), None
+    )
+    if marker is not None:
+        missing = [
+            ln
+            for ln in output[marker + 1 :]
+            if len(parts := ln.split(":")) == 2 and all(p.isalpha() for p in parts)
+        ]
+        if missing:
+            perms = " ".join(f"--add {p}" for p in missing)
+            warn(
+                f"the SSH key for {NB_HOST} lacks {' '.join(missing)} to run tokens create: "
+                f"add it with 'ssh {NB_HOST}' then 'settings default-permissions {perms}' (or "
+                "with --ssh-key <id> to add it to that key only), or set NIXBUILDNET_TOKEN "
+                "yourself"
+            )
     return None
 
 
@@ -437,11 +513,19 @@ def deploy_node(node: str, meta: dict, action: str) -> bool:
     )
 
 
-def cmd_build(extra: list[str], hosts: list[str]) -> int:
-    """Same build step as the workflow's build/check job: build the deploy
-    checks on the remote store (nixbuild.net), leaving the closures there for
-    the hosts to pull. Builds every node; host selection does not apply."""
-    return stream(
+def build_nodes(extra: list[str]) -> dict | None:
+    """Build every deploy node's closure on the remote store — the same check
+    the workflow's build/check job builds — and return the deploy table that
+    build writes (node -> hostname/sshUser/closure).
+
+    The table is the build's output, so a deploy reads the hosts and closures
+    out of the build it just ran instead of evaluating the flake (and every
+    NixOS configuration) again. Builds every node; host selection does not
+    apply.
+
+    Build logs go to stderr and are streamed, leaving stdout for the JSON
+    result."""
+    p = subprocess.Popen(
         [
             "nix",
             *NIX_ARGS,
@@ -457,9 +541,47 @@ def cmd_build(extra: list[str], hosts: list[str]) -> int:
             "auto",
             "--store",
             REMOTE_STORE,
+            "--json",
             *extra,
-        ]
+        ],
+        stdout=subprocess.PIPE,
+        text=True,
     )
+    result = p.stdout.read()
+    p.stdout.close()
+    if p.wait() != 0:
+        warn("ERROR: the build step failed")
+        return None
+    try:
+        manifest = json.loads(result)[0]["outputs"]["out"]
+    except (json.JSONDecodeError, IndexError, KeyError, TypeError):
+        warn("ERROR: could not read the build result")
+        return None
+    # Read the manifest straight out of the remote store. Copying it would pull
+    # its closure: the JSON names the closures, so the store records them as
+    # this file's references, and `nix copy` follows references (the whole
+    # system closures would come back to this runner).
+    p = subprocess.run(
+        ["nix", *NIX_ARGS, "--store", REMOTE_STORE, "store", "cat", manifest],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    if p.returncode != 0:
+        warn(f"ERROR: could not read the deploy manifest from the remote store: {p.stderr.strip()}")
+        return None
+    try:
+        return json.loads(p.stdout)
+    except json.JSONDecodeError:
+        warn("ERROR: could not decode the deploy manifest")
+        return None
+
+
+def cmd_build(extra: list[str], hosts: list[str]) -> int:
+    """Same build step as the workflow's build/check job: build the deploy
+    checks on the remote store (nixbuild.net), leaving the closures there for
+    the hosts to pull. Builds every node; host selection does not apply."""
+    return 0 if build_nodes(extra) is not None else 1
 
 
 def cmd_resolve(extra: list[str], hosts: list[str]) -> int:
@@ -488,10 +610,13 @@ def cmd_activate(extra: list[str], hosts: list[str]) -> int:
     return activate_nodes(meta, deploy_nodes, extra, "switch")
 
 
-def cmd_activate_selected(extra: list[str], hosts: list[str], action: str) -> int:
+def cmd_activate_selected(
+    extra: list[str], hosts: list[str], action: str, nodes: dict | None = None
+) -> int:
     """Resolve, copy each closure to its host, then activate with `action`.
-    Shared by deploy-ci/boot/reboot."""
-    resolved = resolve_hosts(hosts)
+    Shared by deploy/deploy-ci/boot/reboot; `nodes` is the deploy table when
+    the caller already built (see build_nodes)."""
+    resolved = resolve_hosts(hosts, nodes)
     if resolved is None:
         return 1
     meta, deploy_nodes = resolved
@@ -515,9 +640,13 @@ def cmd_reboot(extra: list[str], hosts: list[str]) -> int:
 
 
 def cmd_deploy(extra: list[str], hosts: list[str]) -> int:
-    if cmd_build([], []) != 0:
+    """Build on the remote store, then deploy what that build produced: the
+    build reports every node's host and closure, so the deploy phase neither
+    evaluates the flake again nor re-derives the closures."""
+    nodes = build_nodes(extra)
+    if nodes is None:
         return 1
-    return cmd_deploy_ci(extra, hosts)
+    return cmd_activate_selected(extra, hosts, "switch", nodes)
 
 
 COMMANDS = {
