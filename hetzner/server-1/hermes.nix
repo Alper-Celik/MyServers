@@ -43,18 +43,47 @@ in
     ];
   };
 
-  # Git HTTPS credentials for the AGENT's shell — the replacement for the gh
-  # CLI credential helper. gh is no longer installed (the GitHub MCP server
-  # below does the API work), so `git push` over HTTPS authenticates from this
-  # file through git's `store` helper, wired up by the GIT_CONFIG_* variables
-  # in `environment` further down.
+  # gh CLI credentials for the AGENT's shell (gh comes from extraPackages).
   # Why a file and not the environment: hermes strips Tier-1 secrets —
   # GITHUB_TOKEN / GH_TOKEN — from every terminal and execute_code child, and
   # `terminal.env_passthrough` cannot re-allow them (provider/tool credentials
   # are blocked on purpose, GHSA-rhgp-j443-p4rf; docs: "Hermes-managed provider
-  # credentials can never be re-allowed this way"). git's store helper reads
-  # $HOME/.git-credentials instead, and on the LOCAL terminal backend files are
+  # credentials can never be re-allowed this way"). gh reads
+  # ~/.config/gh/hosts.yml instead, and on the LOCAL terminal backend files are
   # simply accessible — the documented route for file credentials.
+  # Shape: the bundled github skill's headless fallback (users map + flat
+  # oauth_token + user). Verified on this host with
+  # `env -u GITHUB_TOKEN -u GH_TOKEN gh auth status` / `gh api /user`. The
+  # users map ALONE is rejected by gh ("the token ... is invalid"); the flat
+  # `oauth_token:` line is what it actually uses.
+  sops.templates."gh-hosts" = {
+    content = ''
+      github.com:
+          users:
+              Alper-Celiks-Agent:
+                  oauth_token: ${config.sops.placeholder.GITHUB_TOKEN_AI}
+          git_protocol: https
+          oauth_token: ${config.sops.placeholder.GITHUB_TOKEN_AI}
+          user: Alper-Celiks-Agent
+    '';
+    path = "/var/lib/hermes/.config/gh/hosts.yml";
+    mode = "0600";
+    owner = config.users.users.hermes.name;
+    group = config.users.groups.hermes.name;
+  };
+
+  # Git HTTPS credentials for the AGENT's shell — a second, gh-independent
+  # route to the same token: `git push` authenticates from this file through
+  # git's `store` helper (wired up by the GIT_CONFIG_* variables in
+  # `environment` further down) rather than through `gh auth git-credential`
+  # from the hand-managed ~/.gitconfig, so HTTPS pushes keep working even if
+  # gh is dropped again. Belongs to the same reasoning as the gh block above:
+  # hermes strips Tier-1 secrets — GITHUB_TOKEN / GH_TOKEN — from every
+  # terminal and execute_code child, and `terminal.env_passthrough` cannot
+  # re-allow them (provider/tool credentials are blocked on purpose,
+  # GHSA-rhgp-j443-p4rf). git's store helper reads $HOME/.git-credentials, and
+  # on the LOCAL terminal backend files are simply accessible — the documented
+  # route for file credentials.
   # Format: one `https://user:token@host` line per host, 0600, owner hermes.
   sops.templates."git-credentials" = {
     content = ''
@@ -73,9 +102,10 @@ in
     # mcp-grafana: the Grafana MCP stdio server below, as a nix-built binary —
     #   uvx cannot run it on this host (see the grafana MCP server comment)
     # github-mcp-server: the GitHub MCP stdio server below, likewise a
-    #   nix-built Go binary (no interpreter). `gh` used to live here; it is
-    #   gone — GitHub API work is done by the MCP server, git push by the
-    #   sops-rendered ~/.git-credentials.
+    #   nix-built Go binary (no interpreter)
+    # gh: the GitHub CLI, still here alongside the MCP server — it reads the
+    #   sops-rendered ~/.config/gh/hosts.yml above, and covers what the MCP
+    #   server does not (raw `gh api`, `gh run watch`, ad-hoc `gh pr` output)
     extraPackages = with pkgs; [
       nix
       chromium
@@ -83,6 +113,7 @@ in
       fd
       ripgrep
       uv
+      gh
       mcp-grafana
       github-mcp-server
     ];
@@ -134,8 +165,9 @@ in
     # (sops-rendered above); Nix only ever sees the literal placeholder, so no
     # secret value lands in the nix store or config.yaml.
     # GitHub is served by the entry below (pkgs.github-mcp-server, extraPackages
-    # above) — the gh CLI is no longer installed; Exa is the native web-search
-    # backend (exa dependency group).
+    # above); the gh CLI stays installed as well — the two are complementary,
+    # the MCP server for typed API work, gh for raw/CLI-shaped work. Exa is the
+    # native web-search backend (exa dependency group).
     mcpServers = {
       # GitHub — the official MCP server, nix-packaged so it needs no uvx/npx
       # interpreter (uv's managed CPython cannot run on this host; see the
@@ -217,10 +249,10 @@ in
     # issues — attribute to the GITHUB_TOKEN account automatically).
     # GIT_CONFIG_* wires git's credential `store` helper to the sops-rendered
     # ~/.git-credentials without editing ~/.gitconfig (hand-managed on the
-    # host, and still carrying a `gh auth git-credential` line whose store path
-    # goes away with the gh package). Env-config entries outrank file config
-    # and git falls through to the next helper when one fails, so HTTPS push
-    # keeps working; verified with `git credential fill` against a failing
+    # host; it keeps its own `gh auth git-credential` line, whose nix-store path
+    # would go stale were gh ever dropped again). Env-config entries outrank
+    # file config, so `store` is consulted first while the gh helper stays as a
+    # fallback; verified with `git credential fill` against a failing
     # file-level helper. git >= 2.31 (host runs 2.54).
     environment = {
       GIT_AUTHOR_NAME = "hermes-agent";
