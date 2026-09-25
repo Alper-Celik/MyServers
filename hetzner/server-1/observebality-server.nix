@@ -7,6 +7,69 @@ let
   mimir-domain = "mimir.lab.alper-celik.dev";
   loki-domain = "loki.lab.alper-celik.dev";
   mimir-version = config.services.mimir.package.version;
+
+  # Units whose absence from the "active" state is a real outage. Each exists
+  # on at least one host; hosts that don't run a unit have no series at all,
+  # so they never trip the rule.
+  critical-units = "sshd\\.service|tailscaled\\.service|alloy\\.service|caddy\\.service|grafana\\.service|mimir\\.service|loki\\.service|postgresql\\.service|hermes-agent\\.service";
+
+  # A Grafana-managed alert rule = instant PromQL query (A) + threshold
+  # expression (B). NoData stays OK everywhere here: an empty result is the
+  # healthy case ("nothing failed", "no unreachable target"), so only a real
+  # value of 1 may fire.
+  mkAlertData = expr: [
+    {
+      refId = "A";
+      datasourceUid = "mimir";
+      relativeTimeRange = {
+        from = 300;
+        to = 0;
+      };
+      model = {
+        editorMode = "code";
+        expr = expr;
+        instant = true;
+        range = false;
+        intervalMs = 1000;
+        maxDataPoints = 43200;
+        refId = "A";
+      };
+    }
+    {
+      refId = "B";
+      datasourceUid = "__expr__";
+      relativeTimeRange = {
+        from = 300;
+        to = 0;
+      };
+      model = {
+        refId = "B";
+        type = "threshold";
+        expression = "A";
+        intervalMs = 1000;
+        maxDataPoints = 43200;
+        datasource = {
+          type = "__expr__";
+          uid = "__expr__";
+        };
+        conditions = [
+          {
+            type = "query";
+            query.params = [ "A" ];
+            reducer = {
+              type = "last";
+              params = [ ];
+            };
+            evaluator = {
+              type = "gt";
+              params = [ 0 ];
+            };
+            operator.type = "and";
+          }
+        ];
+      };
+    }
+  ];
 in
 {
   # grafana (data dashboard)
@@ -59,6 +122,102 @@ in
           url = "https://${loki-domain}";
         }
       ];
+
+      # Alert rules, file-provisioned (provisioning/alerting/rules.yaml).
+      # The folder is created by the alert provisioner on first start; routing
+      # uses the existing notification policy (Telegram). Rules are NOT
+      # editable in the UI — change them here and redeploy.
+      alerting.rules.settings = {
+        apiVersion = 1;
+        groups = [
+          {
+            orgId = 1;
+            name = "fleet-availability";
+            folder = "Fleet Alerts";
+            interval = "60s";
+            rules = [
+              # Any unit that systemd has put in the failed state.
+              {
+                uid = "fleet-systemd-unit-failed";
+                title = "Systemd unit failed";
+                condition = "B";
+                for = "5m";
+                noDataState = "OK";
+                execErrState = "Alerting";
+                labels = {
+                  severity = "warning";
+                  category = "systemd";
+                };
+                annotations = {
+                  summary = "systemd unit {{ $labels.name }} is failed on {{ $labels.host }}";
+                  description = "node_systemd_unit_state{state=\"failed\"} == 1 for 5m — {{ $labels.name }} ({{ $labels.type }}) on {{ $labels.host }}.";
+                };
+                data = mkAlertData ''node_systemd_unit_state{state="failed"} == 1'';
+              }
+              # A unit that matters (ssh, tailscale, alloy, caddy, grafana,
+              # mimir, loki, postgres, hermes) leaving the active state: stopped,
+              # failed or stuck deactivating.
+              {
+                uid = "fleet-systemd-critical-unit-down";
+                title = "Critical systemd unit not active";
+                condition = "B";
+                for = "5m";
+                noDataState = "OK";
+                execErrState = "Alerting";
+                labels = {
+                  severity = "critical";
+                  category = "systemd";
+                };
+                annotations = {
+                  summary = "critical unit {{ $labels.name }} is not active on {{ $labels.host }}";
+                  description = "max_over_time(node_systemd_unit_state{state=\"active\", name=~\"${critical-units}\"}[10m]) == 0 for 5m — {{ $labels.name }} on {{ $labels.host }} is stopped or failed.";
+                };
+                data = mkAlertData "max_over_time(node_systemd_unit_state{state=\"active\", name=~\"${critical-units}\"}[10m]) == 0";
+              }
+              # Anything the fleet scrapes that has been unreachable for 10m
+              # (remote scrapes like the openwrt router, node_exporter jobs, …).
+              {
+                uid = "fleet-scrape-target-down";
+                title = "Scrape target down";
+                condition = "B";
+                for = "10m";
+                noDataState = "OK";
+                execErrState = "Alerting";
+                labels = {
+                  severity = "critical";
+                  category = "scrape";
+                };
+                annotations = {
+                  summary = "scrape target {{ $labels.instance }} (job {{ $labels.job }}) is down";
+                  description = "up == 0 for 10m — {{ $labels.job }} cannot reach {{ $labels.instance }} (host {{ $labels.host }}).";
+                };
+                data = mkAlertData "up == 0";
+              }
+              # Whole-host downtime: hosts push their own node_exporter/alloy
+              # metrics, so a dead machine makes the series disappear instead of
+              # turning 0 — nothing new is pushed to alert on. Compare the
+              # series against itself 20m ago to catch the disappearance.
+              {
+                uid = "fleet-host-metrics-missing";
+                title = "Host stopped reporting";
+                condition = "B";
+                for = "5m";
+                noDataState = "OK";
+                execErrState = "Alerting";
+                labels = {
+                  severity = "critical";
+                  category = "host";
+                };
+                annotations = {
+                  summary = "{{ $labels.host }} stopped pushing metrics";
+                  description = "up{job=\"integrations/unix\"} had samples 20m ago and has none now: the host is down or its node_exporter/alloy died.";
+                };
+                data = mkAlertData ''up{job="integrations/unix"} offset 20m unless up{job="integrations/unix"}'';
+              }
+            ];
+          }
+        ];
+      };
     };
 
   };
