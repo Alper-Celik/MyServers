@@ -16,6 +16,7 @@ in
     OPENROUTER_API_KEY = { };
     API_SERVER_KEY = { };
     EXA_API_KEY = { };
+    TELEGRAM_BOT_TOKEN_AI = { };
   };
 
   # rendered into the env file the gateway reads at startup; the raw secrets
@@ -25,6 +26,8 @@ in
       OPENROUTER_API_KEY=${config.sops.placeholder.OPENROUTER_API_KEY}
       API_SERVER_KEY=${config.sops.placeholder.API_SERVER_KEY}
       EXA_API_KEY=${config.sops.placeholder.EXA_API_KEY}
+      TELEGRAM_BOT_TOKEN=${config.sops.placeholder.TELEGRAM_BOT_TOKEN_AI}
+      TELEGRAM_ALLOWED_USERS=1228209533
     '';
     owner = config.users.users.hermes.name;
     group = config.users.groups.hermes.name;
@@ -58,7 +61,13 @@ in
         enabled = true;
         port = 8642;
       };
-
+      gateway.platforms.telegram.extra = {
+        drop_pending_on_cold_boot = false;
+        status_indicator = true;
+        # Optional custom strings (defaults: "Online" / "Offline"):
+        status_online = "🟢 Online";
+        status_offline = "🔴 Offline";
+      };
       gateway.streaming = {
         enabled = true;
         transport = "auto";
