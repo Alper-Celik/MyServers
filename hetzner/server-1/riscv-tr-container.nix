@@ -14,6 +14,7 @@
   virtualisation.containers.enable = true;
 
   services.caddy.virtualHosts."riscv.alper-celik.dev" = {
+    x-expose = true;
     serverAliases = [ "*.riscv.alper-celik.dev" ];
     extraConfig = "reverse_proxy https://192.168.100.11";
   };
