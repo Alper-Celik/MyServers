@@ -47,6 +47,8 @@ in
     enable = true;
     addToSystemPackages = true;
     # nix on PATH so the agent can run throwaway tools: nix shell/run/nix-shell
+    # mcp-grafana: the Grafana MCP stdio server below, as a nix-built binary —
+    #   uvx cannot run it on this host (see the grafana MCP server comment)
     extraPackages = with pkgs; [
       nix
       chromium
@@ -55,6 +57,7 @@ in
       ripgrep
       uv
       gh
+      mcp-grafana
     ];
     extraDependencyGroups = [
       "messaging"
@@ -130,14 +133,26 @@ in
       # Grafana on this host (observe.lab.alper-celik.dev, caddy → 127.0.0.1:3080).
       # enforce_domain=true, so the local URL is rejected — go through caddy.
       # Token: Grafana → Administration → Service accounts → token (Viewer/Admin).
+      # Server: pkgs.mcp-grafana (extraPackages above) — the official Go server, so
+      # it needs no interpreter. The previous uvx route (`uvx mcp-grafana==1.6.0`)
+      # could never start here: uv's managed CPython is a generic-glibc build, and
+      # this host runs environment.stub-ld (the "NixOS cannot run dynamically
+      # linked executables" message stub) at /lib/ld-linux-aarch64.so.1 rather than
+      # programs.nix-ld, so every uv-managed interpreter exits 127.
+      # Update by bumping pkgs.mcp-grafana in nixpkgs — there is no version pin here.
+      # Wart: 0.14.0 always sets up an OTLP exporter to localhost:4318 and then
+      # stalls ~10s at shutdown when no collector answers; OTEL_SDK_DISABLED and
+      # OTEL_*_EXPORTER=none do not suppress it.
       grafana = {
-        command = "uvx";
-        args = [ "mcp-grafana==1.6.0" ]; # bump to update; uv caches the env
+        command = "mcp-grafana";
+        args = [
+          "-transport"
+          "stdio"
+        ];
         env = {
           GRAFANA_URL = "https://observe.lab.alper-celik.dev";
           GRAFANA_SERVICE_ACCOUNT_TOKEN = "\${GRAFANA_SERVICE_ACCOUNT_TOKEN}";
         };
-        connect_timeout = 300; # first run downloads the package from PyPI
         timeout = 300;
       };
     };
