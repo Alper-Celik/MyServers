@@ -3,11 +3,11 @@
     "MyServersSecrets": {
       "flake": false,
       "locked": {
-        "lastModified": 1790333873,
-        "narHash": "sha256-DzvBeUGJDGkMZ9X1RqDGb7s4vSpOaqyzFP7TsFgSyz0=",
+        "lastModified": 1790337186,
+        "narHash": "sha256-V84QjFaggsD797Ygf8DOuERq/qkvTSHtH81i41KMhD4=",
         "ref": "refs/heads/main",
-        "rev": "1b19d33bbe12bc3babf63203a92007d8bcb70c7b",
-        "revCount": 41,
+        "rev": "aa0d96834ea1f54fffcefa32c71dbc2b74958028",
+        "revCount": 42,
         "type": "git",
         "url": "ssh://git@github.com/Alper-Celik/MyServersSecrets.git"
       },
