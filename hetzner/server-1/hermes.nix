@@ -17,6 +17,7 @@ in
     API_SERVER_KEY = { };
     EXA_API_KEY = { };
     TELEGRAM_BOT_TOKEN_AI = { };
+    GITHUB_TOKEN_AI = { };
   };
 
   # rendered into the env file the gateway reads at startup; the raw secrets
@@ -27,6 +28,7 @@ in
       API_SERVER_KEY=${config.sops.placeholder.API_SERVER_KEY}
       EXA_API_KEY=${config.sops.placeholder.EXA_API_KEY}
       TELEGRAM_BOT_TOKEN=${config.sops.placeholder.TELEGRAM_BOT_TOKEN_AI}
+      GITHUB_TOKEN=${config.sops.placeholder.GITHUB_TOKEN_AI}
       TELEGRAM_ALLOWED_USERS=1228209533
     '';
     owner = config.users.users.hermes.name;
@@ -41,7 +43,14 @@ in
     enable = true;
     addToSystemPackages = true;
     # nix on PATH so the agent can run throwaway tools: nix shell/run/nix-shell
-    extraPackages = [ pkgs.nix ];
+    extraPackages = with pkgs; [
+      nix
+      chromium
+      git
+      gh
+      fd
+      ripgrep
+    ];
     extraDependencyGroups = [
       "messaging"
       "exa"
