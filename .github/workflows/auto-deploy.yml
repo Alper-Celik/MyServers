@@ -102,7 +102,7 @@ jobs:
 
       - name: build/check
         run: |
-          nix build .#checks.aarch64-linux.deploy-activate -L  \
+          nix build .#checks.aarch64-linux.deploy-toplevels -L  \
           --print-build-logs \
           --builders "" \
           --max-jobs 2 \

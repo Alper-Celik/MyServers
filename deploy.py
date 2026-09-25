@@ -4,14 +4,23 @@
 """Deploy this flake's NixOS hosts.
 
 Subcommands:
-  deploy      build on the remote store, then copy closures and activate
-  deploy-ci   copy closures and activate (CI already built them)
-  build       run the CI build step against the remote store
+  deploy      build on the remote store, then copy closures and switch to them
+  deploy-ci   copy closures and switch to them (CI already built them)
+  boot        copy closures and make them the boot default (no activation)
+  reboot      copy closures, make them the boot default, then reboot
+  build       run the CI build step against the remote store (all nodes)
   resolve     resolve reachable hosts and their closure paths
   copy        resolve hosts, then get each closure onto its host
-  activate    resolve hosts, then activate with deploy-rs
+  activate    resolve hosts, then switch them to their closure over SSH
 
-Any extra arguments are forwarded to deploy-rs.
+Every subcommand except build takes an optional list of node names to limit
+the run, e.g. `deploy.py reboot rpi5`.
+
+Activation installs the copied closure as the system profile and runs
+switch-to-configuration on the host — the same thing nixos-rebuild does
+remotely — so no deploy-rs (and no per-host flake evaluation) is involved.
+
+Extra arguments are only forwarded to the build step.
 
 Closures are pulled from the remote store either by the host itself (using
 NIXBUILDNET_TOKEN, or a short-lived store:read token minted from the local
@@ -22,6 +31,7 @@ this runner — so a machine with only an SSH key to nixbuild.net works too.
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import shlex
 import subprocess
@@ -37,7 +47,7 @@ NIX_ARGS = ["--extra-experimental-features", "nix-command flakes"]
 SSH_OPTS = ["-o", "ConnectTimeout=10", "-o", "BatchMode=yes"]
 
 # Attribute checked by the CI build step (builds/validates every deploy node).
-CHECK_ATTR = "checks.aarch64-linux.deploy-activate"
+CHECK_ATTR = "checks.aarch64-linux.deploy-toplevels"
 
 # Pinned nixbuild.net host key (same one nixbuild-action uses).
 NB_HOST = REMOTE_STORE.removeprefix("ssh-ng://")
@@ -45,6 +55,48 @@ NB_HOST_KEY = (
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPIQCZc54poJ8vqawd8TraNryQeJnvH1eLpIDgbiqymM"
 )
 REMOTE_DIR = "/run/deploy-nixbuild"
+
+# Run on each host (via `bash -s`, since the remote login shell may be fish):
+# install the copied closure as the system profile generation, then run
+# switch-to-configuration. `action` is one of switch/boot/reboot, where reboot
+# means boot + reboot. These are the steps `nixos-rebuild` performs remotely.
+# Binaries are resolved by absolute path because a non-interactive SSH command
+# may not have them on PATH. `cd /tmp` avoids the deleted-cwd failure
+# (nixpkgs#73404) that deploy-rs also worked around.
+ACTIVATE_SCRIPT = """\
+set -euo pipefail
+closure="$1"; action="$2"
+
+find_bin() {
+  for c in "/run/current-system/sw/bin/$1" "/nix/var/nix/profiles/default/bin/$1"; do
+    if [ -x "$c" ]; then printf '%s\\n' "$c"; return; fi
+  done
+  printf '%s\\n' "$1"
+}
+
+do_reboot=0
+if [ "$action" = reboot ]; then
+  action=boot
+  do_reboot=1
+fi
+case "$action" in
+  switch | boot) ;;
+  *)
+    echo "unknown activation action: $action" >&2
+    exit 2
+    ;;
+esac
+
+"$(find_bin nix-env)" -p /nix/var/nix/profiles/system --set "$closure"
+cd /tmp
+"$closure/bin/switch-to-configuration" "$action"
+
+# Detach so the SSH channel closes (and reports success) before the host goes
+# down; the reboot fires a few seconds later.
+if [ "$do_reboot" = 1 ]; then
+  ( "$(find_bin sleep)" 3; "$(find_bin systemctl)" reboot ) >/dev/null 2>&1 </dev/null &
+fi
+"""
 
 SETUP_SCRIPT = """\
 set -euo pipefail
@@ -212,54 +264,70 @@ def prepare_node(node: str, meta: dict) -> bool:
     return copy_via_runner(ssh_user, host, closure, node, tag)
 
 
-def resolve_hosts() -> tuple[dict[str, tuple[str, str, str]], list[str]] | None:
-    """Resolve every reachable host's closure path. The closures are already
-    built in the remote store by the CI build step, so this only evaluates the
-    flake (no build). Hosts that are unreachable are skipped.
+def select_nodes(hosts: list[str]) -> list[str] | None:
+    """Restrict to the requested nodes (kept in NODES order), or all nodes when
+    none are given. Returns None if a requested node is unknown."""
+    if not hosts:
+        return list(NODES)
+    unknown = [h for h in hosts if h not in NODES]
+    if unknown:
+        warn(f"ERROR: unknown node(s): {' '.join(unknown)} (known: {' '.join(NODES)})")
+        return None
+    return [n for n in NODES if n in hosts]
 
-    Returns (meta, deploy_nodes), or None on evaluation failure."""
+
+def resolve_hosts(hosts: list[str]) -> tuple[dict[str, tuple[str, str, str]], list[str]] | None:
+    """Resolve the selected nodes' hosts and closure paths in a single flake
+    evaluation.
+
+    The closures are already built in the remote store by the CI build step,
+    so this evaluates but does not build. One evaluation covers all nodes
+    (instead of one full flake/config evaluation per node); hosts that are
+    unreachable are skipped.
+
+    Returns (meta, deploy_nodes), or None on evaluation or selection failure."""
+    selected = select_nodes(hosts)
+    if selected is None:
+        return None
+    p = subprocess.run(
+        [
+            "nix",
+            *NIX_ARGS,
+            "eval",
+            "--json",
+            f"{REPO}#deploy-nodes",
+            "--apply",
+            "nodes: builtins.mapAttrs (n: v: {"
+            " hostname = v.hostname;"
+            " sshUser = v.sshUser;"
+            " closure = v.toplevel.outPath;"
+            " }) nodes",
+        ],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    if p.returncode != 0:
+        warn("ERROR: failed to evaluate deploy-nodes")
+        return None
+    try:
+        nodes = json.loads(p.stdout)
+    except json.JSONDecodeError:
+        warn("ERROR: failed to decode deploy-nodes evaluation")
+        return None
+
     meta: dict[str, tuple[str, str, str]] = {}
     deploy_nodes: list[str] = []
-    for node in NODES:
-        p = subprocess.run(
-            [
-                "nix",
-                *NIX_ARGS,
-                "eval",
-                "--raw",
-                f"{REPO}#deploy.nodes.{node}",
-                "--apply",
-                'n: "${n.hostname} ${n.sshUser}"',
-            ],
-            stdout=subprocess.PIPE,
-            text=True,
-        )
-        if p.returncode != 0:
-            warn("ERROR: failed to evaluate deploy.nodes")
-            return None
-        host, ssh_user = p.stdout.split()
+    for node in selected:
+        info = nodes.get(node)
+        if info is None:
+            warn(f"WARNING: {node} is not defined in deploy-nodes, skipping")
+            continue
+        host, ssh_user, closure = info["hostname"], info["sshUser"], info["closure"]
         print(f"==> checking {node} at {ssh_user}@{host}", flush=True)
         if subprocess.run(["ssh", *SSH_OPTS, f"{ssh_user}@{host}", "true"]).returncode != 0:
             warn(f"WARNING: {node} ({ssh_user}@{host}) is unreachable, skipping")
             continue
-
-        print(f"==> resolving {node} closure", flush=True)
-        p = subprocess.run(
-            [
-                "nix",
-                *NIX_ARGS,
-                "eval",
-                "--raw",
-                f"{REPO}#deploy.nodes.{node}.profiles.system.path.outPath",
-            ],
-            stdout=subprocess.PIPE,
-            text=True,
-        )
-        if p.returncode != 0:
-            warn(f"WARNING: failed to resolve {node} closure, skipping")
-            continue
-
-        meta[node] = (host, ssh_user, p.stdout.strip())
+        meta[node] = (host, ssh_user, closure)
         deploy_nodes.append(node)
 
     if not deploy_nodes:
@@ -326,55 +394,53 @@ def copy_nodes(meta: dict, deploy_nodes: list[str]) -> set[str]:
     return set(deploy_nodes) - push_failed
 
 
-def activate_nodes(meta: dict, deploy_nodes_ok: list[str], extra: list[str]) -> int:
-    """Deploy each prepared node independently, so a failure on one host does
-    not stop the others (the remote build deploy-rs performs finds the closure
-    already valid, so each just activates)."""
+def activate_nodes(
+    meta: dict, deploy_nodes_ok: list[str], extra: list[str], action: str
+) -> int:
+    """Activate each prepared node independently (set profile + run
+    switch-to-configuration with `action`), so a failure on one host does not
+    stop the others."""
+    if extra:
+        warn(f"WARNING: ignoring extra arguments with direct activation: {' '.join(extra)}")
     deploy_failed: list[str] = []
     with ThreadPoolExecutor(max_workers=len(deploy_nodes_ok)) as ex:
         for node, ok in zip(
             deploy_nodes_ok,
-            ex.map(lambda n: deploy_node(n, extra), deploy_nodes_ok),
+            ex.map(lambda n: deploy_node(n, meta, action), deploy_nodes_ok),
         ):
             if not ok:
-                warn(f"WARNING: deployment to {node} failed; other nodes were still deployed")
+                warn(f"WARNING: activation ({action}) failed on {node}; other nodes were still activated")
                 deploy_failed.append(node)
 
     if deploy_failed:
-        warn(f"ERROR: deployment failed on: {' '.join(deploy_failed)}")
+        warn(f"ERROR: activation ({action}) failed on: {' '.join(deploy_failed)}")
         return 1
     return 0
 
 
-def deploy_node(node: str, extra: list[str]) -> bool:
+def deploy_node(node: str, meta: dict, action: str) -> bool:
+    """Activate the host to its already-copied system closure over SSH: set it
+    as the system profile and run switch-to-configuration with `action`
+    (switch/boot/reboot). This is what nixos-rebuild does remotely, so no
+    deploy-rs (and no per-host flake evaluation or build) is involved."""
+    host, ssh_user, closure = meta[node]
     tag = f"{node:<18}"
     return (
-        stream(
-            [
-                "deploy",
-                f"{REPO}#{node}",
-                "--auto-rollback",
-                "false",
-                "--magic-rollback",
-                "false",
-                "--skip-checks",
-                *extra,
-                "--",
-                "--accept-flake-config",
-                "--extra-experimental-features",
-                "flakes",
-                "-L",
-            ],
+        ssh_cmd(
+            ssh_user,
+            host,
+            f"bash -s -- {shlex.quote(closure)} {shlex.quote(action)}",
+            stdin_data=ACTIVATE_SCRIPT,
             tag=tag,
         )
         == 0
     )
 
 
-def cmd_build(extra: list[str]) -> int:
+def cmd_build(extra: list[str], hosts: list[str]) -> int:
     """Same build step as the workflow's build/check job: build the deploy
     checks on the remote store (nixbuild.net), leaving the closures there for
-    the hosts to pull."""
+    the hosts to pull. Builds every node; host selection does not apply."""
     return stream(
         [
             "nix",
@@ -396,14 +462,14 @@ def cmd_build(extra: list[str]) -> int:
     )
 
 
-def cmd_resolve(extra: list[str]) -> int:
-    if resolve_hosts() is None:
+def cmd_resolve(extra: list[str], hosts: list[str]) -> int:
+    if resolve_hosts(hosts) is None:
         return 1
     return 0
 
 
-def cmd_copy(extra: list[str]) -> int:
-    resolved = resolve_hosts()
+def cmd_copy(extra: list[str], hosts: list[str]) -> int:
+    resolved = resolve_hosts(hosts)
     if resolved is None:
         return 1
     meta, deploy_nodes = resolved
@@ -414,16 +480,18 @@ def cmd_copy(extra: list[str]) -> int:
     return 0
 
 
-def cmd_activate(extra: list[str]) -> int:
-    resolved = resolve_hosts()
+def cmd_activate(extra: list[str], hosts: list[str]) -> int:
+    resolved = resolve_hosts(hosts)
     if resolved is None:
         return 1
     meta, deploy_nodes = resolved
-    return activate_nodes(meta, deploy_nodes, extra)
+    return activate_nodes(meta, deploy_nodes, extra, "switch")
 
 
-def cmd_deploy_ci(extra: list[str]) -> int:
-    resolved = resolve_hosts()
+def cmd_activate_selected(extra: list[str], hosts: list[str], action: str) -> int:
+    """Resolve, copy each closure to its host, then activate with `action`.
+    Shared by deploy-ci/boot/reboot."""
+    resolved = resolve_hosts(hosts)
     if resolved is None:
         return 1
     meta, deploy_nodes = resolved
@@ -431,22 +499,36 @@ def cmd_deploy_ci(extra: list[str]) -> int:
     if not prepared:
         warn("ERROR: no hosts were successfully prepared")
         return 1
-    return activate_nodes(meta, [n for n in deploy_nodes if n in prepared], extra)
+    return activate_nodes(meta, [n for n in deploy_nodes if n in prepared], extra, action)
 
 
-def cmd_deploy(extra: list[str]) -> int:
-    if cmd_build([]) != 0:
+def cmd_deploy_ci(extra: list[str], hosts: list[str]) -> int:
+    return cmd_activate_selected(extra, hosts, "switch")
+
+
+def cmd_boot(extra: list[str], hosts: list[str]) -> int:
+    return cmd_activate_selected(extra, hosts, "boot")
+
+
+def cmd_reboot(extra: list[str], hosts: list[str]) -> int:
+    return cmd_activate_selected(extra, hosts, "reboot")
+
+
+def cmd_deploy(extra: list[str], hosts: list[str]) -> int:
+    if cmd_build([], []) != 0:
         return 1
-    return cmd_deploy_ci(extra)
+    return cmd_deploy_ci(extra, hosts)
 
 
 COMMANDS = {
-    "deploy": ("build on the remote store, then copy closures and activate", cmd_deploy),
-    "deploy-ci": ("copy closures and activate (CI already built them)", cmd_deploy_ci),
-    "build": ("run the CI build step against the remote store", cmd_build),
+    "deploy": ("build on the remote store, then copy closures and switch to them", cmd_deploy),
+    "deploy-ci": ("copy closures and switch to them (CI already built them)", cmd_deploy_ci),
+    "boot": ("copy closures and make them the boot default (no activation)", cmd_boot),
+    "reboot": ("copy closures, make them the boot default, then reboot", cmd_reboot),
+    "build": ("run the CI build step against the remote store (all nodes)", cmd_build),
     "resolve": ("resolve reachable hosts and their closure paths", cmd_resolve),
     "copy": ("resolve hosts, then get each closure onto its host", cmd_copy),
-    "activate": ("resolve hosts, then activate with deploy-rs", cmd_activate),
+    "activate": ("resolve hosts, then switch them to their closure over SSH", cmd_activate),
 }
 
 
@@ -457,9 +539,17 @@ def main() -> int:
     )
     sub = parser.add_subparsers(dest="command", required=True)
     for name, (help_text, _) in COMMANDS.items():
-        sub.add_parser(name, help=help_text)
+        sp = sub.add_parser(name, help=help_text)
+        if name != "build":
+            sp.add_argument(
+                "hosts",
+                nargs="*",
+                metavar="HOST",
+                help=f"limit to these nodes (default: all of {', '.join(NODES)})",
+            )
     ns, extra = parser.parse_known_args()
-    return COMMANDS[ns.command][1](extra)
+    hosts = getattr(ns, "hosts", [])
+    return COMMANDS[ns.command][1](extra, hosts)
 
 
 if __name__ == "__main__":
