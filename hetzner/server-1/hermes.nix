@@ -1,6 +1,7 @@
 {
   inputs,
   config,
+  lib,
   pkgs,
   ...
 }:
@@ -171,6 +172,21 @@ in
       api_server = {
         enabled = true;
         port = 8642;
+      };
+      # GitHub /ac_agent trigger endpoint. GitHub POSTs comment events here and the
+      # route's script decides whether the comment is a real /ac_agent request
+      # (marker + allow-listed author) before anything runs. The adapter binds
+      # LOOPBACK ONLY on purpose: caddy is the sole public surface, and only for
+      # the single /webhooks/github-ac-agent path (see the virtualHosts block at
+      # the bottom of this file). Per-route HMAC secrets live in
+      # $HERMES_HOME/webhook_subscriptions.json (runtime state, not nix-managed),
+      # so no secret belongs in this file or in the sops-rendered .env.
+      platforms.webhook = {
+        enabled = true;
+        extra = {
+          host = "127.0.0.1";
+          port = 8644;
+        };
       };
       gateway.platforms.telegram.extra = {
         drop_pending_on_cold_boot = false;
@@ -399,7 +415,30 @@ in
 
   services.caddy.virtualHosts = {
     "hermes.lab.alper-celik.dev" = {
-      extraConfig = "reverse_proxy http://localhost:${toString dashboard-port}";
+      extraConfig = lib.mkMerge [
+        # Public trigger path for the GitHub /ac_agent webhook.
+        #
+        # common/caddy.nix blocks every request whose client IP is outside the
+        # tailnet with a 403 (@not_local_ip, emitted at mkOrder 400). GitHub's
+        # delivery IPs are obviously not on the tailnet, so this ONE path is
+        # exempted — mkOrder 100 lands it before that guard; `caddy adapt` on the
+        # generated Caddyfile confirms the path matcher precedes the
+        # static_response 403 in the site's handler chain.
+        #
+        # Exposure: the path is HMAC-SHA256 authenticated by the hermes webhook
+        # adapter (per-route secret in webhook_subscriptions.json) AND the route's
+        # script re-checks the comment author against an allow-list, so an
+        # unsigned or non-allow-listed POST runs nothing. Everything else on this
+        # vhost — the dashboard — stays tailnet-only, and the adapter itself
+        # listens on loopback (platforms.webhook.extra.host above).
+        (lib.mkOrder 100 ''
+          @github_ac_agent path /webhooks/github-ac-agent*
+          handle @github_ac_agent {
+            reverse_proxy 127.0.0.1:8644
+          }
+        '')
+        "reverse_proxy http://localhost:${toString dashboard-port}"
+      ];
     };
     "hermes-api.lab.alper-celik.dev" = {
       extraConfig = "reverse_proxy http://localhost:${toString api-port}";
