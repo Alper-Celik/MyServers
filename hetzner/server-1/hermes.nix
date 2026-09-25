@@ -43,6 +43,38 @@ in
     ];
   };
 
+  # gh CLI credentials for the AGENT's shell (gh comes from extraPackages).
+  # Why a file and not the environment: hermes strips Tier-1 secrets —
+  # GITHUB_TOKEN / GH_TOKEN — from every terminal and execute_code child, and
+  # `terminal.env_passthrough` cannot re-allow them (provider/tool credentials
+  # are blocked on purpose, GHSA-rhgp-j443-p4rf; docs: "Hermes-managed provider
+  # credentials can never be re-allowed this way"). gh reads
+  # ~/.config/gh/hosts.yml instead, and on the LOCAL terminal backend files are
+  # simply accessible — the documented route for file credentials.
+  # Shape: the bundled github skill's headless fallback (users map + flat
+  # oauth_token + user). Verified on this host with
+  # `env -u GITHUB_TOKEN -u GH_TOKEN gh auth status` / `gh api /user`. The
+  # users map ALONE is rejected by gh ("the token ... is invalid"); the flat
+  # `oauth_token:` line is what it actually uses.
+  # ~/.gitconfig already runs `gh auth setup-git`, so `git push` over HTTPS
+  # picks this up too, and `gh auth token` gives the agent a token for push
+  # URLs without any env var.
+  sops.templates."gh-hosts" = {
+    content = ''
+      github.com:
+          users:
+              Alper-Celiks-Agent:
+                  oauth_token: ${config.sops.placeholder.GITHUB_TOKEN_AI}
+          git_protocol: https
+          oauth_token: ${config.sops.placeholder.GITHUB_TOKEN_AI}
+          user: Alper-Celiks-Agent
+    '';
+    path = "/var/lib/hermes/.config/gh/hosts.yml";
+    mode = "0600";
+    owner = config.users.users.hermes.name;
+    group = config.users.groups.hermes.name;
+  };
+
   services.hermes-agent = {
     enable = true;
     addToSystemPackages = true;
@@ -117,17 +149,16 @@ in
       };
 
       # grep.app — code search across public GitHub repos (keyless).
-      # npx comes from the nodejs bundled in the hermes package wrapper.
-      # First run downloads the package into the npm cache.
+      # Use the HOSTED MCP endpoint instead of the `grep-mcp` npm wrapper: the
+      # wrapper asks https://grep.app/api/search with User-Agent
+      # grep-mcp-ts/1.0.0, and grep.app is now behind a Vercel bot checkpoint
+      # that answers every non-browser request with 429 {"code":"challenge"}
+      # (the wrapper reports that as a bogus "rate limit exceeded"). The hosted
+      # endpoint serves the same index, needs no auth and no local runtime.
+      # Tool: mcp__grep_app__searchGitHub — literal/regex code patterns, not
+      # keywords (e.g. "useState(", "import React from").
       grep-app = {
-        command = "npx";
-        args = [
-          "-y"
-          "grep-mcp"
-          "--transport"
-          "stdio"
-        ];
-        connect_timeout = 180;
+        url = "https://mcp.grep.app";
       };
 
       # Grafana on this host (observe.lab.alper-celik.dev, caddy → 127.0.0.1:3080).
