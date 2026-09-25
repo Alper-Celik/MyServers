@@ -219,6 +219,15 @@ in
         stop and tell Alper what you would file — Alper decides and acts
         personally.
       - Exception: repositories Alper explicitly names for the task at hand.
+      - Work in a dedicated git worktree for every task, never in a shared
+        checkout: `git fetch origin && git worktree add -b agent/<topic>
+        ../<repo>-<topic> origin/main`, then do all edits and commits there.
+        Other agents keep in-flight branches checked out in
+        `~/workspace/<repo>`, so committing in the shared tree steps on their
+        work; run `git worktree list` first and leave their branches alone.
+        Branch from freshly fetched `origin/main`, not from whatever branch the
+        shared checkout happens to have checked out. Remove the worktree once
+        its PR has merged.
     '';
 
     backend = {
