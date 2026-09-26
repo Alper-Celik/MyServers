@@ -21,6 +21,18 @@ let
     text = "#!${pkgs.nodejs}/bin/node\n" + builtins.readFile ../../pkgs/hermes-openrouter-stt.js;
   };
 
+  # Voice replies (TTS) use the same shape: pkgs/hermes-openrouter-tts.js posts
+  # the reply text to OpenRouter's speech endpoint (Kokoro-82M, served by
+  # DeepInfra/Together — those endpoints pass the account ZDR guardrail, unlike
+  # the audio-*output* chat models), and degrades to espeak-ng if the API is
+  # unreachable. Store shebang again, so node need not be on the unit PATH.
+  ttsScript = pkgs.writeTextFile {
+    name = "hermes-openrouter-tts";
+    executable = true;
+    destination = "/bin/hermes-openrouter-tts";
+    text = "#!${pkgs.nodejs}/bin/node\n" + builtins.readFile ../../pkgs/hermes-openrouter-tts.js;
+  };
+
   # Offline fallback model for that script (whisper.cpp): small is the
   # speed/quality compromise that still fits the 300 s local-STT timeout on 4
   # cores. large-v3-turbo transcribes far better (and is what OpenRouter is
@@ -142,6 +154,11 @@ in
       # pinned by the script's store shebang). ffmpeg, needed to turn the
       # Telegram .ogg into 16 kHz wav, is already on the unit PATH from the module.
       whisper-cpp
+      # espeak-ng: OFFLINE fallback for the TTS script below. Deliberately NOT
+      # piper-tts: its aarch64 closure pulls torch/librosa/numba (~2 GB) for one
+      # CPU voice, while espeak-ng is a couple of MB. Swap it if voice quality
+      # during an OpenRouter outage matters more than the closure size.
+      espeak-ng
     ];
     extraDependencyGroups = [
       "messaging"
@@ -217,6 +234,28 @@ in
       gateway.streaming = {
         enabled = true;
         transport = "auto";
+      };
+
+      # Voice replies (TTS). A command provider rather than a built-in one: every
+      # built-in cloud provider needs its own key, and the local piper backend
+      # imports the python `piper` package from the hermes env (an
+      # extraDependencyGroups entry that drags torch on aarch64). Kokoro-82M on
+      # OpenRouter's speech endpoint passes the account-level ZDR guardrail — the
+      # audio-output chat models do not ("0 endpoints … ZDR violation"), and a
+      # per-request provider.zdr cannot loosen it. `output_format = wav` matches
+      # what the script writes (a RIFF header around Kokoro's raw PCM) and
+      # `voice_compatible = true` is what makes Hermes deliver it to Telegram as
+      # a native voice bubble instead of an audio attachment. {text_path},
+      # {output_path} and {voice} are Hermes' command placeholders.
+      tts = {
+        provider = "openrouter-kokoro";
+        providers."openrouter-kokoro" = {
+          type = "command";
+          command = "${ttsScript}/bin/hermes-openrouter-tts {text_path} {output_path} {voice}";
+          output_format = "wav";
+          voice_compatible = true;
+          voice = "af_heart";
+        };
       };
       dashboard = {
         public_url = "https://hermes.lab.alper-celik.dev";
