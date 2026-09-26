@@ -21,7 +21,7 @@ in
       profile = "shortlived";
       dnsResolver = "1.1.1.1:53";
       email = "alper@alper-celik.dev";
-      renewInterval = "6h";
+      renewInterval = "0/6:00";
       renewJitter = "2h";
       validMinDays = 4;
       dnsProvider = "cloudflare";
