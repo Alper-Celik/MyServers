@@ -35,5 +35,10 @@
     "hermes-api.lab.alper-celik.dev" = {
       extraConfig = "reverse_proxy http://localhost:${toString hermesPorts.api}";
     };
+    # Default x-expose = false: caddy 403s every client IP outside the
+    # tailnet, so this vhost never leaves the tailnet.
+    "agent.lab.alper-celik.dev" = {
+      extraConfig = "reverse_proxy http://localhost:${toString hermesPorts.webui}";
+    };
   };
 }
