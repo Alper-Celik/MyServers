@@ -24,8 +24,9 @@ let
   # Voice replies (TTS) use the same shape: pkgs/hermes-openrouter-tts.js posts
   # the reply text to OpenRouter's speech endpoint (Kokoro-82M, served by
   # DeepInfra/Together — those endpoints pass the account ZDR guardrail, unlike
-  # the audio-*output* chat models), and degrades to espeak-ng if the API is
-  # unreachable. Store shebang again, so node need not be on the unit PATH.
+  # the audio-*output* chat models), then encodes the raw PCM to Ogg/Opus with
+  # the ffmpeg already on the unit PATH. Store shebang again, so node need not
+  # be on the unit PATH.
   ttsScript = pkgs.writeTextFile {
     name = "hermes-openrouter-tts";
     executable = true;
@@ -154,11 +155,6 @@ in
       # pinned by the script's store shebang). ffmpeg, needed to turn the
       # Telegram .ogg into 16 kHz wav, is already on the unit PATH from the module.
       whisper-cpp
-      # espeak-ng: OFFLINE fallback for the TTS script below. Deliberately NOT
-      # piper-tts: its aarch64 closure pulls torch/librosa/numba (~2 GB) for one
-      # CPU voice, while espeak-ng is a couple of MB. Swap it if voice quality
-      # during an OpenRouter outage matters more than the closure size.
-      espeak-ng
     ];
     extraDependencyGroups = [
       "messaging"
@@ -242,17 +238,20 @@ in
       # extraDependencyGroups entry that drags torch on aarch64). Kokoro-82M on
       # OpenRouter's speech endpoint passes the account-level ZDR guardrail — the
       # audio-output chat models do not ("0 endpoints … ZDR violation"), and a
-      # per-request provider.zdr cannot loosen it. `output_format = wav` matches
-      # what the script writes (a RIFF header around Kokoro's raw PCM) and
-      # `voice_compatible = true` is what makes Hermes deliver it to Telegram as
-      # a native voice bubble instead of an audio attachment. {text_path},
+      # per-request provider.zdr cannot loosen it. The script writes Ogg/Opus
+      # (encoded with the ffmpeg already on the unit PATH); `output_format = ogg`
+      # matches that, and `voice_compatible = true` is what makes Hermes deliver
+      # a .ogg from a command provider as a native voice bubble — already Opus,
+      # so the gateway skips its own ffmpeg transcode. There is deliberately no
+      # offline fallback: if OpenRouter fails, the tool reports the error instead
+      # of burning VPS CPU on local synthesis. {text_path},
       # {output_path} and {voice} are Hermes' command placeholders.
       tts = {
         provider = "openrouter-kokoro";
         providers."openrouter-kokoro" = {
           type = "command";
           command = "${ttsScript}/bin/hermes-openrouter-tts {text_path} {output_path} {voice}";
-          output_format = "wav";
+          output_format = "ogg";
           voice_compatible = true;
           voice = "af_heart";
         };

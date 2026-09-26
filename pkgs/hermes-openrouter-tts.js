@@ -8,9 +8,12 @@
 // Contract of tts.providers.<name> {type: command}: the templated command is run
 // through shlex.split (no shell — this script IS the shell), placeholders are
 // shell-quoted for their position, and the audio must land at <output-path>.
-// Kokoro answers with raw PCM (24 kHz, mono, 16-bit LE); this script wraps that
-// in a RIFF/WAVE container itself, so node alone is enough. Hermes turns the WAV
-// into Opus for voice-bubble platforms (Telegram) via its own ffmpeg.
+// Kokoro answers with raw PCM (24 kHz, mono, 16-bit LE); the ffmpeg already on
+// the gateway unit's PATH encodes that into Ogg/Opus at <output-path> — the
+// modern codec voice-bubble platforms need anyway, at a fraction of the WAV
+// size. output_format = ogg + voice_compatible = true makes Hermes deliver that
+// file as a native voice bubble without re-encoding (it only transcodes when a
+// command provider's output is not already .ogg).
 //
 // Why this route and not the chat models: OpenRouter's audio-*output* chat
 // models (openai/gpt-audio*, google/lyria-3-*) are not ZDR-eligible and the
@@ -22,9 +25,12 @@
 // Env overrides: OR_TTS_MODEL (default hexgrad/kokoro-82m), OR_TTS_VOICE
 // (default af_heart; af_bella / am_michael / alloy also accepted),
 // OR_TTS_PROVIDER (default DeepInfra), OR_TTS_MAX_CHARS (default 600 per
-// request), OR_TTS_TIMEOUT (seconds), OR_TTS_ENV_FILE, OR_TTS_FALLBACK=0 to
-// disable the offline fallback, OR_TTS_FALLBACK_CMD (default espeak-ng, with
-// {input_path} / {output_path} placeholders).
+// request), OR_TTS_TIMEOUT (seconds), OR_TTS_BITRATE (default 32k),
+// OR_TTS_FFMPEG (default ffmpeg, resolved from PATH), OR_TTS_ENV_FILE.
+//
+// Deliberately NO local fallback: if OpenRouter or the encode fails, the script
+// exits non-zero and Hermes reports the error. The VPS runs other services and
+// must not spend CPU synthesising speech offline.
 
 const fs = require('fs');
 const path = require('path');
@@ -36,12 +42,10 @@ const PROVIDER = process.env.OR_TTS_PROVIDER || 'DeepInfra';
 const ENV_FILE = process.env.OR_TTS_ENV_FILE || '/var/lib/hermes/.hermes/.env';
 const TIMEOUT_MS = Number(process.env.OR_TTS_TIMEOUT || 120) * 1000;
 const MAX_CHARS = Number(process.env.OR_TTS_MAX_CHARS || 600);
-const FALLBACK = (process.env.OR_TTS_FALLBACK ?? '1') !== '0';
-const FALLBACK_CMD =
-  process.env.OR_TTS_FALLBACK_CMD || 'espeak-ng -w {output_path} -f {input_path}';
+const FFMPEG = process.env.OR_TTS_FFMPEG || 'ffmpeg';
+const BITRATE = process.env.OR_TTS_BITRATE || '32k';
 const SAMPLE_RATE = 24000;
 const CHANNELS = 1;
-const BITS = 16;
 
 const log = (m) => process.stderr.write(`openrouter-tts: ${m}\n`);
 
@@ -112,41 +116,25 @@ async function synth(text) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-// Last resort so an OpenRouter outage degrades to robotic speech, not silence.
-// espeak-ng is a couple of MB, unlike piper-tts whose aarch64 closure drags in
-// torch/librosa/numba (torch alone is ~2 GB) for one CPU voice.
-function localFallback() {
-  if (!FALLBACK) return false;
-  log(`falling back to local: ${FALLBACK_CMD}`);
-  const quote = (v) => `'${String(v).replace(/'/g, `'\\''`)}'`;
-  const command = FALLBACK_CMD.replace(/{input_path}/g, quote(textFile)).replace(
-    /{output_path}/g,
-    quote(outputPath),
+// Kokoro's concatenated raw PCM -> Ogg/Opus in one ffmpeg pass, written
+// straight to the output file. libopus VBR at speech bitrates is what Telegram
+// voice notes use anyway, so the result needs no further processing.
+function encodeOpus(pcm) {
+  const r = spawnSync(
+    FFMPEG,
+    [
+      '-hide_banner', '-loglevel', 'error', '-y',
+      '-f', 's16le', '-ar', String(SAMPLE_RATE), '-ac', String(CHANNELS),
+      '-i', 'pipe:0',
+      '-c:a', 'libopus', '-b:a', BITRATE, '-vbr', 'on', '-compression_level', '10',
+      '-f', 'ogg', outputPath,
+    ],
+    { input: pcm, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 },
   );
-  const r = spawnSync(command, { shell: true, encoding: 'utf8' });
-  if (r.status === 0 && fs.existsSync(outputPath) && fs.statSync(outputPath).size > 0) return true;
-  if (r.error) log(`local fallback unavailable: ${r.error.message}`);
-  else if (r.stderr) log(`local fallback failed: ${r.stderr.trim().slice(0, 200)}`);
-  return false;
-}
-
-function wav(pcm) {
-  const header = Buffer.alloc(44);
-  const byteRate = (SAMPLE_RATE * CHANNELS * BITS) / 8;
-  header.write('RIFF', 0);
-  header.writeUInt32LE(36 + pcm.length, 4);
-  header.write('WAVE', 8);
-  header.write('fmt ', 12);
-  header.writeUInt32LE(16, 16);
-  header.writeUInt16LE(1, 20); // PCM
-  header.writeUInt16LE(CHANNELS, 22);
-  header.writeUInt32LE(SAMPLE_RATE, 24);
-  header.writeUInt32LE(byteRate, 28);
-  header.writeUInt16LE((CHANNELS * BITS) / 8, 32); // block align
-  header.writeUInt16LE(BITS, 34);
-  header.write('data', 36);
-  header.writeUInt32LE(pcm.length, 40);
-  return Buffer.concat([header, pcm]);
+  if (r.error) throw new Error(`cannot run ${FFMPEG}: ${r.error.message}`);
+  if (r.status !== 0) {
+    throw new Error(`${FFMPEG} exited ${r.status}: ${String(r.stderr || '').trim().slice(0, 300)}`);
+  }
 }
 
 async function main() {
@@ -172,15 +160,21 @@ async function main() {
       pcmParts.push(await synth(part));
     } catch (e) {
       log(`chunk ${i + 1}/${parts.length} failed: ${e.message}`);
-      if (localFallback()) return;
-      process.exit(1);
+      process.exit(1); // no local fallback, on purpose — see the file header
     }
   }
   const pcm = Buffer.concat(pcmParts);
-  fs.writeFileSync(outputPath, wav(pcm));
+  try {
+    encodeOpus(pcm);
+  } catch (e) {
+    log(`opus encode failed: ${e.message}`);
+    process.exit(1);
+  }
+  const written = fs.statSync(outputPath).size;
   log(
     `${parts.length} chunk(s), ${text.trim().length} chars, ` +
       `${(pcm.length / 2 / SAMPLE_RATE).toFixed(2)}s audio, ` +
+      `pcm ${(pcm.length / 1024).toFixed(0)}KiB -> opus ${(written / 1024).toFixed(0)}KiB, ` +
       `${((Date.now() - started) / 1000).toFixed(1)}s via ${MODEL}/${VOICE}/${PROVIDER}`,
   );
 }
