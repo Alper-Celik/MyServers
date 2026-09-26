@@ -355,6 +355,19 @@ in
       # [joking], …) so tone survives the transcription; OR_STT_TONE=0 disables.
       HERMES_LOCAL_STT_COMMAND = "${sttScript}/bin/hermes-openrouter-stt {input_path} {output_dir}";
       OR_STT_WHISPER_MODEL = "${whisperModel}";
+      # STT model: Voxtral Small 24B (Apache-2.0 open weights) instead of the
+      # script's default (google/gemini-3.5-flash-lite). Measured on real voice
+      # notes, same verbatim+tone prompt: gemini-3.5-flash-lite turned a spoken
+      # "I can talk with you" into "I can't talk with you" on 5 of 5 runs of one
+      # clip (a contracted-negative inversion — the exact failure that flips
+      # meaning), while voxtral-small-24b did not flip once, at ~0.9 s and ~30x
+      # lower cost per note (audio input tokens bill heavily on Gemini rates;
+      # the pro Gemini tiers were no more accurate, only slower and pricier).
+      # OpenRouter serves it from DeepInfra/Together, both of which pass the
+      # account-level ZDR guardrail. Tone tagging is sparser than Gemini's but
+      # present; OR_STT_MODEL here beats the script default so the choice is
+      # visible in host config, not buried in a JS file.
+      OR_STT_MODEL = "mistralai/voxtral-small-24b-2507";
     };
 
     # Workspace policy file, installed on every activation (nix-managed —
