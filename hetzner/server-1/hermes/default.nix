@@ -6,10 +6,12 @@
 {
   imports = [
     inputs.hermes-agent.nixosModules.default
+    inputs.hermes-webui.nixosModules.default
     ./secrets.nix
     ./settings.nix
     ./mcp-servers.nix
     ./web.nix
+    ./webui.nix
   ];
 
   # Ports shared by the agent services (settings.nix) and their caddy vhosts
@@ -17,6 +19,7 @@
   _module.args.hermesPorts = {
     api = 8642; # OpenAI-compatible API server (gateway platform)
     dashboard = 9119; # web dashboard / desktop backend
+    webui = 8787; # hermes-webui (loopback-only; no caddy vhost yet)
   };
 
   # programs.nix-ld (configuration.nix) exports NIX_LD / NIX_LD_LIBRARY_PATH to
