@@ -7,6 +7,7 @@
   # individual keys from inputs.MyServersSecrets secrets/hetzner/server-1.yaml
   sops.secrets = {
     OPENROUTER_API_KEY = { };
+    OPENCODE_GO_API_KEY = { };
     API_SERVER_KEY = { };
     EXA_API_KEY = { };
     TELEGRAM_BOT_TOKEN_AI = { };
@@ -20,6 +21,7 @@
   sops.templates."hermes-env" = {
     content = ''
       OPENROUTER_API_KEY=${config.sops.placeholder.OPENROUTER_API_KEY}
+      OPENCODE_GO_API_KEY=${config.sops.placeholder.OPENCODE_GO_API_KEY}
       API_SERVER_KEY=${config.sops.placeholder.API_SERVER_KEY}
       EXA_API_KEY=${config.sops.placeholder.EXA_API_KEY}
       TELEGRAM_BOT_TOKEN=${config.sops.placeholder.TELEGRAM_BOT_TOKEN_AI}
