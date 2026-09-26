@@ -53,7 +53,20 @@ in
       "A ${cfg.dataDir} - - - - ${acl "nextcloud" "rwX"}"
       "A ${cfg.dataDir}/Music - - - - ${acl "jellyfin" "rwX"},${acl "navidrome" "rwX"},${acl "nextcloud" "rwX"}"
       "A \"${cfg.dataDir}/Calibre Library\" - - - - ${acl "calibre-web" "rwX"}"
+
+      # SSH access for the ai-agent user on hetzner (see ai-agent.nix).
+      # Recursive (A+) so EXISTING files pick up the entry — the service users
+      # above predate this user and their defaults never covered it — plus
+      # default ACLs so files syncthing creates later inherit it.
+      "A+ ${cfg.dataDir}/Music - - - - ${acl "ai-agent" "rwX"}"
     ];
+
+  # Keeps default-ACL masks from clipping named users to read-only: syncthing
+  # creates files 0644 by default and the ACL mask is derived from the create
+  # mode's group bits. 0002 keeps group bits rw. Group is syncthing's own, so
+  # nothing outside the ACL set gains anything. (UMask is a [Service] key —
+  # serviceConfig, not unitConfig.)
+  systemd.services.syncthing.serviceConfig.UMask = "0002";
 
   services.caddy.virtualHosts."syncthing-rpi.lab.alper-celik.dev" = {
     extraConfig = "reverse_proxy http://${config.services.syncthing.guiAddress}";
