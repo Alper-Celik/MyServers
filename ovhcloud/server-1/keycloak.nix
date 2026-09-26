@@ -31,8 +31,9 @@ in
   };
 
   # The caddy module sets security.acme.certs.<useACMEHost>.group = services.caddy.group
-  # ("caddy"), and acme chowns the cert dir acme:caddy with g=r.
-  systemd.services.keycloak.unitConfig.SupplementaryGroups = [ "caddy" ];
+  # ("caddy"), and acme chowns the cert dir acme:caddy with g=r. SupplementaryGroups
+  # is a [Service] key — under unitConfig it lands in [Unit] and systemd ignores it.
+  systemd.services.keycloak.serviceConfig.SupplementaryGroups = [ "caddy" ];
 
   services.postgresql = {
     ensureDatabases = [ "keycloak" ];
