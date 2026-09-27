@@ -29,8 +29,8 @@
     issuer = "https://id.auth.how/realms/private";
     client_id = "hermes-webui";
     redirect_uri = "https://agent.lab.alper-celik.dev/api/auth/oidc/callback";
-    allow_claim = "preferred_username";
+    allow_claim = "email";
     # empty allow_values disables OIDC entirely (upstream)
-    allow_values = [ "alper" ];
+    allow_values = [ "alper@alper-celik.dev" ];
   };
 }
