@@ -3,7 +3,9 @@
   services.navidrome = {
     enable = true;
     package = pkgs-unstable.navidrome;
-    plugins = with pkgs-unstable.navidromePlugins; [ audiomuseai ];
+    # Navidrome plugins are wasi/wasm artifacts and nixpkgs marks them
+    # platforms = wasi, so the native pkgs instance refuses to evaluate them.
+    plugins = with pkgs-unstable.pkgsCross.wasi32.navidromePlugins; [ audiomuseai ];
     settings = {
       Agents = "audiomuseai,lastfm,deezer,listenbrainz";
       Backup = {
