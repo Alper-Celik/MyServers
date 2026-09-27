@@ -19,7 +19,7 @@
   _module.args.hermesPorts = {
     api = 8642; # OpenAI-compatible API server (gateway platform)
     dashboard = 9119; # web dashboard / desktop backend
-    webui = 8787; # hermes-webui (loopback-only; no caddy vhost yet)
+    webui = 8787; # hermes-webui (loopback-only)
   };
 
   # programs.nix-ld (configuration.nix) exports NIX_LD / NIX_LD_LIBRARY_PATH to
