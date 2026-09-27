@@ -52,6 +52,7 @@ in
 
       "A ${cfg.dataDir} - - - - ${acl "nextcloud" "rwX"}"
       "A ${cfg.dataDir}/Music - - - - ${acl "jellyfin" "rwX"},${acl "navidrome" "rwX"},${acl "nextcloud" "rwX"}"
+      "A+ ${cfg.dataDir}/Music - - - - ${acl "ai-agent" "rwX"}"
       "A \"${cfg.dataDir}/Calibre Library\" - - - - ${acl "calibre-web" "rwX"}"
     ];
 
