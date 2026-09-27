@@ -35,5 +35,8 @@
     "hermes-api.lab.alper-celik.dev" = {
       extraConfig = "reverse_proxy http://localhost:${toString hermesPorts.api}";
     };
+    "agent.lab.alper-celik.dev" = {
+      extraConfig = "reverse_proxy http://localhost:${toString hermesPorts.webui}";
+    };
   };
 }

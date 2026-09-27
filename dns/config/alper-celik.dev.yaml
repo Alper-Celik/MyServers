@@ -68,6 +68,9 @@ hermes.lab:
 hermes-api.lab:
   type: CNAME
   value: hetzner-server-1.tailnet.alper-celik.dev.
+agent.lab:
+  type: CNAME
+  value: hetzner-server-1.tailnet.alper-celik.dev.
 
   # hetzner-server-1
 adguardhome.lab:

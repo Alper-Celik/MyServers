@@ -166,6 +166,26 @@
         "type": "github"
       }
     },
+    "hermes-webui": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1790399664,
+        "narHash": "sha256-NGs0TEjZir3PWmcS/jpxpPPJSDVwi/TBF+uPG5hJgW4=",
+        "owner": "nesquena",
+        "repo": "hermes-webui",
+        "rev": "c296673ebfaf98750fe38438bc71f0cbb1f75777",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nesquena",
+        "repo": "hermes-webui",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -619,6 +639,7 @@
         "MyServersSecrets": "MyServersSecrets",
         "disko": "disko",
         "hermes-agent": "hermes-agent",
+        "hermes-webui": "hermes-webui",
         "impermanence": "impermanence",
         "my-blog": "my-blog",
         "nixos-hardware": "nixos-hardware",
