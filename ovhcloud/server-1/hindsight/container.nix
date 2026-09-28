@@ -41,7 +41,16 @@ in
       HINDSIGHT_API_EMBEDDINGS_PROVIDER = "openrouter";
       # open weights, Apache-2.0 (HF Qwen/Qwen3-Embedding-8B); unset → perplexity/pplx-embed-v1-0.6b
       HINDSIGHT_API_EMBEDDINGS_OPENROUTER_MODEL = "qwen/qwen3-embedding-8b";
-      HINDSIGHT_API_RERANKER_PROVIDER = "rrf"; # rank fusion only, no reranker model
+      # open weights, Apache-2.0 (HF Qwen/Qwen3-Reranker-8B); unset → cohere/rerank-v3.5
+      HINDSIGHT_API_RERANKER_PROVIDER = "openrouter";
+      HINDSIGHT_API_RERANKER_OPENROUTER_MODEL = "qwen/qwen3-reranker-8b";
+      # failover 1: Jev (TypeSafe decision model) via OpenRouter's System One API —
+      # member 1 inherits nothing, so model/base URL/key are all spelled out
+      HINDSIGHT_API_RERANKER_1_PROVIDER = "typesafe";
+      HINDSIGHT_API_RERANKER_1_TYPESAFE_MODEL = "typesafe/jev-1.13";
+      HINDSIGHT_API_RERANKER_1_TYPESAFE_BASE_URL = "https://openrouter.ai/api";
+      # failover 2: no model — keep the RRF order rather than fail recall
+      HINDSIGHT_API_RERANKER_2_PROVIDER = "rrf";
       HINDSIGHT_API_PORT = port;
     };
     environmentFiles = [ config.sops.templates."hindsight-env".path ];
