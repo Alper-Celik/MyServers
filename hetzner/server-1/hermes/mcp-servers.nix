@@ -1,4 +1,5 @@
 {
+  pkgs,
   ...
 }:
 
@@ -28,8 +29,14 @@
     # hermes at startup from the sops-rendered .env — never from Nix.
     # Writes are enabled (the agent opens PRs); add "--read-only" to args to
     # make the server hard-read-only for non-PR work.
+    # Absolute store path rather than the bare name: `command` is exec'd by
+    # whichever hermes process owns the session, and only the gateway and
+    # dashboard carry extraPackages (settings.nix) on their PATH. The webui
+    # service runs its own agent with a minimal PATH, where a bare
+    # `github-mcp-server` cannot be exec'd at all — the spawn dies silently,
+    # so the tools simply never register there (same for grafana below).
     github = {
-      command = "github-mcp-server";
+      command = "${pkgs.github-mcp-server}/bin/github-mcp-server";
       args = [
         "stdio"
         "--toolsets=default,actions"
@@ -62,7 +69,9 @@
     # enforce_domain=true, so the local URL is rejected — go through caddy.
     # Token: Grafana → Administration → Service accounts → token (Viewer/Admin).
     # Server: pkgs.mcp-grafana (extraPackages in settings.nix) — the official Go
-    # server, so it needs no interpreter. The previous uvx route
+    # server, so it needs no interpreter. Absolute store path here because the
+    # bare name only resolves in the processes that carry those extraPackages
+    # on PATH (see the github comment above). The previous uvx route
     # (`uvx mcp-grafana==1.6.0`) could never start here: uv's managed CPython is
     # a generic-glibc build, and this host runs environment.stub-ld (the "NixOS
     # cannot run dynamically linked executables" message stub) at
@@ -73,7 +82,7 @@
     # stalls ~10s at shutdown when no collector answers; OTEL_SDK_DISABLED and
     # OTEL_*_EXPORTER=none do not suppress it.
     grafana = {
-      command = "mcp-grafana";
+      command = "${pkgs.mcp-grafana}/bin/mcp-grafana";
       args = [
         "-transport"
         "stdio"
