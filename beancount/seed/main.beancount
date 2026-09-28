@@ -1,0 +1,60 @@
+;; Starter ledger, seeded once into /var/lib/fava (never overwritten after
+;; that) — the live copy and its git history stay on the host, this file is
+;; only the template. Numbers below are demo data: replace the postings with
+;; your own, or point the service at a different ledger.
+;;
+;; Fava reads its own settings from `custom "fava-option"` directives and loads
+;; extensions from `custom "fava-extension"`; both are documented in Fava's
+;; Help menu.
+
+option "title" "Ledger"
+option "operating_currency" "EUR"
+
+;; Extensions available in this service's interpreter.
+2010-01-01 custom "fava-extension" "fava_envelope" "{}"
+2010-01-01 custom "fava-extension" "fava_dashboards"
+2010-01-01 custom "fava-extension" "fava.ext.auto_commit"
+
+;; fava-envelope: `start date` and at least one `budget account` are required,
+;; otherwise the Envelope page 404s. Every Assets/Liabilities account not listed
+;; here stays out of the budget.
+2010-01-01 custom "envelope" "start date" "2026-01"
+2010-01-01 custom "envelope" "budget account" "Assets:Bank:Checking"
+2010-01-01 custom "envelope" "budget account" "Liabilities:Credit-Card"
+
+2026-01-01 open Assets:Bank:Checking EUR
+2026-01-01 open Assets:Bank:Savings EUR
+2026-01-01 open Liabilities:Credit-Card EUR
+2026-01-01 open Expenses:Food EUR
+2026-01-01 open Expenses:Rent EUR
+2026-01-01 open Expenses:Fun EUR
+2026-01-01 open Income:Salary EUR
+2026-01-01 open Equity:Opening-Balances EUR
+
+2026-01-01 * "Opening balance"
+  Assets:Bank:Checking                     1500.00 EUR
+  Equity:Opening-Balances                 -1500.00 EUR
+
+2026-01-25 * "Employer" "Salary"
+  Assets:Bank:Checking                     2500.00 EUR
+  Income:Salary                           -2500.00 EUR
+
+2026-01-31 custom "envelope" "allocate" Expenses:Food 400.00 EUR
+2026-01-31 custom "envelope" "allocate" Expenses:Rent 900.00 EUR
+2026-01-31 custom "envelope" "allocate" Expenses:Fun 150.00 EUR
+
+2026-02-01 * "Landlord" "Rent"
+  Expenses:Rent                             900.00 EUR
+  Assets:Bank:Checking                     -900.00 EUR
+
+2026-02-05 * "Supermarket" "Groceries"
+  Expenses:Food                             120.50 EUR
+  Assets:Bank:Checking                     -120.50 EUR
+
+2026-02-25 * "Employer" "Salary"
+  Assets:Bank:Checking                     2500.00 EUR
+  Income:Salary                           -2500.00 EUR
+
+2026-02-28 * "Cinema" "Night out"
+  Expenses:Fun                               32.00 EUR
+  Assets:Bank:Checking                      -32.00 EUR

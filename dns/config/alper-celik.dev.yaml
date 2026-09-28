@@ -85,6 +85,9 @@ mimir.lab:
 loki.lab:
   type: CNAME
   value: hetzner-server-1.tailnet.alper-celik.dev.
+fava.lab:
+  type: CNAME
+  value: hetzner-server-1.tailnet.alper-celik.dev.
 
   # Github pages:
 ym-pdf:
