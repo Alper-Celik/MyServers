@@ -15,11 +15,25 @@ in
   # /run/postgresql stays first so host clients (keycloak, freshrss, …) are untouched.
   services.postgresql.settings.unix_socket_directories = lib.mkForce "/run/postgresql,${socketDir}";
 
-  # postgres also exits when a directory in that list is missing, and a tmpfiles
-  # rule only runs at boot, so the directory is created by the unit itself before
-  # every start: as root (the `+` prefix escapes User= and the unit's sandbox,
-  # which is ProtectSystem=strict), 0755 so container clients can reach the socket.
-  systemd.services.postgresql.serviceConfig.ExecStartPre = [
-    "+${pkgs.coreutils}/bin/install -d -o postgres -g postgres -m 0755 ${socketDir}"
-  ];
+  # The postmaster runs under ProtectSystem=strict, so the socket dir has to be in
+  # its writable set, and that bind mount is set up BEFORE ExecStartPre runs - the
+  # directory must therefore already exist when the unit starts, which a tmpfiles
+  # rule (boot only) and an ExecStartPre (too late) both fail to guarantee.
+  systemd.services.postgresql.serviceConfig.ReadWritePaths = [ socketDir ];
+
+  systemd.services.postgresql = {
+    requires = [ "postgresql-socket-dir.service" ];
+    after = [ "postgresql-socket-dir.service" ];
+  };
+
+  systemd.services.postgresql-socket-dir = {
+    description = "Create the persistent postgres socket directory";
+    serviceConfig = {
+      Type = "oneshot";
+      # 0755 so container clients (not in group postgres) can traverse it, and
+      # install -d re-applies mode/owner on every start, which also recovers a
+      # mount point podman may have created as root.
+      ExecStart = "${pkgs.coreutils}/bin/install -d -o postgres -g postgres -m 0755 ${socketDir}";
+    };
+  };
 }
