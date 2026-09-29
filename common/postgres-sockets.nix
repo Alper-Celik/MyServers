@@ -21,19 +21,5 @@ in
   # rule (boot only) and an ExecStartPre (too late) both fail to guarantee.
   systemd.services.postgresql.serviceConfig.ReadWritePaths = [ socketDir ];
 
-  systemd.services.postgresql = {
-    requires = [ "postgresql-socket-dir.service" ];
-    after = [ "postgresql-socket-dir.service" ];
-  };
-
-  systemd.services.postgresql-socket-dir = {
-    description = "Create the persistent postgres socket directory";
-    serviceConfig = {
-      Type = "oneshot";
-      # 0755 so container clients (not in group postgres) can traverse it, and
-      # install -d re-applies mode/owner on every start, which also recovers a
-      # mount point podman may have created as root.
-      ExecStart = "${pkgs.coreutils}/bin/install -d -o postgres -g postgres -m 0755 ${socketDir}";
-    };
-  };
+  systemd.tmpfiles.rules = [ "d ${socketDir} 0755 postgres postgres -" ];
 }
