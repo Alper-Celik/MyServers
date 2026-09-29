@@ -7,17 +7,14 @@
   config,
   hindsightPorts,
   postgresSocketDir,
+  lib,
   ...
 }:
 let
   hindsight-uid = 984;
   hindsight-gid = 984;
-  port = toString hindsightPorts.api;
+  port = 21912;
   hindsight = config.virtualisation.oci-containers.containers.hindsight;
-  # This host's tailnet address (`tailscale ip -4`). A published port is DNAT'd
-  # in PREROUTING, so the host's tailscale0 input rule never sees it: binding
-  # the publish to the tailnet address is what keeps it off the WAN.
-  tailnet-address = "100.105.99.91";
 in
 {
   users = {
@@ -28,6 +25,25 @@ in
       uid = hindsight-uid;
       home = "/var/lib/hindsight";
     };
+  };
+
+  # Alper adds HINDSIGHT_OPENROUTER_API_KEY to secrets/ovhcloud/server-1.yaml.
+  # Service-scoped on purpose: each service keeps its own OpenRouter key/quota
+  # (hetzner's hermes uses the unprefixed OPENROUTER_API_KEY).
+  sops.secrets.HINDSIGHT_OPENROUTER_API_KEY = { };
+
+  # hindsight reads its own variable names, so one key feeds every one of them;
+  # the Jev failover member (container.nix) inherits no shared key, so its own
+  # variable is spelled out too
+  sops.templates."hindsight-env" = {
+    content = ''
+      HINDSIGHT_API_OPENROUTER_API_KEY=${config.sops.placeholder.HINDSIGHT_OPENROUTER_API_KEY}
+      HINDSIGHT_API_LLM_API_KEY=${config.sops.placeholder.HINDSIGHT_OPENROUTER_API_KEY}
+      HINDSIGHT_API_RERANKER_1_TYPESAFE_API_KEY=${config.sops.placeholder.HINDSIGHT_OPENROUTER_API_KEY}
+    '';
+    restartUnits = [
+      "${config.virtualisation.oci-containers.containers.hindsight.serviceName}.service"
+    ];
   };
 
   virtualisation.oci-containers.containers.hindsight = {
@@ -51,16 +67,13 @@ in
       HINDSIGHT_API_RERANKER_1_TYPESAFE_BASE_URL = "https://openrouter.ai/api";
       # failover 2: no model — keep the RRF order rather than fail recall
       HINDSIGHT_API_RERANKER_2_PROVIDER = "rrf";
-      HINDSIGHT_API_PORT = port;
+      HINDSIGHT_API_PORT = toString port;
     };
     environmentFiles = [ config.sops.templates."hindsight-env".path ];
     user = "${toString hindsight-uid}:${toString hindsight-gid}";
     volumes = [ "${postgresSocketDir}:${postgresSocketDir}" ];
     ports = [
-      # tailnet address: direct access, no TLS, for tailnet clients
-      "${tailnet-address}:${port}:${port}"
-      # loopback: caddy's upstream (see caddy.nix)
-      "127.0.0.1:${port}:${port}"
+      "${toString port}:${toString port}"
     ];
     labels = {
       "io.containers.autoupdate" = "registry";
@@ -68,7 +81,31 @@ in
     autoStart = true;
   };
 
+  services.postgresql = {
+    # pgvector — hindsight's `vector` extension. Immich's pgvecto-rs
+    # (vectors.so) is related but NOT the same; do not copy its setup.
+    # Note: changes the effective postgres package → postgres restarts on deploy.
+    extensions = ps: [ ps.pgvector ];
+    ensureDatabases = [ "hindsight" ];
+    ensureUsers = [
+      {
+        name = "hindsight";
+        ensureDBOwnership = true;
+        ensureClauses.login = true;
+      }
+    ];
+  };
+
+  # enable the extension inside the hindsight DB (idempotent; immich-module pattern)
+  systemd.services.postgresql.serviceConfig.ExecStartPost = [
+    ''${lib.getExe' config.services.postgresql.package "psql"} -d hindsight -c "CREATE EXTENSION IF NOT EXISTS vector"''
+  ];
+
   # the socket has to exist before the first connect; hindsight retries, but an
   # ordered start avoids a noisy boot
   systemd.services.${hindsight.serviceName}.after = [ "postgresql.service" ];
+
+  services.caddy.virtualHosts."hindsight.lab.alper-celik.dev" = {
+    extraConfig = "reverse_proxy http://localhost:${toString port}";
+  };
 }
