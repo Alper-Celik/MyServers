@@ -1,11 +1,14 @@
-{ ... }:
+{ postgresSocketDir, ... }:
 {
   virtualisation.oci-containers.containers."home-assistant" = {
     image = "ghcr.io/home-assistant/home-assistant:stable";
     volumes = [
       "/var/lib/home-assistant:/config"
       "/etc/localtime:/etc/localtime:ro"
-      "/run/postgresql/:/run/postgresql/"
+      # persistent socket dir (common/postgres-sockets.nix), mounted where the
+      # recorder's config expects it; /run/postgresql itself goes stale on a
+      # postgres restart
+      "${postgresSocketDir}:/run/postgresql"
       "/run/dbus:/run/dbus:ro"
     ];
     environment = {

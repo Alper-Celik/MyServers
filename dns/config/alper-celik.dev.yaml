@@ -86,6 +86,11 @@ loki.lab:
   type: CNAME
   value: hetzner-server-1.tailnet.alper-celik.dev.
 
+  # ovhcloud-server-1
+hindsight.lab:
+  type: CNAME
+  value: ovhcloud-server-1.tailnet.alper-celik.dev.
+
   # Github pages:
 ym-pdf:
   ttl: 300
