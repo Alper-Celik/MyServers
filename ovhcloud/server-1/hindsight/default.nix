@@ -5,6 +5,7 @@
     ./container.nix
     ./secrets.nix
     ./networking.nix
+    ./caddy.nix
   ];
 
   # Port shared by the container (container.nix) and the tailnet firewall rule

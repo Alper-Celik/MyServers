@@ -56,7 +56,12 @@ in
     environmentFiles = [ config.sops.templates."hindsight-env".path ];
     user = "${toString hindsight-uid}:${toString hindsight-gid}";
     volumes = [ "${postgresSocketDir}:${postgresSocketDir}" ];
-    ports = [ "${tailnet-address}:${port}:${port}" ];
+    ports = [
+      # tailnet address: direct access, no TLS, for tailnet clients
+      "${tailnet-address}:${port}:${port}"
+      # loopback: caddy's upstream (see caddy.nix)
+      "127.0.0.1:${port}:${port}"
+    ];
     labels = {
       "io.containers.autoupdate" = "registry";
     };
