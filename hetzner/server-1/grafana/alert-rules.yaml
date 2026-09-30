@@ -62,7 +62,7 @@ groups:
     title: Systemd unit failed
     uid: fleet-systemd-unit-failed
   - annotations:
-      description: max_over_time(node_systemd_unit_state{state="active", name=~"sshd\.service|tailscaled\.service|alloy\.service|caddy\.service|grafana\.service|mimir\.service|loki\.service|postgresql\.service|hermes-agent\.service"}[10m])
+      description: max_over_time(node_systemd_unit_state{state="active", name=~"sshd\\.service|tailscaled\\.service|alloy\\.service|caddy\\.service|grafana\\.service|mimir\\.service|loki\\.service|postgresql\\.service|hermes-agent\\.service"}[10m])
         == 0 for 5m — {{ $labels.name }} on {{ $labels.host }} is stopped or failed.
       summary: critical unit {{ $labels.name }} is not active on {{ $labels.host }}
     condition: B
@@ -70,7 +70,7 @@ groups:
     - datasourceUid: mimir
       model:
         editorMode: code
-        expr: max_over_time(node_systemd_unit_state{state="active", name=~"sshd\.service|tailscaled\.service|alloy\.service|caddy\.service|grafana\.service|mimir\.service|loki\.service|postgresql\.service|hermes-agent\.service"}[10m])
+        expr: max_over_time(node_systemd_unit_state{state="active", name=~"sshd\\.service|tailscaled\\.service|alloy\\.service|caddy\\.service|grafana\\.service|mimir\\.service|loki\\.service|postgresql\\.service|hermes-agent\\.service"}[10m])
           == 0
         instant: true
         intervalMs: 1000
