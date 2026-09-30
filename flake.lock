@@ -186,6 +186,22 @@
         "type": "github"
       }
     },
+    "hindsight": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790760250,
+        "narHash": "sha256-L5HjVF64foSslizP6FPvEcnzorK4LY78YnuuP8rfEcA=",
+        "owner": "vectorize-io",
+        "repo": "hindsight",
+        "rev": "d56c4acdf59c41957613d399094cdf8c489b060c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "vectorize-io",
+        "repo": "hindsight",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -640,6 +656,7 @@
         "disko": "disko",
         "hermes-agent": "hermes-agent",
         "hermes-webui": "hermes-webui",
+        "hindsight": "hindsight",
         "impermanence": "impermanence",
         "my-blog": "my-blog",
         "nixos-hardware": "nixos-hardware",
