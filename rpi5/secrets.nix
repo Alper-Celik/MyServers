@@ -38,6 +38,7 @@ in
       audiomuse_env = { };
       librechat_creds = { };
       navidrome_secret_file = { };
+      youtarr-db-pass = { };
     };
 
   };

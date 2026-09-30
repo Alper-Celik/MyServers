@@ -59,6 +59,9 @@ audiomuse.lab:
 p2p.lab:
   type: CNAME
   value: rpi5.tailnet.alper-celik.dev.
+youtarr.lab:
+  type: CNAME
+  value: rpi5.tailnet.alper-celik.dev.
 llm.lab:
   type: CNAME
   value: hetzner-server-1.tailnet.alper-celik.dev.
