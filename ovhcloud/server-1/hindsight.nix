@@ -13,7 +13,8 @@
 let
   hindsight-uid = 984;
   hindsight-gid = 984;
-  port = 21912;
+  port-api = 21912;
+  port = 21911;
   hindsight = config.virtualisation.oci-containers.containers.hindsight;
 in
 {
@@ -51,6 +52,7 @@ in
     environment = {
       # `?host=<dir>` = unix socket (see common/postgres-sockets.nix)
       HINDSIGHT_API_DATABASE_URL = "postgresql://hindsight@/hindsight?host=${postgresSocketDir}";
+      HINDSIGHT_API_VECTOR_EXTENSION = "vchord";
       HINDSIGHT_API_LLM_PROVIDER = "openrouter";
       # open weights, MIT (HF deepseek-ai/DeepSeek-V4.1-Flash); unset → qwen/qwen3.5-9b
       HINDSIGHT_API_LLM_MODEL = "deepseek/deepseek-v4.1-flash";
@@ -67,13 +69,13 @@ in
       HINDSIGHT_API_RERANKER_1_TYPESAFE_BASE_URL = "https://openrouter.ai/api";
       # failover 2: no model — keep the RRF order rather than fail recall
       HINDSIGHT_API_RERANKER_2_PROVIDER = "rrf";
-      HINDSIGHT_API_PORT = toString port;
     };
     environmentFiles = [ config.sops.templates."hindsight-env".path ];
     user = "${toString hindsight-uid}:${toString hindsight-gid}";
     volumes = [ "${postgresSocketDir}:${postgresSocketDir}" ];
     ports = [
-      "${toString port}:${toString port}"
+      "${toString port-api}:8888"
+      "${toString port}:9999"
     ];
     labels = {
       "io.containers.autoupdate" = "registry";
@@ -82,11 +84,11 @@ in
   };
 
   services.postgresql = {
-    # pgvector — hindsight's `vector` extension. Immich's pgvecto-rs
-    # (vectors.so) is related but NOT the same; do not copy its setup.
-    # Note: changes the effective postgres package → postgres restarts on deploy.
-    extensions = ps: [ ps.pgvector ];
+    extensions = ps: [ ps.vectorchord ];
     ensureDatabases = [ "hindsight" ];
+    settings = {
+      shared_preload_libraries = [ "vchord.so" ];
+    };
     ensureUsers = [
       {
         name = "hindsight";
@@ -98,7 +100,7 @@ in
 
   # enable the extension inside the hindsight DB (idempotent; immich-module pattern)
   systemd.services.postgresql-setup.serviceConfig.ExecStartPost = [
-    ''${lib.getExe' config.services.postgresql.package "psql"} -d hindsight -c "CREATE EXTENSION IF NOT EXISTS vector"''
+    ''${lib.getExe' config.services.postgresql.package "psql"} -d hindsight -c "CREATE EXTENSION IF NOT EXISTS vchord;ALTER EXTENSION vchord UPDATE;"''
   ];
 
   # the socket has to exist before the first connect; hindsight retries, but an
@@ -107,5 +109,9 @@ in
 
   services.caddy.virtualHosts."hindsight.lab.alper-celik.dev" = {
     extraConfig = "reverse_proxy http://localhost:${toString port}";
+  };
+
+  services.caddy.virtualHosts."api.hindsight.lab.alper-celik.dev" = {
+    extraConfig = "reverse_proxy http://localhost:${toString port-api}";
   };
 }
