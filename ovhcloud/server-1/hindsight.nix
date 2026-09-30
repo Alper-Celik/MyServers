@@ -84,7 +84,10 @@ in
   };
 
   services.postgresql = {
-    extensions = ps: [ ps.vectorchord ];
+    extensions = ps: [
+      ps.pgvector
+      ps.vectorchord
+    ];
     ensureDatabases = [ "hindsight" ];
     settings = {
       shared_preload_libraries = [ "vchord.so" ];
@@ -100,6 +103,7 @@ in
 
   # enable the extension inside the hindsight DB (idempotent; immich-module pattern)
   systemd.services.postgresql-setup.serviceConfig.ExecStartPost = [
+    ''${lib.getExe' config.services.postgresql.package "psql"} -d hindsight -c "CREATE EXTENSION IF NOT EXISTS vector;ALTER EXTENSION vector UPDATE;"''
     ''${lib.getExe' config.services.postgresql.package "psql"} -d hindsight -c "CREATE EXTENSION IF NOT EXISTS vchord;ALTER EXTENSION vchord UPDATE;"''
   ];
 
