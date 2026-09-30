@@ -60,10 +60,11 @@ in
     settings.memory.provider = "hindsight";
 
     # $HERMES_HOME/hindsight/config.json outranks the HINDSIGHT_* environment
-    # variables. Unset keys keep the provider's defaults (bank "hermes").
+    # variables.
     hermesHomeFiles."hindsight/config.json" = builtins.toJSON {
       mode = "local_external";
       api_url = "https://api.hindsight.lab.alper-celik.dev";
+      bank_id = "default";
     };
   };
 
