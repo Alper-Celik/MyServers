@@ -3,3 +3,54 @@ import.file "generic" {
 }
 
 generic.base "default" { }
+
+// Public OTLP ingest for OpenRouter's trace broadcast: caddy terminates TLS on
+// otel.alper-celik.dev and proxies /v1/traces here; the bearer token comes from
+// the alloy EnvironmentFile (sops, see grafana-alloy.nix).
+//
+// There is no trace store yet (no tempo), and the otlp receiver only starts its
+// HTTP server when something downstream consumes traces, so the spans end in a
+// spanmetrics connector whose every series is relabeled away: requests are
+// authenticated and acknowledged, nothing is retained. To keep the traces point
+// the receiver output at an otlphttp exporter for tempo; to keep the per-span
+// counters and latency histograms instead, drop the `discard` rules.
+otelcol.receiver.otlp "ingest" {
+	http {
+		endpoint = "127.0.0.1:4320"
+		auth     = otelcol.auth.bearer.ingest.handler
+	}
+
+	output {
+		traces = [otelcol.connector.spanmetrics.ingest.input]
+	}
+}
+
+otelcol.auth.bearer "ingest" {
+	token = sys.env("OTEL_INGEST_TOKEN")
+}
+
+otelcol.connector.spanmetrics "ingest" {
+	histogram {
+		explicit {
+			buckets = ["100ms", "1s", "5s", "30s"]
+		}
+	}
+
+	output {
+		metrics = [otelcol.exporter.prometheus.discard.input]
+	}
+}
+
+otelcol.exporter.prometheus "discard" {
+	forward_to = [prometheus.relabel.discard.receiver]
+}
+
+prometheus.relabel "discard" {
+	forward_to = [generic.base.default.mimir_receiver]
+
+	rule {
+		source_labels = ["__name__"]
+		regex         = ".*"
+		action        = "drop"
+	}
+}

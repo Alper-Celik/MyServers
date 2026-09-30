@@ -105,6 +105,9 @@ blog:
   value: alper-celik.github.io.
 
   # "public" services:
+otel:
+  type: CNAME
+  value: hetzner-server-1.devices.alper-celik.dev.
 photos.lab:
   ttl: 300
   type: CNAME

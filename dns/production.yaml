@@ -9,6 +9,7 @@ processors:
       - /tailnet/
       - cv-redirect
       - git
+      - otel
     class: octodns.processor.filter.NameAllowlistFilter
 
 providers:
