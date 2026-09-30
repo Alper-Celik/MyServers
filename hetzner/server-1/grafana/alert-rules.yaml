@@ -1,0 +1,229 @@
+apiVersion: 1
+deleteRules: []
+groups:
+- folder: Fleet Alerts
+  interval: 60s
+  name: fleet-availability
+  orgId: 1
+  rules:
+  - annotations:
+      description: node_systemd_unit_state{state="failed"} == 1 for 5m — {{ $labels.name
+        }} ({{ $labels.type }}) on {{ $labels.host }}.
+      summary: systemd unit {{ $labels.name }} is failed on {{ $labels.host }}
+    condition: B
+    data:
+    - datasourceUid: mimir
+      model:
+        editorMode: code
+        expr: node_systemd_unit_state{state="failed"} == 1
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+        range: false
+        refId: A
+      refId: A
+      relativeTimeRange:
+        from: 300
+        to: 0
+    - datasourceUid: __expr__
+      model:
+        conditions:
+        - evaluator:
+            params:
+            - 0
+            type: gt
+          operator:
+            type: and
+          query:
+            params:
+            - A
+          reducer:
+            params: []
+            type: last
+          type: query
+        datasource:
+          type: __expr__
+          uid: __expr__
+        expression: A
+        intervalMs: 1000
+        maxDataPoints: 43200
+        refId: B
+        type: threshold
+      refId: B
+      relativeTimeRange:
+        from: 300
+        to: 0
+    execErrState: Alerting
+    for: 5m
+    labels:
+      category: systemd
+      severity: warning
+    noDataState: OK
+    title: Systemd unit failed
+    uid: fleet-systemd-unit-failed
+  - annotations:
+      description: max_over_time(node_systemd_unit_state{state="active", name=~"sshd\.service|tailscaled\.service|alloy\.service|caddy\.service|grafana\.service|mimir\.service|loki\.service|postgresql\.service|hermes-agent\.service"}[10m])
+        == 0 for 5m — {{ $labels.name }} on {{ $labels.host }} is stopped or failed.
+      summary: critical unit {{ $labels.name }} is not active on {{ $labels.host }}
+    condition: B
+    data:
+    - datasourceUid: mimir
+      model:
+        editorMode: code
+        expr: max_over_time(node_systemd_unit_state{state="active", name=~"sshd\.service|tailscaled\.service|alloy\.service|caddy\.service|grafana\.service|mimir\.service|loki\.service|postgresql\.service|hermes-agent\.service"}[10m])
+          == 0
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+        range: false
+        refId: A
+      refId: A
+      relativeTimeRange:
+        from: 300
+        to: 0
+    - datasourceUid: __expr__
+      model:
+        conditions:
+        - evaluator:
+            params:
+            - 0
+            type: gt
+          operator:
+            type: and
+          query:
+            params:
+            - A
+          reducer:
+            params: []
+            type: last
+          type: query
+        datasource:
+          type: __expr__
+          uid: __expr__
+        expression: A
+        intervalMs: 1000
+        maxDataPoints: 43200
+        refId: B
+        type: threshold
+      refId: B
+      relativeTimeRange:
+        from: 300
+        to: 0
+    execErrState: Alerting
+    for: 5m
+    labels:
+      category: systemd
+      severity: critical
+    noDataState: OK
+    title: Critical systemd unit not active
+    uid: fleet-systemd-critical-unit-down
+  - annotations:
+      description: up == 0 for 10m — {{ $labels.job }} cannot reach {{ $labels.instance
+        }} (host {{ $labels.host }}).
+      summary: scrape target {{ $labels.instance }} (job {{ $labels.job }}) is down
+    condition: B
+    data:
+    - datasourceUid: mimir
+      model:
+        editorMode: code
+        expr: up == 0
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+        range: false
+        refId: A
+      refId: A
+      relativeTimeRange:
+        from: 300
+        to: 0
+    - datasourceUid: __expr__
+      model:
+        conditions:
+        - evaluator:
+            params:
+            - 0
+            type: gt
+          operator:
+            type: and
+          query:
+            params:
+            - A
+          reducer:
+            params: []
+            type: last
+          type: query
+        datasource:
+          type: __expr__
+          uid: __expr__
+        expression: A
+        intervalMs: 1000
+        maxDataPoints: 43200
+        refId: B
+        type: threshold
+      refId: B
+      relativeTimeRange:
+        from: 300
+        to: 0
+    execErrState: Alerting
+    for: 10m
+    labels:
+      category: scrape
+      severity: critical
+    noDataState: OK
+    title: Scrape target down
+    uid: fleet-scrape-target-down
+  - annotations:
+      description: 'up{job="integrations/unix"} had samples 20m ago and has none now:
+        the host is down or its node_exporter/alloy died.'
+      summary: '{{ $labels.host }} stopped pushing metrics'
+    condition: B
+    data:
+    - datasourceUid: mimir
+      model:
+        editorMode: code
+        expr: up{job="integrations/unix"} offset 20m unless up{job="integrations/unix"}
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+        range: false
+        refId: A
+      refId: A
+      relativeTimeRange:
+        from: 300
+        to: 0
+    - datasourceUid: __expr__
+      model:
+        conditions:
+        - evaluator:
+            params:
+            - 0
+            type: gt
+          operator:
+            type: and
+          query:
+            params:
+            - A
+          reducer:
+            params: []
+            type: last
+          type: query
+        datasource:
+          type: __expr__
+          uid: __expr__
+        expression: A
+        intervalMs: 1000
+        maxDataPoints: 43200
+        refId: B
+        type: threshold
+      refId: B
+      relativeTimeRange:
+        from: 300
+        to: 0
+    execErrState: Alerting
+    for: 5m
+    labels:
+      category: host
+      severity: critical
+    noDataState: OK
+    title: Host stopped reporting
+    uid: fleet-host-metrics-missing

@@ -1,6 +1,5 @@
 {
   config,
-  inputs,
   ...
 }:
 let
@@ -60,17 +59,6 @@ in
           url = "https://${loki-domain}";
         }
       ];
-
-      # Alert rules, file-provisioned (provisioning/alerting/rules.yaml).
-      # The rule document lives with the dashboards in
-      # github.com/Alper-Celik/Grafana-Config (alerting/rules.yaml) and is
-      # consumed as a pinned flake input: the alert set is versioned and
-      # reviewed in its own repo, and this module only points Grafana at it.
-      # Rules are NOT editable in the UI — change them there, bump the pin
-      # (`nix flake update grafana-config`) and redeploy. Routing uses the
-      # existing notification policy (Telegram); the folder `Fleet Alerts` is
-      # created by the alert provisioner on first start.
-      alerting.rules.path = "${inputs.grafana-config}/alerting/rules.yaml";
     };
 
   };
