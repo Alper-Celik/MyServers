@@ -189,16 +189,15 @@
     "hindsight": {
       "flake": false,
       "locked": {
-        "lastModified": 1790674854,
-        "narHash": "sha256-yeIaj0apz9hRa7zK1M2jwd4GjUrGQO+pmdgeQGmN5NY=",
+        "lastModified": 1790760250,
+        "narHash": "sha256-L5HjVF64foSslizP6FPvEcnzorK4LY78YnuuP8rfEcA=",
         "owner": "vectorize-io",
         "repo": "hindsight",
-        "rev": "5fc4ce20917b916240cef27c212c387a177f115b",
+        "rev": "d56c4acdf59c41957613d399094cdf8c489b060c",
         "type": "github"
       },
       "original": {
         "owner": "vectorize-io",
-        "ref": "v0.10.2",
         "repo": "hindsight",
         "type": "github"
       }
