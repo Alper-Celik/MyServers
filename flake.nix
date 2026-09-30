@@ -9,6 +9,13 @@
       url = "github:nesquena/hermes-webui";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Hindsight's Hermes memory provider plugin + Python client, pinned to the
+    # release tag so flake.lock records the tag's rev and the client stays in
+    # lockstep with the server. Bump the tag and `nix flake update hindsight`.
+    hindsight = {
+      url = "github:vectorize-io/hindsight/v0.10.2";
+      flake = false;
+    };
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     nixos-raspberrypi = {
       url = "github:nvmd/nixos-raspberrypi/develop";

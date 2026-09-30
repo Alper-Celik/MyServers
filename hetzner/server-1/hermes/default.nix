@@ -12,6 +12,7 @@
     ./mcp-servers.nix
     ./web.nix
     ./webui.nix
+    ./hindsight.nix
   ];
 
   # Ports shared by the agent services (settings.nix) and their caddy vhosts
