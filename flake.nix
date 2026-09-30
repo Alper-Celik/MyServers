@@ -16,6 +16,15 @@
     };
     my-blog.url = "github:Alper-Celik/MyBlog";
 
+    # Grafana dashboards + alert rules, github.com/Alper-Celik/Grafana-Config.
+    # Pinned by rev while the Grafana-Config PR that adds alerting/rules.yaml is
+    # still open: drop `?rev=...`, keep the plain repo url and run
+    # `nix flake update grafana-config` once it has landed on main.
+    grafana-config = {
+      url = "github:Alper-Celik/Grafana-Config?rev=475c142e06c44d9f470de4c8c2918cf4cb86d296";
+      flake = false;
+    };
+
     riscv-tr.url = "github:riscv-turkiye/Infra";
 
     impermanence.url = "github:nix-community/impermanence";

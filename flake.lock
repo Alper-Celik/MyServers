@@ -142,6 +142,23 @@
         "type": "github"
       }
     },
+    "grafana-config": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1790758166,
+        "narHash": "sha256-ZFPyB54FOP4MI70wUM/JBeXsvyURhG7XKDM16/WenDs=",
+        "owner": "Alper-Celik",
+        "repo": "Grafana-Config",
+        "rev": "475c142e06c44d9f470de4c8c2918cf4cb86d296",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Alper-Celik",
+        "repo": "Grafana-Config",
+        "rev": "475c142e06c44d9f470de4c8c2918cf4cb86d296",
+        "type": "github"
+      }
+    },
     "hermes-agent": {
       "inputs": {
         "flake-parts": "flake-parts",
@@ -638,6 +655,7 @@
       "inputs": {
         "MyServersSecrets": "MyServersSecrets",
         "disko": "disko",
+        "grafana-config": "grafana-config",
         "hermes-agent": "hermes-agent",
         "hermes-webui": "hermes-webui",
         "impermanence": "impermanence",
