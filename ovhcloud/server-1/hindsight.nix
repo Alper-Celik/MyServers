@@ -56,6 +56,25 @@ in
       HINDSIGHT_API_LLM_PROVIDER = "openrouter";
       # open weights, MIT (HF deepseek-ai/DeepSeek-V4.1-Flash); unset → qwen/qwen3.5-9b
       HINDSIGHT_API_LLM_MODEL = "deepseek/deepseek-v4.1-flash";
+      # This slug is a thinking model: OpenRouter's metadata carries
+      # reasoning.default_enabled=true / default_effort=high, and the trace rows
+      # show thoughts as the bulk of what it generates. Pin the effort per lane —
+      # retain (fact extraction) and consolidation are structured, mechanical
+      # passes; reflect keeps the default because that lane synthesizes answers.
+      # The slug accepts max|high|low only (no minimal/medium/none), and
+      # Hindsight passes the value through as `reasoning_effort` because its
+      # DeepSeek name heuristic only flags v4-pro/reasoner/r1/thinking.
+      HINDSIGHT_API_RETAIN_LLM_REASONING_EFFORT = "low";
+      HINDSIGHT_API_CONSOLIDATION_LLM_REASONING_EFFORT = "low";
+      # Output budget per call. Unset means the provider's implicit cap (131072
+      # for this slug), and OpenRouter reserves max_tokens x completion price
+      # against the balance for every in-flight call — a burst of consolidation
+      # calls each reserving ~$0.065 is what turns a thin balance into HTTP 402
+      # ("you requested up to 131072 tokens, but can only afford 15301").
+      # 16384 is ~1.5x the largest call seen on the live bank (11.3k
+      # output+thinking) and stays above RETAIN_CHUNK_SIZE (3000).
+      HINDSIGHT_API_RETAIN_MAX_COMPLETION_TOKENS = "16384";
+      HINDSIGHT_API_CONSOLIDATION_MAX_COMPLETION_TOKENS = "16384";
       HINDSIGHT_API_EMBEDDINGS_PROVIDER = "openrouter";
       # open weights, Apache-2.0 (HF Qwen/Qwen3-Embedding-8B); unset → perplexity/pplx-embed-v1-0.6b
       HINDSIGHT_API_EMBEDDINGS_OPENROUTER_MODEL = "qwen/qwen3-embedding-8b";
