@@ -172,6 +172,9 @@ groups:
     noDataState: OK
     title: Scrape target down
     uid: fleet-scrape-target-down
+  # macbook-m1-alper (Alper's laptop) pushes the same `integrations/unix` job and
+  # sleeps, so it is excluded by name — a server allowlist here would silently miss
+  # the next server that starts pushing.
   - annotations:
       description: 'up{job="integrations/unix"} had samples 20m ago and has none now:
         the host is down or its node_exporter/alloy died.'
@@ -181,7 +184,8 @@ groups:
     - datasourceUid: mimir
       model:
         editorMode: code
-        expr: up{job="integrations/unix"} offset 20m unless up{job="integrations/unix"}
+        expr: up{job="integrations/unix", host!="macbook-m1-alper"} offset 20m unless
+          up{job="integrations/unix", host!="macbook-m1-alper"}
         instant: true
         intervalMs: 1000
         maxDataPoints: 43200
