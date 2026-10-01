@@ -56,6 +56,8 @@ in
       HINDSIGHT_API_LLM_PROVIDER = "openrouter";
       # open weights, MIT (HF deepseek-ai/DeepSeek-V4.1-Flash); unset → qwen/qwen3.5-9b
       HINDSIGHT_API_LLM_MODEL = "deepseek/deepseek-v4.1-flash";
+      HINDSIGHT_API_RETAIN_LLM_REASONING_EFFORT = "low";
+      HINDSIGHT_API_CONSOLIDATION_LLM_REASONING_EFFORT = "low";
       HINDSIGHT_API_EMBEDDINGS_PROVIDER = "openrouter";
       # open weights, Apache-2.0 (HF Qwen/Qwen3-Embedding-8B); unset → perplexity/pplx-embed-v1-0.6b
       HINDSIGHT_API_EMBEDDINGS_OPENROUTER_MODEL = "qwen/qwen3-embedding-8b";

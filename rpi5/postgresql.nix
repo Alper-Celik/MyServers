@@ -2,6 +2,7 @@
   config,
   pkgs,
   lib,
+  pkgs-stable,
   ...
 }:
 {
@@ -16,6 +17,7 @@
 
   services.pgadmin = {
     enable = true;
+    package = pkgs-stable.pgadmin4;
     initialEmail = "alper@alper-celik.dev";
     initialPasswordFile = config.sops.secrets.pgadmin-pass.path;
   };
