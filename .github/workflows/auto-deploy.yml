@@ -19,7 +19,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  updateDns-build-deploy:
+  # Everything that only has to happen once: the DNS update, one evaluation and
+  # one build of every host's system closure, and the deploy table that build
+  # produced. The deploy jobs below read that table from the artifact instead of
+  # evaluating the flake again, so a push costs exactly one evaluation.
+  build:
+    name: build
     runs-on: ubuntu-24.04-arm
     steps:
       # - name: Free Disk Space (Ubuntu)
@@ -56,7 +61,7 @@ jobs:
       #     # if there's no cache hit, restore a cache by this prefix
       #     restore-prefixes-first-match: nix-${{ runner.os }}-
       #     # collect garbage until the Nix store size (in bytes) is at most this number
-      #     # before trying to save a new cache
+      #     # before trying to save a cache
       #     # 1G = 1073741824
       #     gc-max-store-size-linux: 5G
       #     # do purge caches
@@ -100,6 +105,9 @@ jobs:
           nixbuild_token: ${{ secrets.nixbuild_token }}
           generate_summary_for: "job"
 
+      # The check's output is the deploy manifest, so its store path is kept:
+      # the deploy jobs switch the closures this build produced instead of
+      # evaluating the flake (and every NixOS configuration) a second time.
       - name: build/check
         run: |
           nix build .#checks.aarch64-linux.deploy-toplevels -L  \
@@ -108,12 +116,92 @@ jobs:
           --max-jobs 2 \
           --eval-store auto \
           --store ssh-ng://eu.nixbuild.net \
+          --no-link \
+          --print-out-paths > manifest-store-path
+          cat manifest-store-path
 
-          # deploy.py's shebang runs `nix shell .#deploy-env` on the runner. That
-          # buildEnv exists in no binary cache, so with max-jobs = 0 nix would hand
-          # the build to the `nixbuild` builder over ssh and fail. Build it on
-          # nixbuild.net here and copy it into the runner's store instead.
-          nix build .#deploy-env --no-link -L \
+      - name: read the deploy manifest off the build
+        run: |
+          manifest=$(cat manifest-store-path)
+          # `store cat`, not a copy: the JSON names the system closures, so the
+          # store records them as this file's references and `nix copy` would
+          # follow them and pull every closure back to the runner.
+          nix --extra-experimental-features "nix-command flakes" \
+            --store ssh-ng://eu.nixbuild.net store cat "$manifest" > deploy-manifest.json
+          cat deploy-manifest.json
+
+      - name: upload the deploy manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-manifest
+          path: deploy-manifest.json
+          retention-days: 1
+
+  # One job per host, all in parallel: every host is copied to and switched on
+  # its own, so rpi5 dragging its closure over a home link no longer holds back
+  # the servers' activation (deploy.py fuses copy and activate per host), and a
+  # host that fails no longer hides the others' result (fail-fast: false).
+  deploy:
+    name: deploy ${{ matrix.node }}
+    needs: build
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        node: [ovhcloud-server-1, hetzner-server-1, rpi5]
+    steps:
+      - name: Tailscale
+        id: tailscale
+        uses: tailscale/github-action@v4
+        background: true
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - uses: cachix/install-nix-action@v31.10.5
+        with:
+          extra_nix_config: |
+            keep-env-derivations = true
+            keep-outputs = true
+            experimental-features = nix-command flakes
+            accept-flake-config = true
+
+      - wait: tailscale
+
+      - name: install ssh key
+        run: |
+          install -m 600 -D /dev/null ~/.ssh/id_rsa
+          echo  "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          # Best-effort host key scan: a host being down must not fail the job.
+          : > ~/.ssh/known_hosts
+          for host in \
+            rpi5.tailnet.alper-celik.dev \
+            hetzner-server-1.devices.alper-celik.dev \
+            api.projectread.ing \
+            eu.nixbuild.net; do
+            ssh-keyscan -T 10 "$host" >> ~/.ssh/known_hosts 2>/dev/null \
+              || echo "warning: could not scan $host" >&2
+          done
+        env:
+          SSH_PRIVATE_KEY: ${{secrets.SSH_PRIVATE_KEY}}
+
+      - uses: nixbuild/nixbuild-action@v27
+        with:
+          nixbuild_token: ${{ secrets.nixbuild_token }}
+          generate_summary_for: "job"
+
+      # deploy.py's shebang runs `nix shell .#deploy-env` on the runner. That
+      # buildEnv exists in no binary cache, so with max-jobs = 0 nix would hand
+      # the build to the `nixbuild` builder over ssh and fail. Build it on
+      # nixbuild.net here and copy it into the runner's store instead; the build
+      # job already built it, so this is a cache hit.
+      - name: deploy-env
+        run: |
+          nix build .#deploy-env --no-link -L  \
           --print-build-logs \
           --builders "" \
           --max-jobs 2 \
@@ -122,5 +210,9 @@ jobs:
           nix copy --from ssh-ng://eu.nixbuild.net --no-check-sigs \
           "$(nix eval --raw .#deploy-env.outPath)"
 
-      - name: deploy
-        run: ./deploy.py deploy-ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: deploy-manifest
+
+      - name: deploy ${{ matrix.node }}
+        run: ./deploy.py deploy-ci ${{ matrix.node }} --manifest deploy-manifest.json
