@@ -54,10 +54,18 @@ in
               # mode 0640 so the alloy user (member of the caddy group) can read it.
               # caddy's native log already carries request headers, sizes, duration
               # and tls details, log_append adds the proxy timings it does not.
+              # the filter wrapper deletes the credential headers: the log is
+              # shipped to loki, which is not where tokens belong.
               (lib.mkIf config.x-enable-http-logs (
                 lib.mkAfter ''
                   log {
-                    format json
+                    format filter {
+                      wrap json
+                      fields {
+                        request>headers>Authorization delete
+                        request>headers>Cookie delete
+                      }
+                    }
                     output file ${args.config.services.caddy.logDir}/access-${
                       lib.replaceStrings [ "/" " " ] [ "_" "_" ] config.hostName
                     }.log {
