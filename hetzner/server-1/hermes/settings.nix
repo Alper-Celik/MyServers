@@ -288,7 +288,7 @@ in
     # runtime edits to it are overwritten on deploy).
     workingDirectory = "/var/lib/hermes/workspace";
     documents."AGENTS.md" = ''
-      # Agent identity & GitHub policy
+      # Agent identity, GitHub & memory policy
 
       - You are an automated system and must stay clearly distinguishable from
         Alper: commits use the agent@alper-celik.dev identity, and API actions
@@ -311,6 +311,19 @@ in
         Branch from freshly fetched `origin/main`, not from whatever branch the
         shared checkout happens to have checked out. Remove the worktree once
         its PR has merged.
+
+      # Hindsight long-term memory — the account's paid, ingested store
+
+      - Hindsight is the PRIMARY memory and is consulted before anything else
+        that might already be known: any question touching past sessions,
+        decisions, preferences, people, projects, or why something is set up
+        the way it is goes through `hindsight_recall` first — not a guess, not
+        a question back to Alper, not the current session alone. Use
+        `hindsight_reflect` when the answer needs synthesis across sessions.
+      - `session_search` is the fallback for verbatim transcripts and exact
+        wording, never the first stop.
+      - Retain durable facts as they surface with `hindsight_retain` — the
+        store is only as good as what goes into it.
     '';
 
     backend = {
