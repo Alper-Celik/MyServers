@@ -6,7 +6,7 @@ actual-budget.lab:
 beta.ym-pdf:
   ttl: 300
   type: CNAME
-  value: rpi5.tailnet.alper-celik.dev.
+  value: ovhcloud-server-1.devices.alper-celik.dev
 bitwarden.lab:
   ttl: 300
   type: CNAME
