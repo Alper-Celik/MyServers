@@ -1,4 +1,9 @@
-{ pkgs, config, ... }:
+{
+  pkgs,
+  pkgs-stable,
+  config,
+  ...
+}:
 {
 
   environment.systemPackages = with pkgs; [
@@ -153,6 +158,9 @@
 
   services.collabora-online = {
     enable = true;
+    # unstable's libreoffice fails to compile with gcc16 until nixpkgs PR #568399;
+    # stable's pair is prebuilt, so take both from the stable input.
+    package = pkgs-stable.collabora-online;
     settings = {
       # ssl.termination = true;
       # ssl.enable = false;
