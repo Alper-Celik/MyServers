@@ -20,6 +20,16 @@ Activation installs the copied closure as the system profile and runs
 switch-to-configuration on the host — the same thing nixos-rebuild does
 remotely — so no deploy-rs (and no per-host flake evaluation) is involved.
 
+Copy and activation are one pipeline, one worker per host: a host is switched
+as soon as its own closure has arrived, so the fleet's slowest link (rpi5
+pulls its closure over a home connection) no longer holds back the activation
+of the hosts that were ready minutes earlier.
+
+`--manifest PATH` takes the deploy table from a file — or from a store path the
+build step printed, read with `nix store cat` — instead of evaluating the
+flake. CI passes the table of the build it just ran, so the whole pipeline
+evaluates the flake exactly once.
+
 Extra arguments are only forwarded to the build step.
 
 Closures are pulled from the remote store either by the host itself (using
@@ -450,15 +460,23 @@ def mint_token() -> str | None:
     return None
 
 
+def ensure_pull_token() -> None:
+    """Equip every host-side pull in this run with a store:read token: the one
+    the caller supplied as NIXBUILDNET_TOKEN, else one minted from the local
+    SSH key. Without a token the copies fall back to copying through this
+    runner."""
+    if "NIXBUILDNET_TOKEN" not in os.environ and NB_HOST != REMOTE_STORE:
+        token = mint_token()
+        if token:
+            os.environ["NIXBUILDNET_TOKEN"] = token
+
+
 def copy_nodes(meta: dict, deploy_nodes: list[str]) -> set[str]:
     """Get each closure onto the host, in parallel. Preferred path: the host
     pulls straight from the remote store (using NIXBUILDNET_TOKEN, or one
     minted from the local SSH key). Fallback: copy through this runner.
     Returns the set of successfully prepared nodes."""
-    if "NIXBUILDNET_TOKEN" not in os.environ and NB_HOST != REMOTE_STORE:
-        token = mint_token()
-        if token:
-            os.environ["NIXBUILDNET_TOKEN"] = token
+    ensure_pull_token()
 
     push_failed: set[str] = set()
     with ThreadPoolExecutor(max_workers=len(deploy_nodes)) as ex:
@@ -513,6 +531,71 @@ def deploy_node(node: str, meta: dict, action: str) -> bool:
     )
 
 
+def deploy_prepared_node(node: str, meta: dict, action: str) -> bool:
+    """Copy this node's closure and activate it the moment that copy is done,
+    so the wait for one host is the wait for that host's own closure and not
+    for the fleet's slowest pull."""
+    tag = f"{node:<18}"
+    host, ssh_user, closure = meta[node]
+    if not prepare_node(node, meta):
+        warn(f"WARNING: failed to prepare {node} on {ssh_user}@{host}, skipping")
+        return False
+    say(tag, f"==> {node}: {closure} is on {ssh_user}@{host}, activating ({action})", err=True)
+    if not deploy_node(node, meta, action):
+        warn(f"WARNING: activation ({action}) failed on {node}; other nodes were still activated")
+        return False
+    return True
+
+
+def copy_and_activate(meta: dict, deploy_nodes: list[str], action: str) -> int:
+    """Copy each closure to its host and activate it, one worker per host: every
+    host proceeds through copy -> switch independently, so the hosts whose
+    closures are already there are switched without waiting for the slowest
+    copy in the fleet. A node that fails is reported and skipped; the others
+    are unaffected. Returns 0 only if every node was activated."""
+    ensure_pull_token()
+
+    failed: list[str] = []
+    with ThreadPoolExecutor(max_workers=len(deploy_nodes)) as ex:
+        for node, ok in zip(
+            deploy_nodes,
+            ex.map(lambda n: deploy_prepared_node(n, meta, action), deploy_nodes),
+        ):
+            if not ok:
+                failed.append(node)
+
+    if failed:
+        warn(f"ERROR: activation ({action}) failed on: {' '.join(failed)}")
+        return 1
+    return 0
+
+
+def read_manifest(spec: str) -> dict | None:
+    """Read a deploy table (node -> hostname/sshUser/closure) from a file, or
+    from a store path the build step printed — the latter straight out of the
+    remote store, since copying it would pull the closures it names."""
+    if os.path.exists(spec):
+        try:
+            return json.loads(Path(spec).read_text())
+        except (OSError, json.JSONDecodeError) as e:
+            warn(f"ERROR: could not read the deploy manifest {spec}: {e}")
+            return None
+    p = subprocess.run(
+        ["nix", *NIX_ARGS, "--store", REMOTE_STORE, "store", "cat", spec],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    if p.returncode != 0:
+        warn(f"ERROR: could not read the deploy manifest from the remote store: {p.stderr.strip()}")
+        return None
+    try:
+        return json.loads(p.stdout)
+    except json.JSONDecodeError:
+        warn("ERROR: could not decode the deploy manifest")
+        return None
+
+
 def build_nodes(extra: list[str]) -> dict | None:
     """Build every deploy node's closure on the remote store — the same check
     the workflow's build/check job builds — and return the deploy table that
@@ -557,65 +640,24 @@ def build_nodes(extra: list[str]) -> dict | None:
     except (json.JSONDecodeError, IndexError, KeyError, TypeError):
         warn("ERROR: could not read the build result")
         return None
-    # Read the manifest straight out of the remote store. Copying it would pull
-    # its closure: the JSON names the closures, so the store records them as
-    # this file's references, and `nix copy` follows references (the whole
-    # system closures would come back to this runner).
-    p = subprocess.run(
-        ["nix", *NIX_ARGS, "--store", REMOTE_STORE, "store", "cat", manifest],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-    )
-    if p.returncode != 0:
-        warn(f"ERROR: could not read the deploy manifest from the remote store: {p.stderr.strip()}")
-        return None
-    try:
-        return json.loads(p.stdout)
-    except json.JSONDecodeError:
-        warn("ERROR: could not decode the deploy manifest")
-        return None
+    return read_manifest(manifest)
 
 
-def cmd_build(extra: list[str], hosts: list[str]) -> int:
+def cmd_build(extra: list[str], hosts: list[str], nodes: dict | None) -> int:
     """Same build step as the workflow's build/check job: build the deploy
     checks on the remote store (nixbuild.net), leaving the closures there for
-    the hosts to pull. Builds every node; host selection does not apply."""
+    the hosts to pull. Builds every node; host selection does not apply, and
+    neither does a manifest — the build is what produces the table."""
     return 0 if build_nodes(extra) is not None else 1
 
 
-def cmd_resolve(extra: list[str], hosts: list[str]) -> int:
-    if resolve_hosts(hosts) is None:
+def cmd_resolve(extra: list[str], hosts: list[str], nodes: dict | None) -> int:
+    if resolve_hosts(hosts, nodes) is None:
         return 1
     return 0
 
 
-def cmd_copy(extra: list[str], hosts: list[str]) -> int:
-    resolved = resolve_hosts(hosts)
-    if resolved is None:
-        return 1
-    meta, deploy_nodes = resolved
-    prepared = copy_nodes(meta, deploy_nodes)
-    if not prepared:
-        warn("ERROR: no hosts were successfully prepared")
-        return 1
-    return 0
-
-
-def cmd_activate(extra: list[str], hosts: list[str]) -> int:
-    resolved = resolve_hosts(hosts)
-    if resolved is None:
-        return 1
-    meta, deploy_nodes = resolved
-    return activate_nodes(meta, deploy_nodes, extra, "switch")
-
-
-def cmd_activate_selected(
-    extra: list[str], hosts: list[str], action: str, nodes: dict | None = None
-) -> int:
-    """Resolve, copy each closure to its host, then activate with `action`.
-    Shared by deploy/deploy-ci/boot/reboot; `nodes` is the deploy table when
-    the caller already built (see build_nodes)."""
+def cmd_copy(extra: list[str], hosts: list[str], nodes: dict | None) -> int:
     resolved = resolve_hosts(hosts, nodes)
     if resolved is None:
         return 1
@@ -624,29 +666,56 @@ def cmd_activate_selected(
     if not prepared:
         warn("ERROR: no hosts were successfully prepared")
         return 1
-    return activate_nodes(meta, [n for n in deploy_nodes if n in prepared], extra, action)
+    return 0
 
 
-def cmd_deploy_ci(extra: list[str], hosts: list[str]) -> int:
-    return cmd_activate_selected(extra, hosts, "switch")
+def cmd_activate(extra: list[str], hosts: list[str], nodes: dict | None) -> int:
+    resolved = resolve_hosts(hosts, nodes)
+    if resolved is None:
+        return 1
+    meta, deploy_nodes = resolved
+    return activate_nodes(meta, deploy_nodes, extra, "switch")
 
 
-def cmd_boot(extra: list[str], hosts: list[str]) -> int:
-    return cmd_activate_selected(extra, hosts, "boot")
+def cmd_activate_selected(
+    extra: list[str], hosts: list[str], nodes: dict | None, action: str
+) -> int:
+    """Copy each closure to its host and activate it with `action` as soon as
+    that host's copy is done (see copy_and_activate). Shared by
+    deploy/deploy-ci/boot/reboot; `nodes` is the deploy table when the caller
+    already has it (a build, or --manifest), and is evaluated from the flake
+    when it is absent."""
+    if extra:
+        warn(f"WARNING: ignoring extra arguments with direct activation: {' '.join(extra)}")
+    resolved = resolve_hosts(hosts, nodes)
+    if resolved is None:
+        return 1
+    meta, deploy_nodes = resolved
+    return copy_and_activate(meta, deploy_nodes, action)
 
 
-def cmd_reboot(extra: list[str], hosts: list[str]) -> int:
-    return cmd_activate_selected(extra, hosts, "reboot")
+def cmd_deploy_ci(extra: list[str], hosts: list[str], nodes: dict | None) -> int:
+    return cmd_activate_selected(extra, hosts, nodes, "switch")
 
 
-def cmd_deploy(extra: list[str], hosts: list[str]) -> int:
+def cmd_boot(extra: list[str], hosts: list[str], nodes: dict | None) -> int:
+    return cmd_activate_selected(extra, hosts, nodes, "boot")
+
+
+def cmd_reboot(extra: list[str], hosts: list[str], nodes: dict | None) -> int:
+    return cmd_activate_selected(extra, hosts, nodes, "reboot")
+
+
+def cmd_deploy(extra: list[str], hosts: list[str], nodes: dict | None) -> int:
     """Build on the remote store, then deploy what that build produced: the
     build reports every node's host and closure, so the deploy phase neither
-    evaluates the flake again nor re-derives the closures."""
-    nodes = build_nodes(extra)
+    evaluates the flake again nor re-derives the closures. Build flags go to
+    the build; the activation takes none."""
+    if nodes is None:
+        nodes = build_nodes(extra)
     if nodes is None:
         return 1
-    return cmd_activate_selected(extra, hosts, "switch", nodes)
+    return cmd_activate_selected([], hosts, nodes, "switch")
 
 
 COMMANDS = {
@@ -676,9 +745,20 @@ def main() -> int:
                 metavar="HOST",
                 help=f"limit to these nodes (default: all of {', '.join(NODES)})",
             )
+            sp.add_argument(
+                "--manifest",
+                metavar="PATH",
+                help="deploy table to use instead of evaluating the flake: a file, or a "
+                "store path the build step printed (read with `nix store cat`)",
+            )
     ns, extra = parser.parse_known_args()
     hosts = getattr(ns, "hosts", [])
-    return COMMANDS[ns.command][1](extra, hosts)
+    nodes = None
+    if spec := getattr(ns, "manifest", None):
+        nodes = read_manifest(spec)
+        if nodes is None:
+            return 1
+    return COMMANDS[ns.command][1](extra, hosts, nodes)
 
 
 if __name__ == "__main__":
