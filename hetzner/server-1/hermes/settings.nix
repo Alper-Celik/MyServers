@@ -101,11 +101,11 @@ in
       model = {
         provider = "opencode-go";
         base_url = "https://opencode.ai/zen/go/v1";
-        default = "deepseek-v4.1-flash";
+        default = "glm-5.3-flash";
         context_length = 0;
         aliases = {
           flag = "opencode-go/kimi-k3";
-          flash = "opencode-go/deepseek-v4.1-flash";
+          flash = "opencode-go/glm-5.3-flash";
         };
       };
       # Background offload: the highest-volume aux slots (context compression,
@@ -118,15 +118,15 @@ in
       auxiliary = {
         compression = {
           provider = "opencode-go";
-          model = "deepseek-v4.1-flash";
+          model = "glm-5.3-flash";
         };
         title_generation = {
           provider = "opencode-go";
-          model = "deepseek-v4.1-flash";
+          model = "glm-5.3-flash";
         };
         curator = {
           provider = "opencode-go";
-          model = "deepseek-v4.1-flash";
+          model = "glm-5.3-flash";
         };
       };
       # Error fallback chain (fires on rate limits, 5xx, connection errors —
