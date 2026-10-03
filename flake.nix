@@ -40,6 +40,11 @@
       flake = false;
     };
 
+    fava-envelope-airmail-src = {
+      url = "github:stenius/fava-envelope-airmail/1dcc036ab637e5124083048057fc5e8d52463604";
+      flake = false;
+    };
+
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -128,6 +133,7 @@
             system = "aarch64-linux";
             specialArgs = {
               pkgs-unstable = (pkgs-unstable system);
+              self-pkgs = self.packages.${system};
               inherit
                 inputs
                 trusted-ssh-keys
@@ -280,6 +286,22 @@
 
           octodns-ddns = pkgs.python3Packages.callPackage ./pkgs/octodns-ddns.nix {
             src = inputs.octodns-ddns-src;
+          };
+
+          # Fava plus every extension the ledger may load, in one interpreter:
+          # a `fava-extension` directive is imported by name, so the plugin has
+          # to be in fava's own environment rather than merely installed. The
+          # envelope plugin is not in nixpkgs, hence the local derivation.
+          fava-env = pkgs.python3.withPackages (ps: [
+            ps.fava
+            ps.fava-dashboards
+            ps.fava-investor
+            ps.fava-portfolio-returns
+            self-pkgs.fava-envelope-airmail
+          ]);
+
+          fava-envelope-airmail = pkgs.python3Packages.callPackage ./pkgs/fava-envelope-airmail.nix {
+            src = inputs.fava-envelope-airmail-src;
           };
 
           # ai generated start

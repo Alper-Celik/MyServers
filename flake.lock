@@ -72,6 +72,23 @@
         "type": "github"
       }
     },
+    "fava-envelope-airmail-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1785243285,
+        "narHash": "sha256-7/FNzYuks7mT6Yjc7BxPFMl+mTLSOQVbLZTlT/YfMg0=",
+        "owner": "stenius",
+        "repo": "fava-envelope-airmail",
+        "rev": "1dcc036ab637e5124083048057fc5e8d52463604",
+        "type": "github"
+      },
+      "original": {
+        "owner": "stenius",
+        "repo": "fava-envelope-airmail",
+        "rev": "1dcc036ab637e5124083048057fc5e8d52463604",
+        "type": "github"
+      }
+    },
     "flake-compat": {
       "locked": {
         "lastModified": 1767039857,
@@ -654,6 +671,7 @@
       "inputs": {
         "MyServersSecrets": "MyServersSecrets",
         "disko": "disko",
+        "fava-envelope-airmail-src": "fava-envelope-airmail-src",
         "hermes-agent": "hermes-agent",
         "hermes-webui": "hermes-webui",
         "hindsight": "hindsight",
