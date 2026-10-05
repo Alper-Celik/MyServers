@@ -90,56 +90,12 @@ in
       # instruction files is the PR route: agent edits land as reviewed
       # Alper-Celik/* pull requests, never as direct workspace writes.
       security.protected_instruction_files = false;
-      # Main model: OpenCode Go subscription ($10/month) as the primary route,
-      # served at opencode.ai/zen/go/v1 — Kimi/GLM/DeepSeek speak OpenAI
-      # chat-completions there, MiniMax/Qwen the Anthropic-style surface;
-      # api_mode is per model and the base stays at /v1. Credential:
-      # OPENCODE_GO_API_KEY (sops, see secrets.nix).
-      # context_length = 0 = auto-detect from the Go catalog; the previous
-      # hard 900000 was the OpenRouter preset's window and is wrong for the
-      # Go models, delaying compaction past the model's real limit.
       model = {
-        provider = "opencode-go";
-        base_url = "https://opencode.ai/zen/go/v1";
-        default = "glm-5.3-flash";
-        context_length = 0;
-        aliases = {
-          flag = "opencode-go/kimi-k3";
-          flash = "opencode-go/glm-5.3-flash";
-        };
+        context_length = 900000;
+        provider = "openrouter";
+        default = "@preset/hermes-agent";
+        base_url = "https://openrouter.ai/api/v1";
       };
-      # Background offload: the highest-volume aux slots (context compression,
-      # session titles, memory curation) are PINNED to DeepSeek V4.1 Flash —
-      # the pins keep background calls on the cheap tier even after a
-      # `/model flag` switch to kimi-k3, which unlisted slots would silently
-      # follow and burn flagship quota on. Go's quota is usage-value based
-      # (~$12/5h rolling, $30 weekly, $60 monthly). Slots left unlisted
-      # (vision, approval, ...) follow the main model automatically.
-      auxiliary = {
-        compression = {
-          provider = "opencode-go";
-          model = "glm-5.3-flash";
-        };
-        title_generation = {
-          provider = "opencode-go";
-          model = "glm-5.3-flash";
-        };
-        curator = {
-          provider = "opencode-go";
-          model = "glm-5.3-flash";
-        };
-      };
-      # Error fallback chain (fires on rate limits, 5xx, connection errors —
-      # Go's quota caps included): back to the OpenRouter preset that was the
-      # primary before. OPENROUTER_API_KEY stays in sops regardless — the
-      # STT/TTS scripts above still route through OpenRouter.
-      fallback_providers = [
-        {
-          provider = "openrouter";
-          model = "@preset/hermes-agent";
-          base_url = "https://openrouter.ai/api/v1";
-        }
-      ];
       api_server = {
         enabled = true;
         port = hermesPorts.api;
