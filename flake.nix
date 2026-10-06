@@ -44,6 +44,11 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    crow-ci = {
+      url = "git+https://codefloe.com/crowci/crowci-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
