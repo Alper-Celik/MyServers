@@ -2,4 +2,48 @@ import.file "generic" {
 	filename = file.path_join(module_path, "generic.alloy")
 }
 
-generic.base "default" { }
+otelcol.exporter.otlphttp "tempo" {
+	client {
+		endpoint = "http://127.0.0.1:14318"
+	}
+}
+
+// Public OTLP ingest for OpenRouter's trace broadcast: caddy terminates TLS on
+// otel.alper-celik.dev and proxies /v1/traces here; the bearer token comes from
+// the alloy EnvironmentFile (sops, see grafana-alloy.nix). The spanmetrics
+// connector sends per-span counters and latency histograms to mimir, and the
+// traces go to the local Tempo. OpenRouter includes prompt/completion content
+// on the spans unless Privacy Mode is on for the broadcast destination.
+otelcol.receiver.otlp "ingest" {
+	http {
+		endpoint = "127.0.0.1:4320"
+		auth     = otelcol.auth.bearer.ingest.handler
+	}
+
+	output {
+		traces = [
+			otelcol.connector.spanmetrics.ingest.input,
+			otelcol.exporter.otlphttp.tempo.input,
+		]
+	}
+}
+
+otelcol.auth.bearer "ingest" {
+	token = sys.env("OTEL_INGEST_TOKEN")
+}
+
+otelcol.connector.spanmetrics "ingest" {
+	histogram {
+		explicit {
+			buckets = ["100ms", "1s", "5s", "30s"]
+		}
+	}
+
+	output {
+		metrics = [generic.base.default.mimir_receiver]
+	}
+}
+
+generic.base "default" {
+	forward_to_traces = [otelcol.exporter.otlphttp.tempo.input]
+}

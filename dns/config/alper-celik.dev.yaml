@@ -85,6 +85,15 @@ mimir.lab:
 loki.lab:
   type: CNAME
   value: hetzner-server-1.tailnet.alper-celik.dev.
+tempo.lab:
+  type: CNAME
+  value: hetzner-server-1.tailnet.alper-celik.dev.
+tempo-otlp.lab:
+  type: CNAME
+  value: hetzner-server-1.tailnet.alper-celik.dev.
+pyroscope.lab:
+  type: CNAME
+  value: hetzner-server-1.tailnet.alper-celik.dev.
 
   # ovhcloud-server-1
 hindsight.lab:
@@ -105,6 +114,9 @@ blog:
   value: alper-celik.github.io.
 
   # "public" services:
+otel:
+  type: CNAME
+  value: hetzner-server-1.devices.alper-celik.dev.
 photos.lab:
   ttl: 300
   type: CNAME

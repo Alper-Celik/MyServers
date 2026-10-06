@@ -16,6 +16,12 @@ in
       GITLAB_RUNNER_AUTOCODE = { };
       MIMIR_S3_ENV_FILE = { };
       LOKI_S3_ENV_FILE = { };
+      TEMPO_S3_ENV_FILE = {
+        restartUnits = [ "tempo.service" ];
+      };
+      PYROSCOPE_S3_ENV_FILE = {
+        restartUnits = [ "pyroscope.service" ];
+      };
     };
   };
 }
