@@ -233,17 +233,17 @@ in
     environments = {
       # the flake's AWS provider submodule does not expose these flags
       CROW_PROVIDER = "aws";
-      CROW_AWS_INSTANCE_TYPE = "m5.8xlarge";
+      CROW_AWS_INSTANCE_TYPE = "m8i.8xlarge";
       CROW_AWS_USE_SPOT_INSTANCES = "true";
       CROW_AWS_SPOT_FALLBACK_ON_DEMAND = "true";
       CROW_MIN_AGENTS = "0";
       CROW_MAX_AGENTS = "2";
-      CROW_WORKFLOWS_PER_AGENT = "1";
+      CROW_WORKFLOWS_PER_AGENT = "4";
       CROW_POOL_ID = "1";
       # mandatory with any future second autoscaler: without it every
       # autoscaler counts all pending tasks and over-provisions
-      CROW_FILTER_LABELS = "pool=ec2";
-      CROW_AGENT_IDLE_TIMEOUT = "2m";
+      CROW_FILTER_LABELS = "pool=huge-amd64";
+      CROW_AGENT_IDLE_TIMEOUT = "5m";
       CROW_PROVIDER_USERDATA_FILE = "/etc/crow/userdata.yaml";
     };
     volumes = [ "${ec2UserData}:/etc/crow/userdata.yaml:ro" ];
@@ -287,8 +287,8 @@ in
     CROW_AGENT_SECRET = { };
     CROW_ADMIN_TOKEN = { };
     CROW_AUTOSCALER_TOKEN = { };
-    AWS_ACCESS_KEY_ID = { };
-    AWS_SECRET_ACCESS_KEY = { };
+    CROW_AWS_ACCESS_KEY_ID = { };
+    CROW_AWS_SECRET_ACCESS_KEY = { };
     CROW_AWS_REGION = { };
     CROW_AWS_AMI_ID = { };
     CROW_AWS_SUBNETS = { };
@@ -305,15 +305,15 @@ in
     // {
       "crow-aws-env" = {
         content = ''
-          AWS_ACCESS_KEY_ID=${config.sops.placeholder.AWS_ACCESS_KEY_ID}
-          AWS_SECRET_ACCESS_KEY=${config.sops.placeholder.AWS_SECRET_ACCESS_KEY}
+          AWS_ACCESS_KEY_ID=${config.sops.placeholder.CROW_AWS_ACCESS_KEY_ID}
+          AWS_SECRET_ACCESS_KEY=${config.sops.placeholder.CROW_AWS_SECRET_ACCESS_KEY}
           CROW_AWS_SUBNETS=${config.sops.placeholder.CROW_AWS_SUBNETS}
           CROW_AWS_SECURITY_GROUPS=${config.sops.placeholder.CROW_AWS_SECURITY_GROUPS}
           CROW_AWS_SSH_KEYNAME=${config.sops.placeholder.CROW_AWS_SSH_KEYNAME}
           CROW_AWS_SPOT_FALLBACK_ON_DEMAND=true
           CROW_POOL_ID=1
           CROW_FILTER_LABELS=pool=ec2
-          CROW_AGENT_IDLE_TIMEOUT=2m
+          CROW_AGENT_IDLE_TIMEOUT=5m
         '';
         owner = "root";
         restartUnits = [
