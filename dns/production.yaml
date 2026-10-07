@@ -8,6 +8,8 @@ processors:
       - /devices/
       - /tailnet/
       - cv-redirect
+      - crow-grpc
+      - crow
       - git
     class: octodns.processor.filter.NameAllowlistFilter
 
