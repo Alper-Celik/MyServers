@@ -20,6 +20,10 @@ import.file "access_logs" {
 // the generic stack lives inside a custom component that host configs
 // instantiate with `generic.base "default" { }`.
 declare "base" {
+	// Hosts forward their own trace destination (e.g. a local Tempo) here;
+	// empty by default, which drops received traces.
+	argument "forward_to_traces" { default = [ ] }
+
 	prometheus.remote_write "mimir" {
 		endpoint {
 			url = "https://mimir.lab.alper-celik.dev/api/v1/push"
@@ -55,10 +59,11 @@ declare "base" {
 	}
 
 	otel.otelcol_stack "otelcol" {
-		arch             = constants.arch
-		host             = constants.hostname
-		forward_to_loki  = [loki.write.loki.receiver]
-		forward_to_mimir = [prometheus.remote_write.mimir.receiver]
+		arch              = constants.arch
+		host              = constants.hostname
+		forward_to_loki   = [loki.write.loki.receiver]
+		forward_to_mimir  = [prometheus.remote_write.mimir.receiver]
+		forward_to_traces = argument.forward_to_traces.value
 	}
 
 	// Host configs forward their own extra scrapes here.

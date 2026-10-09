@@ -2,4 +2,12 @@ import.file "generic" {
 	filename = file.path_join(module_path, "generic.alloy")
 }
 
-generic.base "default" { }
+otelcol.exporter.otlphttp "tempo" {
+	client {
+		endpoint = "https://tempo-otlp.lab.alper-celik.dev"
+	}
+}
+
+generic.base "default" {
+	forward_to_traces = [otelcol.exporter.otlphttp.tempo.input]
+}

@@ -7,6 +7,10 @@ declare "otelcol_stack" {
 
 	argument "forward_to_mimir" { }
 
+	// Where received traces are forwarded. Empty by default, which silently
+	// drops them — hosts without a Tempo backend simply omit the argument.
+	argument "forward_to_traces" { default = [ ] }
+
 	otelcol.receiver.otlp "otelcol" {
 		grpc {
 			endpoint = "localhost:4317"
@@ -27,7 +31,19 @@ declare "otelcol_stack" {
 		output {
 			metrics = [otelcol.exporter.prometheus.default.input]
 			logs    = [otelcol.exporter.loki.default.input]
-			//traces  = [otelcol.exporter.otlp.default.input]
+			traces  = [otelcol.processor.attributes.otelcol_traces_label.input]
+		}
+	}
+
+	otelcol.processor.attributes "otelcol_traces_label" {
+		action {
+			key    = "host.name"
+			value  = argument.host.value
+			action = "upsert"
+		}
+
+		output {
+			traces = argument.forward_to_traces.value
 		}
 	}
 

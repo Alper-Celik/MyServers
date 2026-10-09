@@ -11,6 +11,7 @@ processors:
       - crow-grpc
       - crow
       - git
+      - otel
     class: octodns.processor.filter.NameAllowlistFilter
 
 providers:
