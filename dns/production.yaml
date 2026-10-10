@@ -10,6 +10,7 @@ processors:
       - cv-redirect
       - crow-grpc
       - crow
+      - ci
       - git
     class: octodns.processor.filter.NameAllowlistFilter
 

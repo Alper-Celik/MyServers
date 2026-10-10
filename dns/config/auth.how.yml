@@ -1,0 +1,7 @@
+# hetzner-server-1
+git:
+  type: CNAME
+  value: hetzner-server-1.devices.alper-celik.dev.
+ci:
+  type: CNAME
+  value: hetzner-server-1.tailnet.alper-celik.dev.

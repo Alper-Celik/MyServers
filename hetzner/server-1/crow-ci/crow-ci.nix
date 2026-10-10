@@ -4,20 +4,14 @@
   config,
   inputs,
   ...
-}@args:
+}:
 let
   crowGrpcHost = "crow-grpc.alper-celik.dev";
-  crowUiHost = "crow.alper-celik.dev";
+  crowUiHost = "ci.auth.how";
 
   # server + local agent images follow the flake's default-version; the EC2
   # agent image derives from it so all three move together on flake bumps
   crowAgentImage = "codefloe.com/crowci/crow-agent:${config.services.crowci.version}";
-
-  # Pipeline containers must run unprivileged: the agent mounts the rootless
-  # socket of a dedicated CI user instead of the host's rootful one.
-  ciUser = "crow-ci";
-  ciUid = 320;
-  rootlessSocket = "/run/user/${toString ciUid}/podman/podman.sock";
 
   # The podman env-secrets below REPLACE the placeholder env values the
   # crowci-flake renders (podman applies Secret= after --env), so real secret
@@ -59,10 +53,7 @@ let
     crow-agent-secret = {
       secret = "CROW_AGENT_SECRET";
       file = "crow-agent-secret";
-      units = [
-        "crow-server.service"
-        "crow-agent-local-0.service"
-      ];
+      units = [ "crow-server.service" ];
       target = "CROW_AGENT_SECRET";
     };
     crow-admin-token = {
@@ -95,40 +86,6 @@ in
   imports = [ inputs.crow-ci.nixosModules.default ];
 
   services.crowci = {
-    enable = true;
-
-    server = {
-      enable = true;
-      openFirewall = false;
-      # caddy fronts both ports on loopback; the pod network reaches the
-      # server pod-internally
-      http.listen = "127.0.0.1";
-      grpc.listen = "127.0.0.1";
-      url = "https://${crowUiHost}";
-      agentSecret = placeholder;
-      # forge + OAuth app are added via the server UI instead
-      settings = {
-        CROW_ADMIN = "Alper-Celik";
-      };
-    };
-
-    agents = [
-      {
-        hostnamePrefix = "local";
-        replicas = 1;
-        labels = {
-          pool = "local";
-          platform = "linux/arm64";
-        };
-        agentSecret = placeholder;
-        podmanSocket = rootlessSocket;
-        settings = {
-          CROW_BACKEND_PODMAN_HOST = "unix:///run/podman/podman.sock";
-          CROW_MAX_WORKFLOWS = "2";
-        };
-      }
-    ];
-
     autoscaler = {
       enable = true;
       # NOTE: the flake's typed `providers` option can't eval on nixpkgs 26.05
@@ -155,68 +112,9 @@ in
     };
   };
 
-  users.users.${ciUser} = {
-    isSystemUser = true;
-    uid = ciUid;
-    group = ciUser;
-    home = "/var/lib/${ciUser}";
-    createHome = true;
-    linger = true;
-    subUidRanges = [
-      {
-        startUid = 5242880;
-        count = 65536;
-      }
-    ];
-    subGidRanges = [
-      {
-        startGid = 5242880;
-        count = 65536;
-      }
-    ];
-  };
-  users.groups.${ciUser} = { };
-
-  # User-manager podman socket so the agent can drive rootless pipeline
-  # containers; linger keeps it up without a login session.
-  systemd.user.sockets.podman = {
-    description = "Podman API Socket for ${ciUser}";
-    wantedBy = [ "sockets.target" ];
-    socketConfig = {
-      ListenStream = "%t/podman/podman.sock";
-      SocketMode = "0660";
-      RuntimeDirectory = "podman";
-    };
-  };
-  systemd.user.services.podman = {
-    description = "Podman API Service for ${ciUser}";
-    requires = [ "podman.socket" ];
-    after = [ "podman.socket" ];
-    serviceConfig = {
-      Type = "notify";
-      NotifyAccess = "all";
-      ExecStart = "${pkgs.podman}/bin/podman system service --time=0";
-    };
-  };
-
-  # The user socket may come up slightly after boot; don't race it.
-  systemd.services."crow-agent-local-0".serviceConfig.ExecStartPre =
-    pkgs.writeShellScript "wait-crow-rootless-socket" ''
-      for i in $(seq 1 60); do
-        [ -S ${rootlessSocket} ] && exit 0
-        ${pkgs.coreutils}/bin/sleep 1
-      done
-      echo "rootless podman socket ${rootlessSocket} never appeared" >&2
-      exit 1
-    '';
-
-  virtualisation.quadlet.containers."crow-server".containerConfig.secrets = lib.mapAttrsToList (
-    _: v: "${v.file},type=env,target=${v.target}"
-  ) (lib.filterAttrs (_: v: lib.elem "crow-server.service" v.units) crowPodmanSecrets);
-
-  virtualisation.quadlet.containers."crow-agent-local-0".containerConfig.secrets =
+  virtualisation.quadlet.containers."crow-server".containerConfig.secrets =
     lib.mapAttrsToList (_: v: "${v.file},type=env,target=${v.target}")
-      (lib.filterAttrs (_: v: lib.elem "crow-agent-local-0.service" v.units) crowPodmanSecrets);
+      (lib.filterAttrs (_: v: lib.elem "crow-server.service" v.units) crowPodmanSecrets);
 
   # the flake only generates autoscaler containers per provider entry, and
   # its `providers` option can't eval on nixpkgs 26.05 (types.oneOf of
@@ -270,12 +168,6 @@ in
   # crow units need the podman secrets to exist before they start
   systemd.services."crow-server".requires = [ "crow-podman-secrets.service" ];
   systemd.services."crow-server".after = [ "crow-podman-secrets.service" ];
-  systemd.services."crow-agent-local-0".requires = [
-    "crow-podman-secrets.service"
-  ];
-  systemd.services."crow-agent-local-0".after = [
-    "crow-podman-secrets.service"
-  ];
   systemd.services."crow-autoscaler-0-aws".requires = [
     "crow-podman-secrets.service"
   ];

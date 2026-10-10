@@ -1,5 +1,6 @@
 {
   inputs,
+  pkgs,
   ...
 }:
 
@@ -22,6 +23,19 @@
     dashboard = 9119; # web dashboard / desktop backend
     webui = 8787; # hermes-webui (loopback-only)
   };
+
+  # SSH access for the omp coding agent on the workstation: a dedicated
+  # ed25519 key whose authorized_keys entry forces the command to
+  # `hermes mcp serve`, so the key can only talk to Hermes' stdio MCP server
+  # (send/poll messages into conversations) — no shell, no port forwarding.
+  # The omp agent uses this as its fire-and-forget offload channel and as a
+  # more relaxed test surface (own user, wider sandbox than its firejail).
+  # HERMES_HOME is not needed here: the hermes CLI defaults to ~/.hermes,
+  # which is /var/lib/hermes/.hermes for this user — the same state the
+  # gateway services use.
+  users.users.hermes.openssh.authorizedKeys.keys = [
+    ''command="${inputs.hermes-agent.packages.${pkgs.stdenv.hostPlatform.system}.default}/bin/hermes mcp serve",no-port-forwarding,no-X11-forwarding,no-agent-forwarding ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINE8Uozb7bw9NZvZrG3QcJh7TsOMJFGzGBvRSfNPty1s omp-hermes-mcp''
+  ];
 
   # programs.nix-ld (configuration.nix) exports NIX_LD / NIX_LD_LIBRARY_PATH to
   # login sessions only — systemd units get a curated environment, and nix-ld's

@@ -19,14 +19,6 @@ cv-redirect:
   ttl: 300
   type: A
   value: 168.119.172.112
-crow-grpc:
-  ttl: 300
-  type: A
-  value: 168.119.172.112
-crow:
-  ttl: 300
-  type: A
-  value: 168.119.172.112
 fileshare:
   ttl: 300
   type: A
@@ -91,6 +83,9 @@ mimir.lab:
   type: CNAME
   value: hetzner-server-1.tailnet.alper-celik.dev.
 loki.lab:
+  type: CNAME
+  value: hetzner-server-1.tailnet.alper-celik.dev.
+crow-grpc:
   type: CNAME
   value: hetzner-server-1.tailnet.alper-celik.dev.
 
