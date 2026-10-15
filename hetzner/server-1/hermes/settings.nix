@@ -147,25 +147,24 @@ in
       };
 
       # Gemini-style turn progress in Telegram: one in-place-edited bubble showing
-      # each tool call ("🔍 Searching the web for …") plus the model's between-tool
-      # thinking lines (💭). Both are opt-in: gateway/display_config.py pins
-      # Telegram's tier default to tool_progress "off" (mobile inbox), and
-      # thinking_progress is off globally. Resolution is display.platforms.<plat>.<key>
-      # → display.<key> → platform tier → global default, so the keys live under
-      # display.platforms.telegram. The bubble is delivered with notifications
-      # muted (the default "important" notification mode) and repeated identical
-      # tool lines collapse to "(×N)" — one growing bubble per turn, not one
-      # message per tool. cleanup_progress stays at its default (false) on
-      # purpose: the bubble is NOT auto-deleted after the final answer and stays
-      # as a breadcrumb of what the turn did (Alper's choice after a live trial).
-      # tool_progress_command is global-only and merely exposes /verbose on
-      # messaging platforms (it is CLI-only otherwise), letting the mode be
-      # cycled per chat without a restart.
+      # each tool call ("🔍 Searching the web for …"). Opt-in: gateway/display_config.py
+      # pins Telegram's tier default to tool_progress "off" (mobile inbox).
+      # Resolution is display.platforms.<plat>.<key> → display.<key> → platform tier →
+      # global default, so the key lives under display.platforms.telegram. The bubble
+      # is delivered with notifications muted (the default "important" notification
+      # mode) and repeated identical tool lines collapse to "(×N)" — one growing
+      # bubble per turn, not one message per tool. thinking_progress is NOT set: the
+      # 💭 scratch lines duplicate what the streaming draft preview already shows
+      # live in this chat (trialled in #44, dropped right after). cleanup_progress
+      # stays at its default (false) on purpose: the bubble is NOT auto-deleted
+      # after the final answer and stays as a breadcrumb of what the turn did
+      # (Alper's choice after a live trial). tool_progress_command is global-only
+      # and merely exposes /verbose on messaging platforms (it is CLI-only
+      # otherwise), letting the mode be cycled per chat without a restart.
       display = {
         tool_progress_command = true;
         platforms.telegram = {
           tool_progress = "all";
-          thinking_progress = true;
         };
       };
 
