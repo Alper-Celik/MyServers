@@ -31,10 +31,10 @@
     # make the server hard-read-only for non-PR work.
     # Absolute store path rather than the bare name: `command` is exec'd by
     # whichever hermes process owns the session, and only the gateway and
-    # dashboard carry extraPackages (settings.nix) on their PATH. The webui
-    # service runs its own agent with a minimal PATH, where a bare
-    # `github-mcp-server` cannot be exec'd at all — the spawn dies silently,
-    # so the tools simply never register there (same for grafana below).
+    # dashboard carry extraPackages (settings.nix) on their PATH — on a
+    # minimal PATH a bare `github-mcp-server` cannot be exec'd at all, the
+    # spawn dies silently, so the tools simply never register there (same
+    # for grafana below).
     github = {
       command = "${pkgs.github-mcp-server}/bin/github-mcp-server";
       args = [
