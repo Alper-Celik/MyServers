@@ -90,11 +90,48 @@ in
       # instruction files is the PR route: agent edits land as reviewed
       # Alper-Celik/* pull requests, never as direct workspace writes.
       security.protected_instruction_files = false;
+      # Main model: back on the OpenCode Go subscription ($10/month) with
+      # deepseek-v4.1-flash as the primary route — reverting ee67735 ("use
+      # openrouter") at Alper's request. Served at opencode.ai/zen/go/v1;
+      # Kimi/GLM/DeepSeek speak OpenAI chat-completions there (MiniMax/Qwen the
+      # Anthropic-style surface; api_mode is per model and the base stays at
+      # /v1). Credential: OPENCODE_GO_API_KEY (sops, see secrets.nix).
+      # context_length is deliberately NOT set: Hermes auto-detects the window
+      # from the model catalog, and the previous hard 900000 was the OpenRouter
+      # preset's window — wrong for the Go models, delaying compaction past
+      # their real limit. The runtime-preserved model.aliases (flag =
+      # opencode-go/kimi-k3, flash = glm-5.3-flash) are untouched.
       model = {
-        context_length = 900000;
-        provider = "openrouter";
-        default = "@preset/hermes-agent";
-        base_url = "https://openrouter.ai/api/v1";
+        provider = "opencode-go";
+        base_url = "https://opencode.ai/zen/go/v1";
+        default = "deepseek-v4.1-flash";
+      };
+      # Error fallback (rate limits, 5xx, connection errors — Go's quota caps
+      # included): the OpenRouter preset that was primary before ee67735,
+      # declared here so the chain survives deploys instead of living as a
+      # runtime-only key.
+      fallback_providers = [
+        {
+          provider = "openrouter";
+          model = "@preset/hermes-agent";
+          base_url = "https://openrouter.ai/api/v1";
+        }
+      ];
+      # Context window for the fallback. A fallback ENTRY's own context_length is
+      # never read: activation deliberately clears the primary's pin so the
+      # fallback resolves its own window (agent/chat_completion_helpers.py,
+      # #22387). A preset slug is also absent from every public catalog, so
+      # auto-detection would guess. model_overrides is the supported pin —
+      # resolution step 0b consults it before custom_providers and every live
+      # probe, on any route (primary or fallback). Verified against the
+      # installed 0.21.5: this returns 900000 for the fallback while an
+      # unrelated OpenRouter model still resolves its own catalog window.
+      model_overrides = {
+        openrouter = {
+          "@preset/hermes-agent" = {
+            context_window = 900000;
+          };
+        };
       };
       api_server = {
         enabled = true;
