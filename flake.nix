@@ -3,12 +3,6 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
     hermes-agent.url = "github:NousResearch/hermes-agent";
-    # nesquena/hermes-webui — shares the agent package via webui.nix; bump
-    # together with hermes-agent (it imports agent internals).
-    hermes-webui = {
-      url = "github:nesquena/hermes-webui";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     hindsight = {
       url = "github:vectorize-io/hindsight";
       flake = false;

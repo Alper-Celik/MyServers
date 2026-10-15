@@ -7,12 +7,10 @@
 {
   imports = [
     inputs.hermes-agent.nixosModules.default
-    inputs.hermes-webui.nixosModules.default
     ./secrets.nix
     ./settings.nix
     ./mcp-servers.nix
     ./web.nix
-    ./webui.nix
     ./hindsight.nix
   ];
 
@@ -21,7 +19,6 @@
   _module.args.hermesPorts = {
     api = 8642; # OpenAI-compatible API server (gateway platform)
     dashboard = 9119; # web dashboard / desktop backend
-    webui = 8787; # hermes-webui (loopback-only)
   };
 
   # SSH access for the omp coding agent on the workstation: a dedicated

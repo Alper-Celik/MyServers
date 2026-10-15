@@ -35,8 +35,6 @@
     restartUnits = [
       "hermes-agent.service"
       "hermes-backend.service"
-      # webui caches config in warm agent instances.
-      "hermes-webui.service"
     ];
   };
 
