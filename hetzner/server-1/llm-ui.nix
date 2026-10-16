@@ -35,6 +35,7 @@ in
       PIP_NO_CACHE_DIR = "1";
     };
     environmentFiles = [ config.sops.secrets.OPENWEBUI_SECRET_KEY.path ];
+    labels."io.containers.autoupdate" = "registry";
   };
   services.caddy.virtualHosts."llm.lab.alper-celik.dev" = {
     extraConfig = "reverse_proxy http://localhost:${toString openwebui-port}";
