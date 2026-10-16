@@ -5,8 +5,9 @@
 
 {
   imports = [
-    ./crow-ci.nix
+    inputs.crow-ci.nixosModules.default
     ./crow-server.nix
+    ./crow-autoscaler.nix
     ./crow-agent.nix
   ];
 

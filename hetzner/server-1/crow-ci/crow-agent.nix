@@ -7,13 +7,6 @@
   crow-ci-args,
   ...
 }@args:
-
-let
-  # systemd applies EnvironmentFile= over Environment=, so this inert value
-  # (required by the flake's agent option) is overridden by the real secret
-  # in the env file below
-  agentSecret = "sops-managed";
-in
 {
   services.crowci = {
     agents = [
@@ -21,14 +14,13 @@ in
         server = crow-ci-args.hosts.grpc-host;
         podmanSocket = "/run/podman-crow-ci.sock";
         hostnamePrefix = "local";
-        agentSecret = agentSecret;
         replicas = 1;
         labels = {
           pool = "local";
           platform = "linux/arm64";
         };
         settings = {
-          CROW_MAX_WORKFLOWS = "3";
+          CROW_MAX_WORKFLOWS = "2";
         };
       }
     ];

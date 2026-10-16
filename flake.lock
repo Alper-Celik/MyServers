@@ -43,11 +43,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1790184935,
-        "narHash": "sha256-Va+8HFhgDg7v3BsrhCZzJzQj9/R9Hk92OXcaJIhwdhM=",
+        "lastModified": 1791679190,
+        "narHash": "sha256-CnHVsHTMkYP6l4rpdqzsG0WIqU3s0a6RiWujyW8uImg=",
         "ref": "refs/heads/main",
-        "rev": "5bad6fb811af5db06b24c06c7aa4d3976e7621d0",
-        "revCount": 211,
+        "rev": "59c879e056c2e2b266a9ef0640cfd3a602586378",
+        "revCount": 213,
         "type": "git",
         "url": "https://codefloe.com/crowci/crowci-flake"
       },
