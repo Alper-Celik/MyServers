@@ -42,7 +42,6 @@
     configureRedis = true;
 
     config = {
-      adminpassFile = config.sops.secrets.nextcloud-admin-pass.path;
       dbtype = "pgsql";
       trustedProxies = [ "::1" ];
     };
