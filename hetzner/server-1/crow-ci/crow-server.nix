@@ -60,12 +60,17 @@ in
       CROW_ADMIN = "Alper-Celik";
       CROW_DATABASE_DRIVER = "postgres";
       CROW_DATABASE_DATASOURCE = "postgres://${server.name}@/${server.name}?host=${postgresSocketDir}";
+      CROW_FORGES = "forgejoe";
+      CROW_FORGE_FORGEJOE_TYPE = "forgejo";
+      CROW_FORGE_FORGEJOE_URL = "https://git.auth.how";
     };
   };
 
   sops.templates."crow-server" = {
     content = ''
       CROW_AGENT_SECRET=${config.sops.placeholder.CROW_AGENT_SECRET}
+      CROW_FORGE_FORGEJOE_CLIENT=${config.sops.placeholder.CROW_FORGE_FORGEJOE_CLIENT}
+      CROW_FORGE_FORGEJOE_SECRET=${config.sops.placeholder.CROW_FORGE_FORGEJOE_SECRET}
     '';
     restartUnits = [ "${container.serviceName}.service" ];
   };
