@@ -11,39 +11,58 @@ let
   hindsightSrc = inputs.hindsight;
 
   # The hermes-agent package builds against its OWN nixpkgs input (MyServers does
-  # not make it follow the root), and the module only puts a package on PYTHONPATH
-  # if its `pythonModule` is that build's exact interpreter: a bundle built with
-  # the root pkgs is dropped silently.
+  # not make it follow the root). The module (nix/hermes-agent.nix in the
+  # hermes-agent flake) filters extraPythonPackages through
+  # requiredPythonModules, which drops any package whose pythonModule is not the
+  # interpreter of the sealed venv — silently. So the package set here must be
+  # derived from what hermes actually builds with, not hardcoded: hardcoding
+  # python312 is what broke hindsight when hermes moved to 3.14 — the
+  # python312-built bundle kept building fine and then vanished from the
+  # runtime PYTHONPATH (ModuleNotFoundError: hindsight_client). Derive the
+  # family the same way hermes' own nix/pythonLock.nix does: the
+  # major.minor of the packages.python.version pinned in its pm/lock.json
+  # (the full version carries a patch and a build tag — e.g. "3.14.9+<date>" —
+  # so it cannot name the pkgs attribute directly).
   hermesPkgs = inputs.hermes-agent.inputs.nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system};
+  hermesPythonFamily =
+    let
+      version = (builtins.fromJSON (
+        builtins.readFile "${inputs.hermes-agent}/pm/lock.json"
+      )).packages.python.version;
+      parts = builtins.match "([0-9]+)\\.([0-9]+)(\\..*)?" version;
+    in
+    builtins.elemAt parts 0 + "." + builtins.elemAt parts 1;
+  hermesPythonPkgs = hermesPkgs."python${lib.replaceStrings [ "." ] [ "" ] hermesPythonFamily}Packages";
 
   clientVersion =
     (lib.importTOML "${hindsightSrc}/hindsight-clients/python/pyproject.toml").project.version;
 
-  sitePackages = hermesPkgs.python312.sitePackages;
+  sitePackages = hermesPythonPkgs.python.sitePackages;
 
   # A wheel, not a plain copy: the plugin reads
   # importlib.metadata.version("hindsight-client") and falls back to a lazy install
-  # when the dist-info is missing. `dependencies` stays empty and the runtime-dep
+  # when the dist-info is missing. Built FROM THE INPUT, not a PyPI pin: the
+  # client then rides flake.lock bumps with the plugin it ships beside. The
+  # plugin's floor check (`installed < 0.10.1`) still guards it.
+  # `dependencies` stays empty and the runtime-dep
   # check off because those deps ride the hermes venv already, and declaring them
-  # trips the module's checkPackageCollisions.
-  hindsightClient = hermesPkgs.python312Packages.buildPythonPackage {
+  # trips the module's checkPackageCollisions. That includes aiohttp-retry since
+  # the hermes lock started shipping it — do not add it back to this bundle.
+  hindsightClient = hermesPythonPkgs.buildPythonPackage {
     pname = "hindsight-client";
     version = clientVersion;
     pyproject = true;
     src = "${hindsightSrc}/hindsight-clients/python";
-    build-system = [ hermesPkgs.python312Packages.hatchling ];
+    build-system = [ hermesPythonPkgs.hatchling ];
     dependencies = [ ];
     doCheck = false;
     dontCheckRuntimeDeps = true;
   };
 
-  # The client, plus aiohttp-retry — the one dependency the venv lacks (imported
-  # by the generated hindsight_client_api/rest.py).
-  hindsightPython = hermesPkgs.python312Packages.toPythonModule (
+  hindsightPython = hermesPythonPkgs.toPythonModule (
     hermesPkgs.runCommand "hermes-hindsight-python" { } ''
       mkdir -p $out/${sitePackages}
       cp -r ${hindsightClient}/${sitePackages}/. $out/${sitePackages}/
-      cp -r ${hermesPkgs.python312Packages.aiohttp-retry}/${sitePackages}/. $out/${sitePackages}/
     ''
   );
 
