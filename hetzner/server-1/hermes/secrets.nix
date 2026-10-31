@@ -14,6 +14,7 @@
     GITHUB_TOKEN_AI = { };
     CONTEXT7_API_KEY = { };
     GRAFANA_SERVICE_ACCOUNT_TOKEN = { };
+    FORGEJOE_AI_ACCOUNT_TOKEN = { };
   };
 
   # rendered into the env file the gateway reads at startup; the raw secrets
@@ -28,6 +29,7 @@
       GITHUB_TOKEN=${config.sops.placeholder.GITHUB_TOKEN_AI}
       TELEGRAM_ALLOWED_USERS=1228209533
       CONTEXT7_API_KEY=${config.sops.placeholder.CONTEXT7_API_KEY}
+      FORGEJOE_AI_ACCOUNT_TOKEN=${config.sops.placeholder.FORGEJOE_AI_ACCOUNT_TOKEN}
       GRAFANA_SERVICE_ACCOUNT_TOKEN=${config.sops.placeholder.GRAFANA_SERVICE_ACCOUNT_TOKEN}
     '';
     owner = config.users.users.hermes.name;
