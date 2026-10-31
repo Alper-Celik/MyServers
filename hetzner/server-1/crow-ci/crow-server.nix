@@ -55,7 +55,7 @@ in
       CROW_HOST = "https://${crow-ci-args.hosts.server-host}";
       CROW_SERVER_ADDR = ":8000";
       CROW_GRPC_ADDR = ":9000";
-      CROW_OPEN = "false";
+      CROW_OPEN = "true";
       CROW_LOG_LEVEL = "info";
       CROW_ADMIN = "Alper-Celik";
       CROW_DATABASE_DRIVER = "postgres";
