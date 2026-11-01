@@ -4,8 +4,12 @@
 #   - a cron named `update-nixpkgs`, schedule 30 22 * * *, branch main
 #   - a repo secret `forgejo_token`: a Forgejo PAT with push access to main
 when:
-  event: cron
-  cron: update-nixpkgs
+  - event: cron
+    cron: update-nixpkgs
+  # Hand trigger from the Crow UI ("Run pipeline"); the branch filter keeps a
+  # stray manual run on another branch from pushing that branch to main.
+  - event: manual
+    branch: main
 
 # Keep the job off the EC2 autoscaler pool; the local agent is enough.
 labels:
