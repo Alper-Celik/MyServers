@@ -1,0 +1,30 @@
+# Ported from the retired .github/workflows/auto-update.yml: daily
+# flake.lock bump committed straight to main as "Server Updater".
+# Requires, set up once in the Crow UI for this repo:
+#   - a cron named `update-nixpkgs`, schedule 30 22 * * *, branch main
+#   - a repo secret `forgejo_token`: a Forgejo PAT with push access to main
+when:
+  event: cron
+  cron: update-nixpkgs
+
+# Keep the job off the EC2 autoscaler pool; the local agent is enough.
+labels:
+  pool: local
+
+steps:
+  update-lockfile:
+    image: docker.io/nixos/nix:2.35.4
+    environment:
+      FORGEJO_TOKEN:
+        from_secret: forgejo_token
+    commands:
+      - apk add --no-cache git
+      - export NIX_CONFIG="experimental-features = nix-command flakes"
+      - nix flake update nixpkgs nixpkgs-unstable nixos-raspberrypi
+      - git config user.name "Server Updater"
+      - git config user.email "server-updater@alper-celik.dev"
+      - git add flake.lock
+      - git commit -m "update nixpkgs" || echo "No changes to commit"
+      # Crow only injects netrc credentials into trusted clone plugins, so a
+      # direct push from a normal step must authenticate with a secret.
+      - git push "https://oauth2:${FORGEJO_TOKEN}@${CI_REPO_CLONE_URL#https://}" HEAD:main
