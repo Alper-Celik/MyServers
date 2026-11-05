@@ -26,6 +26,19 @@ declare "base" {
 		}
 	}
 
+	// Stamps every metric this host pushes (own collectors and extra scrape
+	// targets alike) with role="server". The Fleet Alerts rules allowlist on
+	// it: laptops and handhelds that push the same job without the label are
+	// not alerted on, and a new device only joins alerting by pushing it.
+	prometheus.relabel "fleet_labels" {
+		forward_to = [prometheus.remote_write.mimir.receiver]
+
+		rule {
+			target_label = "role"
+			replacement  = "server"
+		}
+	}
+
 	loki.write "loki" {
 		endpoint {
 			url = "https://loki.lab.alper-celik.dev/loki/api/v1/push"
@@ -35,7 +48,7 @@ declare "base" {
 	node_collector.node_metrics "node_metrics" {
 		arch       = constants.arch
 		host       = constants.hostname
-		forward_to = [prometheus.remote_write.mimir.receiver]
+		forward_to = [prometheus.relabel.fleet_labels.receiver]
 	}
 
 	logs.systemd_journal "systemd_journal" {
@@ -58,11 +71,11 @@ declare "base" {
 		arch             = constants.arch
 		host             = constants.hostname
 		forward_to_loki  = [loki.write.loki.receiver]
-		forward_to_mimir = [prometheus.remote_write.mimir.receiver]
+		forward_to_mimir = [prometheus.relabel.fleet_labels.receiver]
 	}
 
 	// Host configs forward their own extra scrapes here.
 	export "mimir_receiver" {
-		value = prometheus.remote_write.mimir.receiver
+		value = prometheus.relabel.fleet_labels.receiver
 	}
 }
