@@ -6,7 +6,10 @@
 }:
 let
   podmanUser = crow-ci-args.users.podman;
-  podmanSocket = "/run/podman-crow-ci.sock";
+  # The container mounts the socket's DIRECTORY, not the socket file: a
+  # bind-mounted socket file pins the inode, so a recreated node leaves the
+  # container staring at a dead socket while every probe stays green.
+  podmanSocketDir = "/run/podman-ci";
   container = config.virtualisation.oci-containers.containers."crow-agent-local-0";
 in
 {
@@ -23,7 +26,7 @@ in
       CROW_LOG_LEVEL = "info";
       CROW_MAX_WORKFLOWS = "2";
     };
-    volumes = [ "${podmanSocket}:/run/podman/podman.sock" ];
+    volumes = [ "${podmanSocketDir}:/run/podman" ];
     # CROW_AGENT_SECRET only comes from here: a value in `environment` would be
     # passed as podman `--env`, which overrides `--env-file`
     environmentFiles = [ config.sops.templates."crow-agent-env".path ];
@@ -37,13 +40,22 @@ in
     restartUnits = [ "${container.serviceName}.service" ];
   };
 
+  # systemd does not create missing parent directories for ListenStream
+  systemd.tmpfiles.settings."crow-podman-api" = {
+    "${podmanSocketDir}".d = {
+      user = "root";
+      group = podmanUser.name;
+      mode = "0750";
+    };
+  };
+
   systemd.sockets.podman-ci = {
     description = "Podman API Socket for crow ci";
     wantedBy = [ "sockets.target" ];
     socketConfig = {
       SocketUser = podmanUser.name;
       SocketGroup = podmanUser.name;
-      ListenStream = podmanSocket;
+      ListenStream = "${podmanSocketDir}/podman.sock";
       SocketMode = "0660";
     };
   };
@@ -54,7 +66,7 @@ in
     serviceConfig = {
       KillMode = "process";
       Delegate = true;
-      ExecStart = "${pkgs.podman}/bin/podman system service --time=0 unix://${podmanSocket}";
+      ExecStart = "${pkgs.podman}/bin/podman system service --time=0 unix://${podmanSocketDir}/podman.sock";
     };
   };
 
@@ -81,5 +93,4 @@ in
   users.groups.${podmanUser.name} = {
     gid = podmanUser.gid;
   };
-
 }
