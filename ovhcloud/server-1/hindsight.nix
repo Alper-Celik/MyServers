@@ -5,17 +5,20 @@
 # name (postgres.nix) — socket access with no password and no hba change.
 {
   config,
-  hindsightPorts,
+  inputs,
+  pkgs,
   postgresSocketDir,
   lib,
   ...
 }:
 let
+  secrets = inputs.MyServersSecrets;
   hindsight-uid = 984;
   hindsight-gid = 984;
   port-api = 21912;
   port = 21911;
   hindsight = config.virtualisation.oci-containers.containers.hindsight;
+  sopsFile = "${secrets}/secrets/ovhcloud/server-1.yaml";
 in
 {
   users = {
@@ -28,23 +31,28 @@ in
     };
   };
 
-  # Alper adds HINDSIGHT_OPENROUTER_API_KEY to secrets/ovhcloud/server-1.yaml.
-  # Service-scoped on purpose: each service keeps its own OpenRouter key/quota
-  # (hetzner's hermes uses the unprefixed OPENROUTER_API_KEY).
-  sops.secrets.HINDSIGHT_OPENROUTER_API_KEY = { };
+  # Secrets resolve through SecretSpec (common/secretspec.nix) instead of a
+  # sops template. The manifest is plaintext — key names only, same names the
+  # sops route already exposed in this file — and resolves HINDSIGHT_OPENROUTER_API_KEY
+  # (Alper adds it to secrets/ovhcloud/server-1.yaml; service-scoped on
+  # purpose: each service keeps its own OpenRouter key/quota) into the three
+  # variable names hindsight reads.
+  secretspec.render.hindsight = {
+    manifest = ''
+      [project]
+      name = "hindsight"
+      revision = "1.0"
 
-  # hindsight reads its own variable names, so one key feeds every one of them;
-  # the Jev failover member (container.nix) inherits no shared key, so its own
-  # variable is spelled out too
-  sops.templates."hindsight-env" = {
-    content = ''
-      HINDSIGHT_API_OPENROUTER_API_KEY=${config.sops.placeholder.HINDSIGHT_OPENROUTER_API_KEY}
-      HINDSIGHT_API_LLM_API_KEY=${config.sops.placeholder.HINDSIGHT_OPENROUTER_API_KEY}
-      HINDSIGHT_API_RERANKER_1_TYPESAFE_API_KEY=${config.sops.placeholder.HINDSIGHT_OPENROUTER_API_KEY}
+      [providers]
+      enc = "sops://${sopsFile}"
+
+      [profiles.default]
+      HINDSIGHT_API_OPENROUTER_API_KEY = { description = "OpenRouter key", ref = { item = "HINDSIGHT_OPENROUTER_API_KEY" }, providers = ["enc"] }
+      HINDSIGHT_API_LLM_API_KEY = { ref = { item = "HINDSIGHT_OPENROUTER_API_KEY" }, providers = ["enc"] }
+      HINDSIGHT_API_RERANKER_1_TYPESAFE_API_KEY = { ref = { item = "HINDSIGHT_OPENROUTER_API_KEY" }, providers = ["enc"] }
     '';
-    restartUnits = [
-      "${config.virtualisation.oci-containers.containers.hindsight.serviceName}.service"
-    ];
+    sopsFile = sopsFile;
+    provider = "enc";
   };
 
   virtualisation.oci-containers.containers.hindsight = {
@@ -72,7 +80,7 @@ in
       # failover 2: no model — keep the RRF order rather than fail recall
       HINDSIGHT_API_RERANKER_2_PROVIDER = "rrf";
     };
-    environmentFiles = [ config.sops.templates."hindsight-env".path ];
+    environmentFiles = [ config.secretspec.render.hindsight.path ];
     user = "${toString hindsight-uid}:${toString hindsight-gid}";
     volumes = [ "${postgresSocketDir}:${postgresSocketDir}" ];
     ports = [
@@ -111,7 +119,16 @@ in
 
   # the socket has to exist before the first connect; hindsight retries, but an
   # ordered start avoids a noisy boot
-  systemd.services.${hindsight.serviceName}.after = [ "postgresql.service" ];
+  systemd.services.${hindsight.serviceName} = {
+    after = [
+      "postgresql.service"
+      config.secretspec.render.hindsight.service
+    ];
+    requires = [ config.secretspec.render.hindsight.service ];
+    # a new secrets generation changes the sopsFile store path, so this
+    # restarts the container with the freshly rendered env file
+    restartTriggers = [ sopsFile ];
+  };
 
   services.caddy.virtualHosts."hindsight.lab.alper-celik.dev" = {
     extraConfig = "reverse_proxy http://localhost:${toString port}";
