@@ -22,7 +22,7 @@ steps:
       FORGEJO_TOKEN:
         from_secret: forgejo_token
     commands:
-      - apk add --no-cache git
+      # The nixos/nix image bundles git in its nix profile (and has no apk).
       - export NIX_CONFIG="experimental-features = nix-command flakes"
       - nix flake update nixpkgs nixpkgs-unstable nixos-raspberrypi
       - git config user.name "Server Updater"
