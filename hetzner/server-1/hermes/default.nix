@@ -14,6 +14,14 @@
     ./hindsight.nix
   ];
 
+  # The agent's shared rust compile cache. cargo runs by the hermes user wrap
+  # rustc with sccache via ~/.cargo/config.toml (`build.rustc-wrapper`), so the
+  # binary must exist on PATH wherever cargo does — one cold build of a
+  # worktree's dependency graph then warms every other worktree and clean
+  # rebuild. Declared here rather than left as a mutable `nix profile` entry.
+  # A remote backend (B2 via SCCACHE_BUCKET) slots in later on the same binary.
+  users.users.hermes.packages = [ pkgs.sccache ];
+
   # Ports shared by the agent services (settings.nix) and their caddy vhosts
   # (web.nix), declared once here and handed to both as module args.
   _module.args.hermesPorts = {
