@@ -6,10 +6,11 @@
 # both), so local copies only need crash-recent history. This host is the one
 # that ran /var out of space under the defaults.
 {
-  services.journald.settings.Journal = {
-    SystemMaxUse = "1G";
-    MaxRetentionSec = "3day";
-  };
+  # enable back after everything is >= 26.11
+  # services.journald.settings.Journal = {
+  #   SystemMaxUse = "1G";
+  #   MaxRetentionSec = "3day";
+  # };
 
   systemd.tmpfiles.rules = [
     # caddy rotates its access logs by size but never prunes; the daily
