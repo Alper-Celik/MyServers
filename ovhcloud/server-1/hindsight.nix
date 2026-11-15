@@ -36,23 +36,27 @@ in
   # sops route already exposed in this file — and resolves HINDSIGHT_OPENROUTER_API_KEY
   # (Alper adds it to secrets/ovhcloud/server-1.yaml; service-scoped on
   # purpose: each service keeps its own OpenRouter key/quota) into the three
-  # variable names hindsight reads.
-  secretspec.render.hindsight = {
-    manifest = ''
-      [project]
-      name = "hindsight"
-      revision = "1.0"
+  # variable names hindsight reads. The manifest names no provider: the
+  # host-level secretspec.defaultProvider/providers below decide where values
+  # come from, so a store swap (sops → OpenBao) is a two-line change here, not
+  # a manifest rewrite.
+  secretspec = {
+    providers.enc = "sops://${sopsFile}";
+    defaultProvider = "enc";
 
-      [providers]
-      enc = "sops://${sopsFile}"
+    render.hindsight = {
+      manifest = ''
+        [project]
+        name = "hindsight"
+        revision = "1.0"
 
-      [profiles.default]
-      HINDSIGHT_API_OPENROUTER_API_KEY = { description = "OpenRouter key", ref = { item = "HINDSIGHT_OPENROUTER_API_KEY" }, providers = ["enc"] }
-      HINDSIGHT_API_LLM_API_KEY = { ref = { item = "HINDSIGHT_OPENROUTER_API_KEY" }, providers = ["enc"] }
-      HINDSIGHT_API_RERANKER_1_TYPESAFE_API_KEY = { ref = { item = "HINDSIGHT_OPENROUTER_API_KEY" }, providers = ["enc"] }
-    '';
-    sopsFile = sopsFile;
-    provider = "enc";
+        [profiles.default]
+        HINDSIGHT_API_OPENROUTER_API_KEY = { description = "OpenRouter key", ref = { item = "HINDSIGHT_OPENROUTER_API_KEY" } }
+        HINDSIGHT_API_LLM_API_KEY = { ref = { item = "HINDSIGHT_OPENROUTER_API_KEY" } }
+        HINDSIGHT_API_RERANKER_1_TYPESAFE_API_KEY = { ref = { item = "HINDSIGHT_OPENROUTER_API_KEY" } }
+      '';
+      sopsFile = sopsFile;
+    };
   };
 
   virtualisation.oci-containers.containers.hindsight = {
@@ -127,7 +131,10 @@ in
     requires = [ config.secretspec.render.hindsight.service ];
     # a new secrets generation changes the sopsFile store path, so this
     # restarts the container with the freshly rendered env file
-    restartTriggers = [ sopsFile ];
+    restartTriggers = [
+      sopsFile
+      config.secretspec.configDir
+    ];
   };
 
   services.caddy.virtualHosts."hindsight.lab.alper-celik.dev" = {
