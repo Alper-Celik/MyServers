@@ -7,6 +7,7 @@
   config,
   inputs,
   pkgs,
+  pkgs-unstable,
   postgresSocketDir,
   lib,
   ...
@@ -41,6 +42,9 @@ in
   # come from, so a store swap (sops → OpenBao) is a two-line change here, not
   # a manifest rewrite.
   secretspec = {
+    # the root 26.05 pin ships secretspec 0.10.1, which has no `export`
+    # (first deploy failure) — take the CLI from nixpkgs-unstable (0.21.x)
+    package = pkgs-unstable.secretspec;
     providers.enc = "sops://${sopsFile}";
     defaultProvider = "enc";
 

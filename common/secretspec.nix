@@ -123,6 +123,16 @@ let
 in
 {
   options.secretspec = {
+    package = mkOption {
+      type = types.package;
+      default = pkgs.secretspec;
+      description = ''
+        The secretspec CLI. Needs >= 0.21 (export, [defaults] providers): the
+        root nixpkgs pin may lag — hosts on the root pin should pass
+        pkgs-unstable.secretspec.
+      '';
+    };
+
     render = mkOption {
       type = types.attrsOf (types.submodule renderModule);
       default = { };
@@ -174,7 +184,7 @@ in
             renderScript = pkgs.writeShellApplication {
               name = "secretspec-render-${name}";
               runtimeInputs = [
-                pkgs.secretspec
+                cfg.package
                 pkgs.sops
                 pkgs.coreutils
               ];
