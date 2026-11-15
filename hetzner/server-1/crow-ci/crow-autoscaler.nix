@@ -76,6 +76,9 @@ in
   virtualisation.oci-containers.containers."crow-autoscaler-0-aws" = {
     image = "codefloe.com/crowci/crow-autoscaler:${crow-ci-args.tags.autoscaler}";
     dependsOn = [ "crow-server" ];
+    # the pod cannot dial grpc-host's DNS answer (this host's Tailscale IP);
+    # pin the public record so the gRPC dial resolves inside the container
+    extraOptions = [ "--add-host=${crow-ci-args.hosts.grpc-host}:${crow-ci-args.hosts.grpc-host-ip}" ];
     labels."io.containers.autoupdate" = "registry";
     volumes = [ "${ec2UserData}:/etc/crow/userdata.yaml:ro" ];
     # tokens and AWS credentials come from here: a value in `environment` would
