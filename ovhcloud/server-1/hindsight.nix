@@ -56,8 +56,8 @@ in
 
         [profiles.default]
         HINDSIGHT_API_OPENROUTER_API_KEY = { description = "OpenRouter key", ref = { item = "HINDSIGHT_OPENROUTER_API_KEY" } }
-        HINDSIGHT_API_LLM_API_KEY = { ref = { item = "HINDSIGHT_OPENROUTER_API_KEY" } }
-        HINDSIGHT_API_RERANKER_1_TYPESAFE_API_KEY = { ref = { item = "HINDSIGHT_OPENROUTER_API_KEY" } }
+        HINDSIGHT_API_LLM_API_KEY = { description = "OpenRouter key (same value, service-scoped)", ref = { item = "HINDSIGHT_OPENROUTER_API_KEY" } }
+        HINDSIGHT_API_RERANKER_1_TYPESAFE_API_KEY = { description = "OpenRouter key for the failover reranker", ref = { item = "HINDSIGHT_OPENROUTER_API_KEY" } }
       '';
       sopsFile = sopsFile;
     };
