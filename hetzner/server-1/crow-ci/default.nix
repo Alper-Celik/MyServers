@@ -22,9 +22,6 @@
     hosts = {
       server-host = "ci.auth.how";
       grpc-host = "crow-grpc.alper-celik.dev";
-      # grpc-host's DNS CNAMEs to this host's Tailscale IP, which pods on the
-      # host itself cannot dial; the public record is what a container needs
-      grpc-host-ip = "168.119.172.112";
     };
 
     users = {
