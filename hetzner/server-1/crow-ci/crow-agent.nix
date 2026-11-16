@@ -20,6 +20,9 @@ in
     environment = {
       CROW_SERVER = "crow-server:9000";
       CROW_BACKEND = "podman";
+      # the in-container stat probe for the socket fails here; naming it
+      # explicitly short-circuits that (same env the spawned EC2 agents get)
+      CROW_BACKEND_PODMAN_HOST = "unix:///run/podman/podman.sock";
       CROW_HOSTNAME = "local-0";
       CROW_HEALTHCHECK_ADDR = ":3010";
       CROW_AGENT_LABELS = "platform=linux/arm64,pool=local";

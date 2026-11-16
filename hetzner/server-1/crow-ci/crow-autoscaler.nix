@@ -76,13 +76,18 @@ in
   virtualisation.oci-containers.containers."crow-autoscaler-0-aws" = {
     image = "codefloe.com/crowci/crow-autoscaler:${crow-ci-args.tags.autoscaler}";
     dependsOn = [ "crow-server" ];
+    # host networking: the gRPC endpoint's DNS answer is this host's Tailscale
+    # IP, only routable from the host's own netns, so the pod dial wedged; on
+    # the host netns DNS/Tailscale resolve it like every other host process
+    extraOptions = [ "--network=host" ];
     labels."io.containers.autoupdate" = "registry";
     volumes = [ "${ec2UserData}:/etc/crow/userdata.yaml:ro" ];
     # tokens and AWS credentials come from here: a value in `environment` would
     # be passed as podman `--env`, which overrides `--env-file`
     environmentFiles = [ config.sops.templates."crow-autoscaler-env".path ];
     environment = {
-      CROW_SERVER = "http://crow-server:8000";
+      # host networking: the server's ports are published on host loopback
+      CROW_SERVER = "http://127.0.0.1:8000";
       CROW_GRPC_ADDR = "${crow-ci-args.hosts.grpc-host}:443";
       CROW_GRPC_SECURE = "true";
 
