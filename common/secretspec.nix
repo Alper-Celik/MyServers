@@ -99,8 +99,15 @@ let
         };
         sopsKeyFile = mkOption {
           type = types.path;
-          default = /var/lib/sops-nix/key.txt;
-          description = "age identity handed to the sops child process (SOPS_AGE_KEY_FILE).";
+          default = /run/secrets.d/age-keys.txt;
+          description = ''
+            age identity handed to the sops child process (SOPS_AGE_KEY_FILE).
+            Defaults to the key file sops-install-secrets assembles per
+            activation (SSH host keys converted to age, plus sops.age.keyFile
+            appended) — sops.age.keyFile alone can be stale on a host and
+            match none of the sopsFile recipients, which fails the render
+            while sops-nix itself still decrypts.
+          '';
         };
 
         path = mkOption {
