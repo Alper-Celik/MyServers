@@ -217,6 +217,10 @@ in
             serviceConfig = {
               Type = "oneshot";
               RuntimeDirectory = "secretspec-${name}";
+              # the env file must outlive the oneshot: without this systemd
+              # deletes the runtime directory when the unit exits, and the
+              # consumer only reads it later (podman: "env: no such file")
+              RuntimeDirectoryPreserve = true;
               ExecStart = lib.getExe renderScript;
             };
             environment = {
