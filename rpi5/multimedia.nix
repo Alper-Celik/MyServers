@@ -59,7 +59,9 @@
     adapt-for-up-low [
       (dir: "Z ${dir} 2775 media media - -")
 
-      (dir: "A ${dir} - - - - ${acl "jellyfin" "rwX"},${acl "immich" "rwX"}")
+      (
+        dir: "A ${dir} - - - - ${acl "jellyfin" "rwX"},${acl "immich" "rwX"},${acl "audiobookshelf" "rwX"}"
+      )
     ];
 
 }

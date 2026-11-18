@@ -56,6 +56,10 @@ syncthing-rpi.lab:
 audiomuse.lab:
   type: CNAME
   value: rpi5.tailnet.alper-celik.dev.
+audiobooks.lab:
+  ttl: 300
+  type: CNAME
+  value: rpi5.tailnet.alper-celik.dev.
 p2p.lab:
   type: CNAME
   value: rpi5.tailnet.alper-celik.dev.
