@@ -13,6 +13,10 @@
         WebUI = {
           AlternativeUIEnabled = true;
           RootFolder = "${pkgs.vuetorrent}/share/vuetorrent";
+          # false = BYPASS auth for loopback clients (upstream polarity);
+          # caddy proxies from 127.0.0.1, so the tailnet vhost is
+          # passwordless while any non-loopback request still needs auth.
+          LocalHostAuth = false;
         };
       };
     };
