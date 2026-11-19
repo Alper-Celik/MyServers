@@ -6,10 +6,7 @@
 }:
 let
   podmanUser = crow-ci-args.users.podman;
-  # The container mounts the socket's DIRECTORY, not the socket file: a
-  # bind-mounted socket file pins the inode, so a recreated node leaves the
-  # container staring at a dead socket while every probe stays green.
-  podmanSocketDir = "/run/podman-ci";
+  runtimeDir = "/run/user/${toString podmanUser.uid}";
   container = config.virtualisation.oci-containers.containers."crow-agent-local-0";
 in
 {
@@ -29,7 +26,12 @@ in
       CROW_LOG_LEVEL = "info";
       CROW_MAX_WORKFLOWS = "2";
     };
-    volumes = [ "${podmanSocketDir}:/run/podman" ];
+    # the socket file lives in the crow-podman user's runtime dir: pipeline
+    # steps are rootless containers under that user's subuid range, not host
+    # root. A file mount pins its inode - a podman-ci restart changes the
+    # inode, so the agent unit is lifecycle-coupled to the service below (and
+    # unit recreation on every deploy covers the boot case).
+    volumes = [ "${runtimeDir}/podman/podman.sock:/run/podman/podman.sock" ];
     # CROW_AGENT_SECRET only comes from here: a value in `environment` would be
     # passed as podman `--env`, which overrides `--env-file`
     environmentFiles = [ config.sops.templates."crow-agent-env".path ];
@@ -43,34 +45,40 @@ in
     restartUnits = [ "${container.serviceName}.service" ];
   };
 
-  # systemd does not create missing parent directories for ListenStream
-  systemd.tmpfiles.settings."crow-podman-api" = {
-    "${podmanSocketDir}".d = {
-      user = "root";
-      group = podmanUser.name;
-      mode = "0750";
+  # Rootless podman API service: runs as crow-podman against its own store
+  # (/var/lib/crow-podman), so every step container executes without host
+  # root. The service binds its own socket in the user's runtime dir - there
+  # is deliberately no systemd socket unit, so nothing recreates or unlinks
+  # the node behind the container's file mount. Type=notify keeps the agent's
+  # After= ordering honest: the socket exists before dependents start.
+  systemd.services.podman-ci = {
+    description = "Rootless Podman API Service for crow ci";
+    after = [ "user-runtime-dir@${toString podmanUser.uid}.service" ];
+    requires = [ "user-runtime-dir@${toString podmanUser.uid}.service" ];
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      User = podmanUser.name;
+      Type = "notify";
+      TimeoutStartSec = "90s";
+      KillMode = "process";
+      Delegate = true;
+      Restart = "on-failure";
+      RestartSec = "5s";
+      ExecStart = "${pkgs.podman}/bin/podman system service --time=0";
+      Environment = [
+        "HOME=/var/lib/${podmanUser.name}"
+        "XDG_RUNTIME_DIR=${runtimeDir}"
+        "DBUS_SESSION_BUS_ADDRESS=unix:path=${runtimeDir}/bus"
+      ];
     };
   };
 
-  systemd.sockets.podman-ci = {
-    description = "Podman API Socket for crow ci";
-    wantedBy = [ "sockets.target" ];
-    socketConfig = {
-      SocketUser = podmanUser.name;
-      SocketGroup = podmanUser.name;
-      ListenStream = "${podmanSocketDir}/podman.sock";
-      SocketMode = "0660";
-    };
-  };
-  systemd.services.podman-ci = {
-    description = "Podman API Service for crow ci";
-    requires = [ "podman-ci.socket" ];
-    after = [ "podman-ci.socket" ];
-    serviceConfig = {
-      KillMode = "process";
-      Delegate = true;
-      ExecStart = "${pkgs.podman}/bin/podman system service --time=0 unix://${podmanSocketDir}/podman.sock";
-    };
+  # the socket file mount pins the inode: a podman-ci restart must stop and
+  # restart the agent, or the agent stares at a dead socket node.
+  systemd.services.${container.serviceName} = {
+    after = [ "podman-ci.service" ];
+    requires = [ "podman-ci.service" ];
+    partOf = [ "podman-ci.service" ];
   };
 
   users.users.${podmanUser.name} = {
