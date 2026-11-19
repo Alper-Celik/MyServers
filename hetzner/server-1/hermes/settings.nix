@@ -60,10 +60,31 @@ in
     #   cron tick of a curl-based watchdog fails with "command not found"
     #   while the same script passes manual testing (hit for real by the
     #   bbbf-mazeret and zdr-deepseek watchdogs, 2026-11).
+    # The rest of this list is the same trap for other CLIs the agent and its
+    #   cron scripts actually reach for; each has a real use, not pad-the-PATH:
+    # jq: JSON wrangling in shell one-liners — Forgejo/GitHub API responses in
+    #   cron scripts and PR tooling (the forgejo skill's jq workarounds exist
+    #   only because this was missing).
+    # python3: exists in the execute_code kernel but not on this PATH — cron
+    #   scripts and ad-hoc shell need it for parsing/HTTP (urllib) work.
+    # procps: ps/pgrep for process checks in watchdog scripts and debugging.
+    # tar, unzip: archive handling (downloads, backup probes).
+    # sqlite: read-only queries on DB copies (e.g. hindsight state.db copies
+    #   in scratch — the live store is never touched).
+    # file: identify mystery downloads/attachments.
+    # iproute2: ss for port/listener checks when debugging caddy/forgejo/web.
     extraPackages = with pkgs; [
       nix
       chromium
       curl
+      jq
+      python3
+      procps
+      gnutar # the `tar` binary (pkgs.tar alias is gone from nixpkgs)
+      unzip
+      sqlite
+      file
+      iproute2
       git
       fd
       ripgrep
