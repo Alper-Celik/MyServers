@@ -54,9 +54,16 @@ in
     #   sops-rendered ~/.config/gh/hosts.yml from secrets.nix, and covers what
     #   the MCP server does not (raw `gh api`, `gh run watch`, ad-hoc `gh pr`
     #   output)
+    # curl: no_agent cron/watchdog scripts (and anything else spawned by the
+    #   gateway process) run with THIS PATH, not the interactive shell's —
+    #   without it here, curl resolves only in terminal sessions and every
+    #   cron tick of a curl-based watchdog fails with "command not found"
+    #   while the same script passes manual testing (hit for real by the
+    #   bbbf-mazeret and zdr-deepseek watchdogs, 2026-11).
     extraPackages = with pkgs; [
       nix
       chromium
+      curl
       git
       fd
       ripgrep
