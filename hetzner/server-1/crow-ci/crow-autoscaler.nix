@@ -114,15 +114,16 @@ in
       };
 
       # .NET and Rust builds: compile-bound and scale with cores, so 2 GiB/vCPU
-      # is enough. c6id is the compute shape with a local NVMe instance store
+      # is enough. c7id is the compute shape with a local NVMe instance store
       # (1 x 600 GB on this size), which is what the builds actually fill - so
       # the root volume stays the rolling image's own, and crow needs no volume
-      # knob. 6th gen (Ice Lake) on purpose: deeper spot pools than the current
-      # generations. 4xlarge on purpose: 16 vCPUs fit the account's default
+      # knob. 4xlarge on purpose: 16 vCPUs fit the account's default
       # Standard-family vCPU quota (on-demand and spot buckets), so agents
-      # launch without a quota raise, and the spot pool is far deeper than the
-      # 8xlarge slice's.
-      CROW_AWS_INSTANCE_TYPE = "c6id.4xlarge";
+      # launch without a quota raise. 7th gen (Sapphire Rapids) on purpose:
+      # the c6id (Ice Lake) pool in eu-central-1 returned InsufficientInstanceCapacity
+      # for spot and on-demand alike for hours; the c7id host pool is separate
+      # and larger.
+      CROW_AWS_INSTANCE_TYPE = "c7id.4xlarge";
       # rolling reference rather than a pinned ami id: RunInstances resolves the
       # Debian public parameter at every launch, so agents always boot whatever
       # Debian published last (they rebuild for each DSA, roughly fortnightly).
