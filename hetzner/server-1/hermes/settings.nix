@@ -39,6 +39,24 @@ let
     url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin";
     hash = "sha256-G+OpsgY4Z7k35k4ux0gzZKeZF+FX+pjF2UtcH//qmHs=";
   };
+
+  # python3 for the agent PATH is a withPackages env, not bare: shell one-liners
+  # and cron scripts get the packages the agent actually reaches for, instead
+  # of an interpreter that dies on `import yaml`/`import requests`:
+  #   requests — scripted HTTP beyond curl (sessions, retries, JSON bodies)
+  #   pyyaml — config/CI files (crow pipelines, webhook yaml, env-ish parsing)
+  #   beautifulsoup4 — HTML scraping in scripts (faculty pages, dashboards)
+  #   pypdf — PDF text extraction (invoices, university docs) in scripts
+  # (The execute_code kernel runs in Hermes' own venv and is unaffected; this
+  # env serves cron/no_agent scripts and ad-hoc shell.)
+  pythonEnv = pkgs.python3.withPackages (
+    ps: with ps; [
+      requests
+      pyyaml
+      beautifulsoup4
+      pypdf
+    ]
+  );
 in
 {
   services.hermes-agent = {
@@ -67,6 +85,8 @@ in
     #   only because this was missing).
     # python3: exists in the execute_code kernel but not on this PATH — cron
     #   scripts and ad-hoc shell need it for parsing/HTTP (urllib) work.
+    #   Shipped as `pythonEnv` (python3.withPackages) so the usual libs are
+    #   importable: requests, pyyaml, beautifulsoup4, pypdf.
     # procps: ps/pgrep for process checks in watchdog scripts and debugging.
     # tar, unzip: archive handling (downloads, backup probes).
     # sqlite: read-only queries on DB copies (e.g. hindsight state.db copies
@@ -78,7 +98,7 @@ in
       chromium
       curl
       jq
-      python3
+      pythonEnv
       procps
       gnutar # the `tar` binary (pkgs.tar alias is gone from nixpkgs)
       unzip
