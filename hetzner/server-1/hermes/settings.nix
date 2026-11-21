@@ -39,6 +39,24 @@ let
     url = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin";
     hash = "sha256-G+OpsgY4Z7k35k4ux0gzZKeZF+FX+pjF2UtcH//qmHs=";
   };
+
+  # python3 for the agent PATH is a withPackages env, not bare: shell one-liners
+  # and cron scripts get the packages the agent actually reaches for, instead
+  # of an interpreter that dies on `import yaml`/`import requests`:
+  #   requests — scripted HTTP beyond curl (sessions, retries, JSON bodies)
+  #   pyyaml — config/CI files (crow pipelines, webhook yaml, env-ish parsing)
+  #   beautifulsoup4 — HTML scraping in scripts (faculty pages, dashboards)
+  #   pypdf — PDF text extraction (invoices, university docs) in scripts
+  # (The execute_code kernel runs in Hermes' own venv and is unaffected; this
+  # env serves cron/no_agent scripts and ad-hoc shell.)
+  pythonEnv = pkgs.python3.withPackages (
+    ps: with ps; [
+      requests
+      pyyaml
+      beautifulsoup4
+      pypdf
+    ]
+  );
 in
 {
   services.hermes-agent = {
@@ -54,9 +72,39 @@ in
     #   sops-rendered ~/.config/gh/hosts.yml from secrets.nix, and covers what
     #   the MCP server does not (raw `gh api`, `gh run watch`, ad-hoc `gh pr`
     #   output)
+    # curl: no_agent cron/watchdog scripts (and anything else spawned by the
+    #   gateway process) run with THIS PATH, not the interactive shell's —
+    #   without it here, curl resolves only in terminal sessions and every
+    #   cron tick of a curl-based watchdog fails with "command not found"
+    #   while the same script passes manual testing (hit for real by the
+    #   bbbf-mazeret and zdr-deepseek watchdogs, 2026-11).
+    # The rest of this list is the same trap for other CLIs the agent and its
+    #   cron scripts actually reach for; each has a real use, not pad-the-PATH:
+    # jq: JSON wrangling in shell one-liners — Forgejo/GitHub API responses in
+    #   cron scripts and PR tooling (the forgejo skill's jq workarounds exist
+    #   only because this was missing).
+    # python3: exists in the execute_code kernel but not on this PATH — cron
+    #   scripts and ad-hoc shell need it for parsing/HTTP (urllib) work.
+    #   Shipped as `pythonEnv` (python3.withPackages) so the usual libs are
+    #   importable: requests, pyyaml, beautifulsoup4, pypdf.
+    # procps: ps/pgrep for process checks in watchdog scripts and debugging.
+    # tar, unzip: archive handling (downloads, backup probes).
+    # sqlite: read-only queries on DB copies (e.g. hindsight state.db copies
+    #   in scratch — the live store is never touched).
+    # file: identify mystery downloads/attachments.
+    # iproute2: ss for port/listener checks when debugging caddy/forgejo/web.
     extraPackages = with pkgs; [
       nix
       chromium
+      curl
+      jq
+      pythonEnv
+      procps
+      gnutar # the `tar` binary (pkgs.tar alias is gone from nixpkgs)
+      unzip
+      sqlite
+      file
+      iproute2
       git
       fd
       ripgrep
